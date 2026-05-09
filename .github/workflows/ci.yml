@@ -7,9 +7,216 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  lint:
+    name: Lint (${{ matrix.lang }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [go, rust, python, node]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        if: matrix.lang == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set up Rust
+        if: matrix.lang == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Python
+        if: matrix.lang == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        if: matrix.lang == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ matrix.lang }}" in
+            go)
+              if command -v gofmt >/dev/null 2>&1 && [ -d src/go ]; then
+                files="$(find src/go -type f -name '*.go')"
+                if [ -n "$files" ]; then
+                  out="$(gofmt -l $files)"
+                  if [ -n "$out" ]; then
+                    echo "$out"
+                    echo "[lint][go] gofmt check failed"
+                    exit 1
+                  fi
+                  echo "[lint][go] gofmt check passed"
+                else
+                  echo "[lint][go] no Go files found; skipping"
+                fi
+              else
+                echo "[lint][go] gofmt not available or src/go missing; skipping"
+              fi
+              ;;
+            rust)
+              if [ -f src/rust/Cargo.toml ]; then
+                (cd src/rust && cargo fmt --all --check)
+                (cd src/rust && cargo clippy --workspace --all-targets -- -D warnings)
+              else
+                echo "[lint][rust] src/rust/Cargo.toml missing; skipping"
+              fi
+              ;;
+            python)
+              python -m pip install --upgrade pip
+              python -m pip install pytest
+              ran=0
+              for p in tests src/python/tests; do
+                if [ -d "$p" ]; then
+                  python -m compileall -q "$p"
+                  ran=1
+                fi
+              done
+              if [ "$ran" -eq 0 ]; then
+                echo "[lint][python] tests/ and src/python/tests missing; skipping"
+              fi
+              ;;
+            node)
+              if [ -f src/web/package.json ]; then
+                cd src/web
+                if [ -f package-lock.json ]; then
+                  npm ci
+                else
+                  npm install --no-audit --no-fund
+                fi
+                npm run lint
+              else
+                echo "[lint][node] src/web/package.json missing; skipping"
+              fi
+              ;;
+          esac
+
+  test:
+    name: Test (${{ matrix.lang }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [go, rust, python, node]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        if: matrix.lang == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set up Rust
+        if: matrix.lang == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Python
+        if: matrix.lang == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        if: matrix.lang == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Test
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ matrix.lang }}" in
+            go)
+              if [ -d src/go ]; then
+                for modfile in src/go/*/go.mod; do
+                  [ -f "$modfile" ] || continue
+                  moddir="$(dirname "$modfile")"
+                  (cd "$moddir" && go test ./...)
+                done
+              else
+                echo "[test][go] src/go missing; skipping"
+              fi
+              ;;
+            rust)
+              if [ -f src/rust/Cargo.toml ]; then
+                (cd src/rust && cargo test --workspace)
+              else
+                echo "[test][rust] src/rust/Cargo.toml missing; skipping"
+              fi
+              ;;
+            python)
+              python -m pip install --upgrade pip
+              python -m pip install pytest
+              if [ -d tests/contracts ]; then
+                pytest -q tests/contracts
+              else
+                echo "[test][python] tests/contracts missing; skipping"
+              fi
+              if [ -d src/python/tests ]; then
+                pytest -q src/python/tests
+              else
+                echo "[test][python] src/python/tests missing; skipping"
+              fi
+              ;;
+            node)
+              if [ -f src/web/package.json ]; then
+                cd src/web
+                if [ -f package-lock.json ]; then
+                  npm ci
+                else
+                  npm install --no-audit --no-fund
+                fi
+                if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then
+                  npm test -- --watch=false
+                else
+                  echo "[test][node] no test script defined; skipping"
+                fi
+              else
+                echo "[test][node] src/web/package.json missing; skipping"
+              fi
+              ;;
+          esac
+
+  contracts:
+    name: Contract Compatibility
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Placeholder build step
-        run: echo "Add your build/test commands here"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run contract smoke tests
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+          if [ -d tests/contracts ]; then
+            pytest -q tests/contracts
+          else
+            echo "[contracts] tests/contracts missing; skipping"
+          fi
+          if [ -d src/python/tests ]; then
+            pytest -q src/python/tests
+          else
+            echo "[contracts] src/python/tests missing; skipping"
+          fi
+
+  integration-docker:
+    name: Integration (Docker Microservices)
+    runs-on: ubuntu-latest
+    needs: [lint, test, contracts]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker microservice smoke test
+        run: |
+          bash tests/integration/docker_microservices_smoke.sh

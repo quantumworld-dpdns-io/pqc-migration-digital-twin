@@ -1,10 +1,9 @@
 import { HndlHeatmap } from '../components/HndlHeatmap';
 import { InventoryTable } from '../components/InventoryTable';
-import { GovernancePanel } from '../components/GovernancePanel';
 import { Panel } from '../components/Panel';
 import { ProofPanel } from '../components/ProofPanel';
 import { RiskMatrix } from '../components/RiskMatrix';
-import type { GovernanceException, HeatmapCell, InventoryItem, RiskItem, VerifierDrift } from '../lib/types';
+import type { HeatmapCell, InventoryItem, RiskItem } from '../lib/types';
 
 const inventory: InventoryItem[] = [
   { system: 'Root CA Issuance', algorithm: 'RSA-2048', owner: 'PKI Ops', status: 'amber' },
@@ -23,17 +22,6 @@ const risks: RiskItem[] = [
   { threat: 'Harvest-Now Decrypt-Later', likelihood: 'High', impact: 'High', score: 9 },
   { threat: 'Vendor PQC Readiness Lag', likelihood: 'Medium', impact: 'High', score: 6 },
   { threat: 'Unmanaged Key Sprawl', likelihood: 'High', impact: 'Medium', score: 6 }
-];
-
-const governanceExceptions: GovernanceException[] = [
-  { id: 'EX-2026-014', control: 'Legacy PQC waiver for VPN concentrators', status: 'Mitigating', owner: 'Network Security', expiry: '2026-09-30' },
-  { id: 'EX-2026-017', control: 'Firmware signer transition holdback', status: 'Open', owner: 'Device Security', expiry: '2026-08-15' },
-  { id: 'EX-2026-019', control: 'Archive re-encryption staged rollout', status: 'Approved', owner: 'Data Platform', expiry: '2026-12-31' }
-];
-
-const verifierDrift: VerifierDrift[] = [
-  { verifier: 'proof-verifier', currentVersion: 'v0.3.1', latestVersion: 'v0.4.0' },
-  { verifier: 'policy-checker', currentVersion: 'v1.2.0', latestVersion: 'v1.2.0' }
 ];
 
 export default function DashboardPage() {
