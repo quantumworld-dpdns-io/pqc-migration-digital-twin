@@ -22,4 +22,9 @@ Implementation-route parity check:
 >>> route_literals = set(re.findall(r'mux\\.HandleFunc\\("([^"]+)"', server_text))
 >>> set(paths.keys()).issubset(route_literals)
 True
+
+>>> 'r.URL.Query().Get("limit")' in server_text and "http.StatusBadRequest" in server_text
+True
+>>> "asset_id, reason, and owner are required" in server_text
+True
 """
