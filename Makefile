@@ -1,4 +1,4 @@
-.PHONY: help bootstrap dev test lint contracts risk-sim proof-demo docker-build docker-up docker-down
+.PHONY: help bootstrap dev test lint contracts risk-sim proof-demo docker-build docker-up docker-down docker-smoke
 
 help:
 	@echo "Available targets:"
@@ -12,6 +12,7 @@ help:
 	@echo "  make docker-build # build all microservice images"
 	@echo "  make docker-up    # start all microservices with docker compose"
 	@echo "  make docker-down  # stop microservices"
+	@echo "  make docker-smoke # run end-to-end docker microservice smoke test"
 
 bootstrap:
 	@set -e; \
@@ -191,4 +192,12 @@ docker-down:
 		docker compose -f docker-compose.microservices.yml down; \
 	else \
 		echo "[docker-down] Skipping: docker is not installed."; \
+	fi
+
+docker-smoke:
+	@set -e; \
+	if command -v docker >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then \
+		bash tests/integration/docker_microservices_smoke.sh; \
+	else \
+		echo "[docker-smoke] Skipping: docker and/or curl not installed."; \
 	fi

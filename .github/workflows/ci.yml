@@ -210,3 +210,13 @@ jobs:
           else
             echo "[contracts] src/python/tests missing; skipping"
           fi
+
+  integration-docker:
+    name: Integration (Docker Microservices)
+    runs-on: ubuntu-latest
+    needs: [lint, test, contracts]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Docker microservice smoke test
+        run: |
+          bash tests/integration/docker_microservices_smoke.sh
