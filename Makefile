@@ -26,9 +26,17 @@ dev:
 contracts:
 	@set -e; \
 	if command -v pytest >/dev/null 2>&1; then \
-		pytest -q tests/contracts; \
+		if [ -d tests/contracts ]; then \
+			pytest -q tests/contracts; \
+		else \
+			echo "[contracts] Skipping: tests/contracts not found."; \
+		fi; \
 	elif python3 -c "import pytest" >/dev/null 2>&1; then \
-		python3 -m pytest -q tests/contracts; \
+		if [ -d tests/contracts ]; then \
+			python3 -m pytest -q tests/contracts; \
+		else \
+			echo "[contracts] Skipping: tests/contracts not found."; \
+		fi; \
 	else \
 		echo "[contracts] Skipping: pytest is not installed."; \
 	fi
@@ -52,11 +60,29 @@ test:
 		echo "[test][rust] Skipping: cargo or src/rust/Cargo.toml not found."; \
 	fi; \
 	if command -v pytest >/dev/null 2>&1; then \
-		echo "[test][python] tests"; \
-		pytest -q tests; \
+		ran=0; \
+		for p in tests src/python/tests; do \
+			if [ -d "$$p" ]; then \
+				echo "[test][python] $$p"; \
+				pytest -q "$$p"; \
+				ran=1; \
+			fi; \
+		done; \
+		if [ "$$ran" -eq 0 ]; then \
+			echo "[test][python] Skipping: tests/ and src/python/tests not found."; \
+		fi; \
 	elif python3 -c "import pytest" >/dev/null 2>&1; then \
-		echo "[test][python] tests"; \
-		python3 -m pytest -q tests; \
+		ran=0; \
+		for p in tests src/python/tests; do \
+			if [ -d "$$p" ]; then \
+				echo "[test][python] $$p"; \
+				python3 -m pytest -q "$$p"; \
+				ran=1; \
+			fi; \
+		done; \
+		if [ "$$ran" -eq 0 ]; then \
+			echo "[test][python] Skipping: tests/ and src/python/tests not found."; \
+		fi; \
 	else \
 		echo "[test][python] Skipping: pytest is not installed."; \
 	fi; \
@@ -99,8 +125,17 @@ lint:
 		echo "[lint][rust] Skipping: cargo or src/rust/Cargo.toml not found."; \
 	fi; \
 	if command -v python3 >/dev/null 2>&1; then \
-		echo "[lint][python] python3 -m compileall tests"; \
-		python3 -m compileall -q tests; \
+		ran=0; \
+		for p in tests src/python/tests; do \
+			if [ -d "$$p" ]; then \
+				echo "[lint][python] python3 -m compileall $$p"; \
+				python3 -m compileall -q "$$p"; \
+				ran=1; \
+			fi; \
+		done; \
+		if [ "$$ran" -eq 0 ]; then \
+			echo "[lint][python] Skipping: tests/ and src/python/tests not found."; \
+		fi; \
 	else \
 		echo "[lint][python] Skipping: python3 is not installed."; \
 	fi; \

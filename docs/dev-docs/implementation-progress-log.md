@@ -93,3 +93,11 @@ Main agent coordinating parallel workers with non-overlapping ownership.
 ### Update 2026-05-09 #12
 - Started continuation round to reduce environment-related skips.
 - Parallel streams: root CI/Makefile Python coverage, src/python test packaging metadata, src/web lightweight Node smoke tests.
+
+### Update 2026-05-09 #13
+- Completed src/python packaging stream.
+- Added `src/python/requirements-dev.txt` and test-run documentation.
+
+### Update 2026-05-09 #14
+- Completed src/web test stream.
+- Added Node built-in smoke tests and wired `npm test` in web package.
