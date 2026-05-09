@@ -58,3 +58,5 @@ build/
 .tmp/
 tmp/
 *.class
+/.ignore
+/.ignore/software-tools

@@ -16,5 +16,5 @@ Lightweight Next.js App Router scaffold for the PQC migration dashboard.
 ## Notes
 
 - Source lives under `src/web`.
-- Dashboard includes placeholders for inventory, HNDL heatmap, risk matrix, and proof panel.
+- Dashboard ships an MVP view for crypto inventory, HNDL signal heatmap, migration risk matrix, and evidence tracking panel.
 - Styling is tokenized via CSS variables in `app/globals.css`.

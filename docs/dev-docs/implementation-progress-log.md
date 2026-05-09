@@ -50,3 +50,22 @@ Main agent coordinating parallel workers with non-overlapping ownership.
 - `W3` Python + QASM scaffold: `completed`
 - `W4` Next.js UI scaffold: `completed`
 - `W5` DevEx/CI scaffolding: `completed`
+
+### Update 2026-05-09 #6
+- Started parallel completion round for remaining TODO/placeholder items.
+- Streams: Go endpoint finalization, DevEx/CI command activation, Web copy finalization, Rust/Python scaffold hardening.
+- Token method unchanged: disjoint ownership + delta-only reporting.
+
+### Update 2026-05-09 #7
+- Completed Web finalization stream.
+- Replaced placeholder wording with concrete MVP copy in UI and web README.
+
+### Update 2026-05-09 #8
+- Completed Go endpoint finalization stream.
+- Replaced `not_implemented` responses with deterministic JSON MVP responses.
+- Added endpoint coverage tests; worker reports gateway Go tests passing.
+
+### Update 2026-05-09 #9
+- Completed Rust/Python hardening stream.
+- Improved ZK proof binding/validation and QASM runner input validation.
+- Rust tests passed; Python tests still blocked locally by missing `pytest`.

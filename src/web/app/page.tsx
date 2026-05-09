@@ -6,9 +6,9 @@ import { RiskMatrix } from '../components/RiskMatrix';
 import type { HeatmapCell, InventoryItem, RiskItem } from '../lib/types';
 
 const inventory: InventoryItem[] = [
-  { system: 'PKI Root CA', algorithm: 'RSA-2048', owner: 'Infra', status: 'amber' },
-  { system: 'IoT Fleet Signing', algorithm: 'ECDSA-P256', owner: 'Edge', status: 'red' },
-  { system: 'Archive Encryption', algorithm: 'AES-256 + RSA', owner: 'Data', status: 'green' }
+  { system: 'Root CA Issuance', algorithm: 'RSA-2048', owner: 'PKI Ops', status: 'amber' },
+  { system: 'Edge Firmware Signing', algorithm: 'ECDSA-P256', owner: 'Device Security', status: 'red' },
+  { system: 'Long-Term Archive', algorithm: 'AES-256 + RSA-OAEP', owner: 'Data Platform', status: 'green' }
 ];
 
 const heatmap: HeatmapCell[] = [
@@ -19,9 +19,9 @@ const heatmap: HeatmapCell[] = [
 ];
 
 const risks: RiskItem[] = [
-  { threat: 'Harvest-Now', likelihood: 'High', impact: 'High', score: 9 },
-  { threat: 'Vendor Lag', likelihood: 'Medium', impact: 'High', score: 6 },
-  { threat: 'Key Sprawl', likelihood: 'High', impact: 'Medium', score: 6 }
+  { threat: 'Harvest-Now Decrypt-Later', likelihood: 'High', impact: 'High', score: 9 },
+  { threat: 'Vendor PQC Readiness Lag', likelihood: 'Medium', impact: 'High', score: 6 },
+  { threat: 'Unmanaged Key Sprawl', likelihood: 'High', impact: 'Medium', score: 6 }
 ];
 
 export default function DashboardPage() {

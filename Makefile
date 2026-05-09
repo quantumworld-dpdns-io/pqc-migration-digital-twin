@@ -1,34 +1,128 @@
-.PHONY: help bootstrap dev test lint risk-sim proof-demo
+.PHONY: help bootstrap dev test lint contracts risk-sim proof-demo
 
 help:
 	@echo "Available targets:"
-	@echo "  make bootstrap   # install baseline dev toolchains/deps (placeholder)"
-	@echo "  make dev         # run local dev workflow (placeholder)"
-	@echo "  make test        # run repo test suites (placeholder)"
-	@echo "  make lint        # run repo linters (placeholder)"
-	@echo "  make risk-sim    # execute migration risk simulation scenarios (placeholder)"
-	@echo "  make proof-demo  # generate/verify migration proof demo (placeholder)"
+	@echo "  make bootstrap   # print detected toolchain versions"
+	@echo "  make dev         # run lightweight local checks"
+	@echo "  make lint        # run available lint/static checks"
+	@echo "  make contracts   # run contract compatibility smoke tests"
+	@echo "  make test        # run available language test suites + contracts"
+	@echo "  make risk-sim    # run Rust risk engine tests"
+	@echo "  make proof-demo  # run Rust proof module tests"
 
 bootstrap:
-	@echo "[bootstrap] Placeholder: install Go/Rust/Python/Node toolchains and dependencies."
-	@echo "[bootstrap] TODO: add repo-specific bootstrap commands."
+	@set -e; \
+	for tool in go cargo python3 node npm; do \
+		if command -v $$tool >/dev/null 2>&1; then \
+			echo "[bootstrap] $$tool: $$($$tool --version | head -n 1)"; \
+		else \
+			echo "[bootstrap] $$tool: not found (optional)"; \
+		fi; \
+	done
 
 dev:
-	@echo "[dev] Placeholder: start local services and developer workflow."
-	@echo "[dev] TODO: wire command(s) for local orchestration."
+	@$(MAKE) lint
+
+contracts:
+	@set -e; \
+	if command -v pytest >/dev/null 2>&1; then \
+		pytest -q tests/contracts; \
+	elif python3 -c "import pytest" >/dev/null 2>&1; then \
+		python3 -m pytest -q tests/contracts; \
+	else \
+		echo "[contracts] Skipping: pytest is not installed."; \
+	fi
 
 test:
-	@echo "[test] Placeholder: run unit/integration/contract tests."
-	@echo "[test] TODO: add language-specific test runners."
+	@set -e; \
+	if command -v go >/dev/null 2>&1; then \
+		for modfile in src/go/*/go.mod; do \
+			[ -f "$$modfile" ] || continue; \
+			moddir="$$(dirname "$$modfile")"; \
+			echo "[test][go] $$moddir"; \
+			(cd "$$moddir" && go test ./...); \
+		done; \
+	else \
+		echo "[test][go] Skipping: go is not installed."; \
+	fi; \
+	if command -v cargo >/dev/null 2>&1 && [ -f src/rust/Cargo.toml ]; then \
+		echo "[test][rust] src/rust"; \
+		(cd src/rust && cargo test --workspace); \
+	else \
+		echo "[test][rust] Skipping: cargo or src/rust/Cargo.toml not found."; \
+	fi; \
+	if command -v pytest >/dev/null 2>&1; then \
+		echo "[test][python] tests"; \
+		pytest -q tests; \
+	elif python3 -c "import pytest" >/dev/null 2>&1; then \
+		echo "[test][python] tests"; \
+		python3 -m pytest -q tests; \
+	else \
+		echo "[test][python] Skipping: pytest is not installed."; \
+	fi; \
+	if [ -f src/web/package.json ] && command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then \
+		if node -e "const p=require('./src/web/package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then \
+			echo "[test][node] src/web"; \
+			(cd src/web && npm test -- --watch=false); \
+		else \
+			echo "[test][node] Skipping: no test script in src/web/package.json."; \
+		fi; \
+	else \
+		echo "[test][node] Skipping: node/npm or src/web/package.json not found."; \
+	fi; \
+	$(MAKE) contracts
 
 lint:
-	@echo "[lint] Placeholder: run formatting, lint, and static analysis checks."
-	@echo "[lint] TODO: add Go/Rust/Python/Node lint commands."
+	@set -e; \
+	if command -v gofmt >/dev/null 2>&1; then \
+		files="$$(find src/go -type f -name '*.go')"; \
+		if [ -n "$$files" ]; then \
+			out="$$(gofmt -l $$files)"; \
+			if [ -n "$$out" ]; then \
+				echo "$$out"; \
+				echo "[lint][go] gofmt check failed."; \
+				exit 1; \
+			fi; \
+			echo "[lint][go] gofmt check passed."; \
+		else \
+			echo "[lint][go] Skipping: no Go files found."; \
+		fi; \
+	else \
+		echo "[lint][go] Skipping: gofmt is not installed."; \
+	fi; \
+	if command -v cargo >/dev/null 2>&1 && [ -f src/rust/Cargo.toml ]; then \
+		echo "[lint][rust] cargo fmt --check"; \
+		(cd src/rust && cargo fmt --all --check); \
+		echo "[lint][rust] cargo clippy"; \
+		(cd src/rust && cargo clippy --workspace --all-targets -- -D warnings); \
+	else \
+		echo "[lint][rust] Skipping: cargo or src/rust/Cargo.toml not found."; \
+	fi; \
+	if command -v python3 >/dev/null 2>&1; then \
+		echo "[lint][python] python3 -m compileall tests"; \
+		python3 -m compileall -q tests; \
+	else \
+		echo "[lint][python] Skipping: python3 is not installed."; \
+	fi; \
+	if [ -f src/web/package.json ] && command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then \
+		echo "[lint][node] src/web"; \
+		(cd src/web && npm run lint); \
+	else \
+		echo "[lint][node] Skipping: node/npm or src/web/package.json not found."; \
+	fi
 
 risk-sim:
-	@echo "[risk-sim] Placeholder: execute migration risk simulation scenarios."
-	@echo "[risk-sim] TODO: wire risk simulation entrypoint."
+	@set -e; \
+	if command -v cargo >/dev/null 2>&1 && [ -f src/rust/risk-engine/Cargo.toml ]; then \
+		(cd src/rust && cargo test -p risk-engine); \
+	else \
+		echo "[risk-sim] Skipping: cargo or risk-engine crate not found."; \
+	fi
 
 proof-demo:
-	@echo "[proof-demo] Placeholder: run migration proof generation/verification demo."
-	@echo "[proof-demo] TODO: wire proof demo entrypoint."
+	@set -e; \
+	if command -v cargo >/dev/null 2>&1 && [ -f src/rust/zk-proof/Cargo.toml ]; then \
+		(cd src/rust && cargo test -p zk-proof); \
+	else \
+		echo "[proof-demo] Skipping: cargo or zk-proof crate not found."; \
+	fi

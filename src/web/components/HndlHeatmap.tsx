@@ -8,7 +8,7 @@ function tone(score: number) {
 
 export function HndlHeatmap({ cells }: { cells: HeatmapCell[] }) {
   return (
-    <div className="heatmap-grid" role="img" aria-label="HNDL heatmap placeholder">
+    <div className="heatmap-grid" role="img" aria-label="HNDL heatmap signal intensity by dimension">
       {cells.map((cell) => (
         <div key={cell.label} className={`heat-cell ${tone(cell.score)}`}>
           <span>{cell.label}</span>
