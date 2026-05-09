@@ -71,10 +71,17 @@ jobs:
               fi
               ;;
             python)
-              if [ -d tests ]; then
-                python -m compileall -q tests
-              else
-                echo "[lint][python] tests directory missing; skipping"
+              python -m pip install --upgrade pip
+              python -m pip install pytest
+              ran=0
+              for p in tests src/python/tests; do
+                if [ -d "$p" ]; then
+                  python -m compileall -q "$p"
+                  ran=1
+                fi
+              done
+              if [ "$ran" -eq 0 ]; then
+                echo "[lint][python] tests/ and src/python/tests missing; skipping"
               fi
               ;;
             node)
@@ -148,12 +155,17 @@ jobs:
               fi
               ;;
             python)
-              if [ -d tests ]; then
-                python -m pip install --upgrade pip
-                python -m pip install pytest
-                pytest -q tests
+              python -m pip install --upgrade pip
+              python -m pip install pytest
+              if [ -d tests/contracts ]; then
+                pytest -q tests/contracts
               else
-                echo "[test][python] tests directory missing; skipping"
+                echo "[test][python] tests/contracts missing; skipping"
+              fi
+              if [ -d src/python/tests ]; then
+                pytest -q src/python/tests
+              else
+                echo "[test][python] src/python/tests missing; skipping"
               fi
               ;;
             node)
@@ -188,4 +200,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest
-          pytest -q tests/contracts
+          if [ -d tests/contracts ]; then
+            pytest -q tests/contracts
+          else
+            echo "[contracts] tests/contracts missing; skipping"
+          fi
+          if [ -d src/python/tests ]; then
+            pytest -q src/python/tests
+          else
+            echo "[contracts] src/python/tests missing; skipping"
+          fi
