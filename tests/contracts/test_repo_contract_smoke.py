@@ -32,6 +32,8 @@ def test_gateway_openapi_contract_is_present_and_valid() -> None:
         "/api/v1/risk/backlog": {"post"},
         "/api/v1/proof": {"post"},
         "/api/v1/qasm": {"post"},
+        "/api/v1/governance/exceptions": {"get", "post"},
+        "/api/v1/governance/verifier-drift": {"get"},
         "/api/v1/audit/events": {"get"},
     }
 
@@ -64,6 +66,9 @@ def test_gateway_code_routes_match_openapi_contract() -> None:
         "risk backlog": "r.Method != http.MethodPost",
         "proof": "r.Method != http.MethodPost",
         "qasm": "r.Method != http.MethodPost",
+        "governance exceptions get": "case http.MethodGet:",
+        "governance exceptions post": "case http.MethodPost:",
+        "verifier drift": "r.Method != http.MethodGet",
         "audit events": "r.Method != http.MethodGet",
     }
     for label, marker in required_method_checks.items():

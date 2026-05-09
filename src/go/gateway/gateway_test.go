@@ -93,6 +93,7 @@ func TestGatewayProxiesDownstreamServices(t *testing.T) {
 		{path: "/api/v1/risk/backlog", method: http.MethodPost, body: map[string]any{"policy": "balanced"}, expectKey: "policy", expectVal: "balanced"},
 		{path: "/api/v1/proof", method: http.MethodPost, body: map[string]any{"credit_score": 700}, expectKey: "service", expectVal: "rust-risk"},
 		{path: "/api/v1/qasm", method: http.MethodPost, body: map[string]any{}, expectKey: "service", expectVal: "qasm-examples"},
+		{path: "/api/v1/governance/verifier-drift", method: http.MethodGet, body: nil, expectKey: "drift", expectVal: false},
 	}
 
 	for _, tc := range cases {
@@ -168,6 +169,7 @@ func TestServiceEndpointsMethodNotAllowed(t *testing.T) {
 		{path: "/api/v1/risk/backlog", method: http.MethodGet},
 		{path: "/api/v1/proof", method: http.MethodGet},
 		{path: "/api/v1/qasm", method: http.MethodGet},
+		{path: "/api/v1/governance/verifier-drift", method: http.MethodPost},
 	}
 	mux := NewMux()
 	for _, tc := range cases {
@@ -179,6 +181,142 @@ func TestServiceEndpointsMethodNotAllowed(t *testing.T) {
 				t.Fatalf("expected status %d, got %d", http.StatusMethodNotAllowed, rr.Code)
 			}
 		})
+	}
+}
+
+func TestGovernanceExceptionsCreateAndList(t *testing.T) {
+	mux := NewMux()
+
+	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/governance/exceptions", bytes.NewReader([]byte(`{
+		"asset_id":"asset-123",
+		"reason":"temporary waiver",
+		"owner":"security-team",
+		"expires_at":"2026-12-31T00:00:00Z"
+	}`)))
+	createReq.Header.Set("Content-Type", "application/json")
+	createRR := httptest.NewRecorder()
+	mux.ServeHTTP(createRR, createReq)
+
+	if createRR.Code != http.StatusCreated {
+		t.Fatalf("expected status %d, got %d", http.StatusCreated, createRR.Code)
+	}
+	var created map[string]any
+	if err := json.Unmarshal(createRR.Body.Bytes(), &created); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	for _, key := range []string{"exception_id", "asset_id", "reason", "owner", "status", "created_at"} {
+		if strings.TrimSpace(asString(created[key], "")) == "" {
+			t.Fatalf("expected non-empty %s", key)
+		}
+	}
+	if created["status"] != "open" {
+		t.Fatalf("expected status open, got %v", created["status"])
+	}
+
+	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/governance/exceptions", nil)
+	listRR := httptest.NewRecorder()
+	mux.ServeHTTP(listRR, listReq)
+	if listRR.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, listRR.Code)
+	}
+	var out map[string][]map[string]any
+	if err := json.Unmarshal(listRR.Body.Bytes(), &out); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if got := len(out["exceptions"]); got != 1 {
+		t.Fatalf("expected 1 exception, got %d", got)
+	}
+	if out["exceptions"][0]["asset_id"] != "asset-123" {
+		t.Fatalf("expected created exception to be listed")
+	}
+}
+
+func TestVerifierDriftEndpoint(t *testing.T) {
+	mux := NewMux()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/governance/verifier-drift", nil)
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+	var out map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &out); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if out["current_verifier_version"] != "v0.1.0" {
+		t.Fatalf("unexpected default current_verifier_version: %v", out["current_verifier_version"])
+	}
+	if out["latest_verifier_version"] != "v0.1.0" {
+		t.Fatalf("unexpected default latest_verifier_version: %v", out["latest_verifier_version"])
+	}
+	if out["drift"] != false {
+		t.Fatalf("expected no drift by default, got %v", out["drift"])
+	}
+
+	t.Setenv("CURRENT_VERIFIER_VERSION", "v0.1.0")
+	t.Setenv("LATEST_VERIFIER_VERSION", "v0.2.0")
+	mux = NewMux()
+	req2 := httptest.NewRequest(http.MethodGet, "/api/v1/governance/verifier-drift", nil)
+	rr2 := httptest.NewRecorder()
+	mux.ServeHTTP(rr2, req2)
+	if rr2.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr2.Code)
+	}
+	var out2 map[string]any
+	if err := json.Unmarshal(rr2.Body.Bytes(), &out2); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if out2["drift"] != true {
+		t.Fatalf("expected drift=true, got %v", out2["drift"])
+	}
+}
+
+func TestGovernanceRoutesEmitAuditEvents(t *testing.T) {
+	mux := NewMux()
+
+	postReq := httptest.NewRequest(http.MethodPost, "/api/v1/governance/exceptions", bytes.NewReader([]byte(`{
+		"asset_id":"asset-1",
+		"reason":"waiver",
+		"owner":"ops"
+	}`)))
+	postRR := httptest.NewRecorder()
+	mux.ServeHTTP(postRR, postReq)
+	if postRR.Code != http.StatusCreated {
+		t.Fatalf("expected status %d, got %d", http.StatusCreated, postRR.Code)
+	}
+
+	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/governance/verifier-drift", nil)
+	getRR := httptest.NewRecorder()
+	mux.ServeHTTP(getRR, getReq)
+	if getRR.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, getRR.Code)
+	}
+
+	auditReq := httptest.NewRequest(http.MethodGet, "/api/v1/audit/events?limit=2", nil)
+	auditRR := httptest.NewRecorder()
+	mux.ServeHTTP(auditRR, auditReq)
+	if auditRR.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, auditRR.Code)
+	}
+	var out map[string][]map[string]any
+	if err := json.Unmarshal(auditRR.Body.Bytes(), &out); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	events := out["events"]
+	if len(events) != 2 {
+		t.Fatalf("expected 2 events, got %d", len(events))
+	}
+	if events[0]["route"] != "/api/v1/governance/exceptions" || events[0]["method"] != http.MethodPost {
+		t.Fatalf("unexpected first governance audit event: %v", events[0])
+	}
+	if events[1]["route"] != "/api/v1/governance/verifier-drift" || events[1]["method"] != http.MethodGet {
+		t.Fatalf("unexpected second governance audit event: %v", events[1])
+	}
+	for _, ev := range events {
+		if ev["outcome"] != "success" {
+			t.Fatalf("expected success outcome, got %v", ev["outcome"])
+		}
 	}
 }
 
