@@ -150,7 +150,7 @@ Deliverables:
 Acceptance criteria:
 
 - All services build in CI with pinned toolchains.
-- API gateway serves health/readiness and auth-protected placeholder endpoints.
+- API gateway serves health plus deterministic MVP discovery/risk/proof/QASM endpoints under `/api/v1/*`.
 - Local dev stack bootstraps with one command.
 
 ## Phase 1: Asset Discovery + Inventory Graph (Weeks 3-6)

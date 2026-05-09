@@ -105,8 +105,12 @@ lint:
 		echo "[lint][python] Skipping: python3 is not installed."; \
 	fi; \
 	if [ -f src/web/package.json ] && command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then \
-		echo "[lint][node] src/web"; \
-		(cd src/web && npm run lint); \
+		if [ -x src/web/node_modules/.bin/next ]; then \
+			echo "[lint][node] src/web"; \
+			(cd src/web && npm run lint); \
+		else \
+			echo "[lint][node] Skipping: Next.js dependencies are not installed."; \
+		fi; \
 	else \
 		echo "[lint][node] Skipping: node/npm or src/web/package.json not found."; \
 	fi

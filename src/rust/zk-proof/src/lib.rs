@@ -18,7 +18,8 @@ pub fn prove(statement: &str, public_score: &RiskScore) -> Proof {
 
 /// MVP scaffold verifier that checks statement + score against proof hash.
 pub fn verify(statement: &str, public_score: &RiskScore, proof: &Proof) -> bool {
-    if proof.statement_hash.len() != 16 || !proof.statement_hash.chars().all(|c| c.is_ascii_hexdigit())
+    if proof.statement_hash.len() != 16
+        || !proof.statement_hash.chars().all(|c| c.is_ascii_hexdigit())
     {
         return false;
     }

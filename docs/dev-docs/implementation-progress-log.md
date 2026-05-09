@@ -69,3 +69,23 @@ Main agent coordinating parallel workers with non-overlapping ownership.
 - Completed Rust/Python hardening stream.
 - Improved ZK proof binding/validation and QASM runner input validation.
 - Rust tests passed; Python tests still blocked locally by missing `pytest`.
+
+### Update 2026-05-09 #10
+- Completed DevEx/CI activation stream.
+- Replaced placeholder Make/CI behavior with runnable commands and contract smoke tests.
+- Local contract execution still skips full run when `pytest` is absent.
+
+## Completion Round Status
+- Go endpoint finalization: `completed`
+- DevEx/CI command activation: `completed`
+- Web copy finalization: `completed`
+- Rust/Python hardening: `completed`
+
+### Update 2026-05-09 #11
+- Local verification pass completed: `make lint` and `make test` now run successfully with graceful skips for missing optional tooling.
+- Updated implementation plan wording to reflect implemented MVP gateway endpoints.
+- Remaining environment gaps: Python contract/unit execution requires `pytest`; web lint runtime requires installed Node dependencies.
+
+## Controller Status
+- Parallel completion round: `completed`
+- Open technical TODOs in code/CI scaffolds: `none found` (excluding historical notes in this log)
