@@ -1,116 +1,95 @@
-services:
-  # ── Database (local dev only) ──────────────────────────────────────────────
-  # In Choreo: remove this service and inject SUPABASE_URL / DATABASE_URL
-  # as Choreo Secrets pointing to your Supabase Cloud project.
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: pqc_digital_twin
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
+# Choreo deployment simulation
+#
+# Differences from docker-compose.microservices.yml:
+#   - No local postgres — DATABASE_URL points to AlwaysData
+#   - Uses pre-built images via REGISTRY / TAG env vars
+#   - No host port bindings (Choreo manages networking)
+#   - DATABASE_URL must be set as a Choreo Secret; use .env locally:
+#       DATABASE_URL=postgres://dennislee928:<password>@postgresql-dennislee928.alwaysdata.net:5432/dennislee928_postgres?sslmode=require
+#
+# Required env vars (.env or Choreo Secrets):
+#   DATABASE_URL    — AlwaysData connection string (see above)
+#   REGISTRY        — container registry prefix, e.g. ghcr.io/your-org
+#   TAG             — image tag (default: latest)
 
-  # ── Services ───────────────────────────────────────────────────────────────
-  go-gateway:
+services:
+  # ── Component 1: Nginx reverse proxy ───────────────────────────────────────
+  nginx:
+    image: ${REGISTRY}/nginx:${TAG:-latest}
     build:
-      context: .
-      dockerfile: src/go/gateway/Dockerfile
-    ports:
-      - "8080:8080"
+      context: "docker images/nginx"
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pqc_digital_twin?sslmode=disable
+      GO_SERVICES_HOST: ${GO_SERVICES_HOST:-go-services}
     depends_on:
-      postgres:
+      go-services:
         condition: service_healthy
-      go-discovery:
-        condition: service_healthy
-      python-analysis:
+      python-services:
         condition: service_healthy
       rust-risk:
         condition: service_healthy
-      qasm-examples:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 3s
+      interval: 15s
+      timeout: 5s
       retries: 5
+    restart: on-failure
 
-  go-discovery:
+  # ── Component 2: Go gateway + discovery ────────────────────────────────────
+  go-services:
+    image: ${REGISTRY}/go-services:${TAG:-latest}
     build:
       context: .
-      dockerfile: src/go/discovery/Dockerfile
-    ports:
-      - "8081:8081"
+      dockerfile: "docker images/go-services/Dockerfile"
+    expose:
+      - "8080"
+      - "8081"
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pqc_digital_twin?sslmode=disable
-    depends_on:
-      postgres:
-        condition: service_healthy
+      DISCOVERY_BASE_URL: http://localhost:8081
+      PYTHON_BASE_URL: http://${PYTHON_SERVICES_HOST:-python-services}:8082
+      RUST_BASE_URL: http://${RUST_RISK_HOST:-rust-risk}:8083
+      QASM_BASE_URL: http://${PYTHON_SERVICES_HOST:-python-services}:8084
+      DATABASE_URL: ${DATABASE_URL}
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/health >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 3s
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
       retries: 5
+    restart: on-failure
 
-  python-analysis:
+  # ── Component 3: Python analysis + QASM examples ───────────────────────────
+  python-services:
+    image: ${REGISTRY}/python-services:${TAG:-latest}
     build:
       context: .
-      dockerfile: src/python/Dockerfile
-    ports:
-      - "8082:8082"
+      dockerfile: "docker images/python-services/Dockerfile"
+    expose:
+      - "8082"
+      - "8084"
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pqc_digital_twin?sslmode=disable
-    depends_on:
-      postgres:
-        condition: service_healthy
+      DATABASE_URL: ${DATABASE_URL}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8082/health', timeout=2)"]
-      interval: 10s
-      timeout: 3s
+      interval: 15s
+      timeout: 5s
       retries: 5
+    restart: on-failure
 
+  # ── Component 4: Rust risk engine ──────────────────────────────────────────
   rust-risk:
+    image: ${REGISTRY}/rust-risk:${TAG:-latest}
     build:
       context: .
-      dockerfile: src/rust/Dockerfile
-    ports:
-      - "8083:8083"
+      dockerfile: "docker images/rust-risk/Dockerfile"
+    expose:
+      - "8083"
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pqc_digital_twin?sslmode=disable
-    depends_on:
-      postgres:
-        condition: service_healthy
+      DATABASE_URL: ${DATABASE_URL}
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8083/health >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 3s
+      interval: 15s
+      timeout: 5s
       retries: 5
-
-  qasm-examples:
-    build:
-      context: .
-      dockerfile: src/qasm/examples/Dockerfile
-    ports:
-      - "8084:8084"
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pqc_digital_twin?sslmode=disable
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8084/health', timeout=2)"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
-volumes:
-  postgres_data:
+    restart: on-failure
