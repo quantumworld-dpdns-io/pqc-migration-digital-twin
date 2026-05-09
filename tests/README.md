@@ -1,26 +1,31 @@
 # Tests Scaffold
 
-This directory contains test scaffolding for the repository quality gates defined in `docs/dev-docs/implementation-plan.md`.
+This directory contains repository quality gates and cross-service validation assets.
 
-## Current scope
+## Python test frameworks (no pytest)
 
-- `tests/contracts/`: repository contract compatibility smoke tests (API/schema drift guardrails).
+- `tests/doctest/`: doctest-based repository contract checks.
+- `tests/behave/`: BDD scenarios for API behavior (including negative API cases).
+- `tests/robot/`: Robot Framework API checks (including negative API cases).
+- `tests/locust/`: Locust headless API load/smoke checks (including negative API cases).
+- `tests/contracts/`: legacy contract checks retained for reference (not executed by default test targets).
 
-## Intended strategy
+## Negative API coverage added
 
-- Unit tests: language-local logic tests.
-- Integration tests: service and dependency boundary checks.
-- Contract tests: compatibility checks for versioned APIs/schemas.
-- End-to-end tests: scan -> analyze -> score -> proof -> UI flow.
+- Unsupported method on risk endpoint: `GET /api/v1/risk` expects `405`.
+- Malformed JSON payload on risk endpoint: `POST /api/v1/risk` expects `400`.
 
-## Implemented contract smoke checks
+## Running
 
-- Gateway API surface contract:
-  - Versioned OpenAPI spec in `docs/api/gateway-openapi.json`.
-  - Required endpoints and HTTP methods (`/health`, `/api/v1/*`) exist and match implementation routes in `src/go/gateway/server.go`.
-- Rust workspace contract:
-  - `src/rust/Cargo.toml` workspace members resolve to real crates.
-  - `shared-contracts` exports core domain contract types (`ApplicantProfile`, `RiskScore`, `RiskBand`).
-- Web package contract:
-  - Required npm scripts (`dev`, `build`, `lint`) exist in `src/web/package.json`.
-  - Required runtime dependencies (`next`, `react`, `react-dom`) are present.
+- `make contracts`: runs doctest contract suite.
+- `make test`: runs Go/Rust/Web + Python suites with this order:
+  - doctest always
+  - Behave if installed and `GATEWAY_BASE_URL` is set
+  - Robot if installed and `GATEWAY_BASE_URL` is set
+  - Locust if installed and `GATEWAY_BASE_URL` is set
+
+Example:
+
+```bash
+GATEWAY_BASE_URL=http://localhost:8080 make test
+```
