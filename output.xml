@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 7.4.2 (Python 3.14.4 on darwin)" generated="2026-05-09T10:43:16.449898" rpa="false" schemaversion="5">
+<suite id="s1" name="Negative Api" source="/Users/dennis_leedennis_lee/Documents/GitHub/pqc-migration-digital-twin/tests/robot/negative_api.robot">
+<test id="s1-t1" name="Negative GET On Risk Endpoint Returns 405" line="8">
+<kw name="GET" owner="RequestsLibrary">
+<msg time="2026-05-09T10:43:16.553021" level="INFO">GET Request : url=http://localhost:8080/api/v1/risk 
+ path_url=/api/v1/risk 
+ headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate, zstd', 'Accept': '*/*', 'Connection': 'keep-alive'} 
+ body=None 
+ </msg>
+<msg time="2026-05-09T10:43:16.553119" level="INFO">GET Response : url=http://localhost:8080/api/v1/risk 
+ status=405, reason=Method Not Allowed 
+ headers={'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff', 'Date': 'Sat, 09 May 2026 02:43:16 GMT', 'Content-Length': '19'} 
+ body=method not allowed
+ 
+ </msg>
+<msg time="2026-05-09T10:43:16.553228" level="INFO">${response} = &lt;Response [405]&gt;</msg>
+<var>${response}</var>
+<arg>${GATEWAY_BASE_URL}/api/v1/risk</arg>
+<arg>expected_status=405</arg>
+<doc>Sends a GET request.</doc>
+<status status="PASS" start="2026-05-09T10:43:16.543589" elapsed="0.009658"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2026-05-09T10:43:16.553811" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<arg>${response.status_code}</arg>
+<arg>405</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="PASS" start="2026-05-09T10:43:16.553362" elapsed="0.000489"/>
+</kw>
+<status status="PASS" start="2026-05-09T10:43:16.543099" elapsed="0.010832"/>
+</test>
+<test id="s1-t2" name="Negative Malformed JSON On Risk Endpoint Returns 400" line="12">
+<kw name="Create Dictionary" owner="BuiltIn">
+<msg time="2026-05-09T10:43:16.554577" level="INFO">${headers} = {'Content-Type': 'application/json'}</msg>
+<var>${headers}</var>
+<arg>Content-Type=application/json</arg>
+<doc>Creates and returns a dictionary based on the given ``items``.</doc>
+<status status="PASS" start="2026-05-09T10:43:16.554332" elapsed="0.000262"/>
+</kw>
+<kw name="POST" owner="RequestsLibrary">
+<msg time="2026-05-09T10:43:16.579223" level="INFO">POST Request : url=http://localhost:8080/api/v1/risk 
+ path_url=/api/v1/risk 
+ headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate, zstd', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Type': 'application/json', 'Content-Length': '17'} 
+ body={"asset_id":"A1", 
+ </msg>
+<msg time="2026-05-09T10:43:16.579277" level="INFO">POST Response : url=http://localhost:8080/api/v1/risk 
+ status=502, reason=Bad Gateway 
+ headers={'Content-Type': 'application/json', 'Date': 'Sat, 09 May 2026 02:43:16 GMT', 'Content-Length': '125'} 
+ body={"error":"Post \"http://python-analysis:8082/hndl/score\": dial tcp: lookup python-analysis: no such host","service":"risk"}
+ 
+ </msg>
+<msg time="2026-05-09T10:43:16.579365" level="FAIL">Url: http://localhost:8080/api/v1/risk Expected status: 502 != 400</msg>
+<var>${response}</var>
+<arg>${GATEWAY_BASE_URL}/api/v1/risk</arg>
+<arg>data={"asset_id":"A1",</arg>
+<arg>headers=${headers}</arg>
+<arg>expected_status=400</arg>
+<doc>Sends a POST request.</doc>
+<status status="FAIL" start="2026-05-09T10:43:16.554649" elapsed="0.026891">Url: http://localhost:8080/api/v1/risk Expected status: 502 != 400</status>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<arg>${response.status_code}</arg>
+<arg>400</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="NOT RUN" start="2026-05-09T10:43:16.581656" elapsed="0.000014"/>
+</kw>
+<status status="FAIL" start="2026-05-09T10:43:16.554055" elapsed="0.027723">Url: http://localhost:8080/api/v1/risk Expected status: 502 != 400</status>
+</test>
+<test id="s1-t3" name="Negative Invalid Limit On Audit Events Returns 400" line="17">
+<kw name="GET" owner="RequestsLibrary">
+<msg time="2026-05-09T10:43:16.583612" level="INFO">GET Request : url=http://localhost:8080/api/v1/audit/events?limit=-1 
+ path_url=/api/v1/audit/events?limit=-1 
+ headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate, zstd', 'Accept': '*/*', 'Connection': 'keep-alive'} 
+ body=None 
+ </msg>
+<msg time="2026-05-09T10:43:16.583651" level="INFO">GET Response : url=http://localhost:8080/api/v1/audit/events?limit=-1 
+ status=400, reason=Bad Request 
+ headers={'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff', 'Date': 'Sat, 09 May 2026 02:43:16 GMT', 'Content-Length': '14'} 
+ body=invalid limit
+ 
+ </msg>
+<msg time="2026-05-09T10:43:16.583712" level="INFO">${response} = &lt;Response [400]&gt;</msg>
+<var>${response}</var>
+<arg>url=${GATEWAY_BASE_URL}/api/v1/audit/events?limit=-1</arg>
+<arg>expected_status=400</arg>
+<doc>Sends a GET request.</doc>
+<status status="PASS" start="2026-05-09T10:43:16.582058" elapsed="0.001667"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2026-05-09T10:43:16.584112" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<arg>${response.status_code}</arg>
+<arg>400</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="PASS" start="2026-05-09T10:43:16.583788" elapsed="0.000355"/>
+</kw>
+<status status="PASS" start="2026-05-09T10:43:16.581896" elapsed="0.002300"/>
+</test>
+<test id="s1-t4" name="Negative Missing Governance Exception Fields Returns 400" line="21">
+<kw name="Create Dictionary" owner="BuiltIn">
+<msg time="2026-05-09T10:43:16.584590" level="INFO">${headers} = {'Content-Type': 'application/json'}</msg>
+<var>${headers}</var>
+<arg>Content-Type=application/json</arg>
+<doc>Creates and returns a dictionary based on the given ``items``.</doc>
+<status status="PASS" start="2026-05-09T10:43:16.584438" elapsed="0.000166"/>
+</kw>
+<kw name="POST" owner="RequestsLibrary">
+<msg time="2026-05-09T10:43:16.586111" level="INFO">POST Request : url=http://localhost:8080/api/v1/governance/exceptions 
+ path_url=/api/v1/governance/exceptions 
+ headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate, zstd', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Type': 'application/json', 'Content-Length': '52'} 
+ body=b'"{\\"asset_id\\":\\"\\",\\"reason\\":\\"\\",\\"owner\\":\\"\\"}"' 
+ </msg>
+<msg time="2026-05-09T10:43:16.586138" level="INFO">POST Response : url=http://localhost:8080/api/v1/governance/exceptions 
+ status=400, reason=Bad Request 
+ headers={'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff', 'Date': 'Sat, 09 May 2026 02:43:16 GMT', 'Content-Length': '41'} 
+ body=asset_id, reason, and owner are required
+ 
+ </msg>
+<msg time="2026-05-09T10:43:16.586184" level="INFO">${response} = &lt;Response [400]&gt;</msg>
+<var>${response}</var>
+<arg>${GATEWAY_BASE_URL}/api/v1/governance/exceptions</arg>
+<arg>json={"asset_id":"","reason":"","owner":""}</arg>
+<arg>headers=${headers}</arg>
+<arg>expected_status=400</arg>
+<doc>Sends a POST request.</doc>
+<status status="PASS" start="2026-05-09T10:43:16.584654" elapsed="0.001541"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2026-05-09T10:43:16.586503" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<arg>${response.status_code}</arg>
+<arg>400</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="PASS" start="2026-05-09T10:43:16.586249" elapsed="0.000279"/>
+</kw>
+<status status="PASS" start="2026-05-09T10:43:16.584277" elapsed="0.002296"/>
+</test>
+<test id="s1-t5" name="Negative Delete Governance Exceptions Returns 405" line="26">
+<kw name="DELETE" owner="RequestsLibrary">
+<msg time="2026-05-09T10:43:16.587855" level="INFO">DELETE Request : url=http://localhost:8080/api/v1/governance/exceptions 
+ path_url=/api/v1/governance/exceptions 
+ headers={'User-Agent': 'python-requests/2.33.1', 'Accept-Encoding': 'gzip, deflate, zstd', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Length': '0'} 
+ body=None 
+ </msg>
+<msg time="2026-05-09T10:43:16.587892" level="INFO">DELETE Response : url=http://localhost:8080/api/v1/governance/exceptions 
+ status=405, reason=Method Not Allowed 
+ headers={'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff', 'Date': 'Sat, 09 May 2026 02:43:16 GMT', 'Content-Length': '19'} 
+ body=method not allowed
+ 
+ </msg>
+<msg time="2026-05-09T10:43:16.587936" level="INFO">${response} = &lt;Response [405]&gt;</msg>
+<var>${response}</var>
+<arg>${GATEWAY_BASE_URL}/api/v1/governance/exceptions</arg>
+<arg>expected_status=405</arg>
+<doc>Sends a DELETE request.</doc>
+<status status="PASS" start="2026-05-09T10:43:16.586787" elapsed="0.001160"/>
+</kw>
+<kw name="Should Be Equal As Integers" owner="BuiltIn">
+<msg time="2026-05-09T10:43:16.588236" level="INFO">Argument types are:
+&lt;class 'int'&gt;
+&lt;class 'str'&gt;</msg>
+<arg>${response.status_code}</arg>
+<arg>405</arg>
+<doc>Fails if objects are unequal after converting them to integers.</doc>
+<status status="PASS" start="2026-05-09T10:43:16.587995" elapsed="0.000264"/>
+</kw>
+<status status="PASS" start="2026-05-09T10:43:16.586647" elapsed="0.001655"/>
+</test>
+<status status="FAIL" start="2026-05-09T10:43:16.450879" elapsed="0.137606"/>
+</suite>
+<statistics>
+<total>
+<stat pass="4" fail="1" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat name="Negative Api" id="s1" pass="4" fail="1" skip="0">Negative Api</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>
