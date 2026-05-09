@@ -223,6 +223,118 @@ Acceptance criteria:
 - Critical/high vulnerabilities remediated or formally accepted.
 - On-call runbook and incident drill pass.
 
+## 5.1 Current Status Snapshot (2026-05-09)
+
+Execution status by phase:
+
+- Phase 0: `Completed`
+- Phase 1: `Partially completed`
+- Phase 2: `Partially completed`
+- Phase 3: `Partially completed`
+- Phase 4: `Partially completed`
+- Phase 5: `Not started`
+
+Evidence basis:
+
+- Cross-language scaffolds exist for Go, Rust, Python, QASM, and Next.js under `src/`.
+- CI and Make targets are active (`.github/workflows/ci.yml`, `Makefile`) including lint/test/contracts and Docker integration smoke.
+- Gateway OpenAPI contract is versioned at `docs/api/gateway-openapi.json` with contract smoke checks in `tests/contracts/test_repo_contract_smoke.py`.
+- Dockerized microservices and integration smoke script exist (`docker-compose.microservices.yml`, `tests/integration/docker_microservices_smoke.sh`).
+
+## 5.2 Per-Phase Execution Checklist
+
+### Phase 0: Foundations
+
+- Completion state: `Completed`
+- Delivered artifacts:
+  - Monorepo service skeletons: `src/go`, `src/rust`, `src/python`, `src/qasm`, `src/web`.
+  - Contract baseline: `docs/api/gateway-openapi.json`.
+  - CI and quality gates: `.github/workflows/ci.yml`, `Makefile`, `tests/contracts/test_repo_contract_smoke.py`.
+  - One-command local microservice bootstrap: `make docker-up` via `docker-compose.microservices.yml`.
+- Acceptance criteria status:
+  - Services build/test in CI with pinned versions: `Met`.
+  - Gateway serves deterministic MVP `/api/v1/*` routes: `Met`.
+  - Local stack bootstraps with one command: `Met`.
+- Remaining acceptance criteria: `None`.
+
+### Phase 1: Asset Discovery + Inventory Graph
+
+- Completion state: `Partially completed`
+- Delivered artifacts:
+  - Discovery service and scanner scaffolding: `src/go/discovery/scanner.go`, `src/go/discovery/scanners_stub.go`.
+  - Gateway discovery endpoint and proxy wiring: `src/go/gateway/server.go`.
+  - Initial inventory UI table/heatmap components: `src/web/components/InventoryTable.tsx`, `src/web/components/HndlHeatmap.tsx`.
+- Acceptance criteria status:
+  - 3+ source systems per asset class: `Not met` (connectors are scaffold/stub level).
+  - Dedup/reconciliation >=99% on corpus: `Not met` (no validation corpus/harness present).
+  - End-to-end scan to persisted inventory to UI: `Not met` (no persistence layer implemented yet).
+- Concrete next actions:
+  - Implement real connector adapters for cert/TLS/SSH/VPN and normalize outputs into a shared asset schema.
+  - Add persistence for `asset` and `endpoint_binding` entities (PostgreSQL migrations + repository layer).
+  - Add discovery accuracy test corpus and reconciliation benchmark in CI.
+
+### Phase 2: HNDL Exposure + Risk Scoring
+
+- Completion state: `Partially completed`
+- Delivered artifacts:
+  - Python HNDL analysis modules and tests: `src/python/hndl_analysis/*`, `src/python/tests/test_hndl_scoring.py`.
+  - Rust deterministic scoring engine and service: `src/rust/risk-engine/src/lib.rs`, `src/rust/risk-service/src/main.rs`.
+  - Risk-related UI components: `src/web/components/RiskMatrix.tsx`.
+- Acceptance criteria status:
+  - Deterministic reproducibility across environments: `Partially met` (unit tests exist; cross-environment reproducibility suite not yet explicit).
+  - 10k asset latency SLO: `Not met` (no performance benchmark harness committed).
+  - Exportable ranked backlog with rationale: `Partially met` (scoring output exists; export workflow/API not complete).
+- Concrete next actions:
+  - Add cross-environment reproducibility fixture suite for scoring/HNDL outputs.
+  - Add 10k-asset benchmark and enforce latency threshold in CI/perf job.
+  - Add API/UI export endpoint for ranked migration backlog and rationale payload.
+
+### Phase 3: ZK Migration Proofs + Governance
+
+- Completion state: `Partially completed`
+- Delivered artifacts:
+  - ZK proof crate and tests: `src/rust/zk-proof/src/lib.rs`.
+  - Proof panel UI component: `src/web/components/ProofPanel.tsx`.
+  - Gateway proof endpoint shape and OpenAPI path definitions.
+- Acceptance criteria status:
+  - Independent verifier validation of proof packages: `Partially met` (core proof logic present; external verifier workflow not yet delivered).
+  - No secret material leakage in logs/artifacts: `Partially met` (design intent present; no dedicated leakage test suite committed).
+  - Complete audit events for generate/verify flow: `Not met` (audit event model and persistence pipeline not implemented).
+- Concrete next actions:
+  - Build verifier CLI/service path that validates exported proof bundles outside core runtime.
+  - Add redaction/leakage regression tests for proof generation logs/artifacts.
+  - Implement `audit_event` persistence and proof lifecycle event emission.
+
+### Phase 4: QASM Workflows + Advanced Planning UX
+
+- Completion state: `Partially completed`
+- Delivered artifacts:
+  - QASM manifest and runner modules: `src/python/qasm_workflows/manifest.py`, `src/python/qasm_workflows/runner.py`.
+  - Example QASM service and assets: `src/qasm/examples/service/qasm_service.py`, `src/qasm/examples/bell_pair.qasm`.
+  - Dashboard UI baseline: `src/web/app/page.tsx` and components in `src/web/components/`.
+- Acceptance criteria status:
+  - Reproducibility via versioned manifests + artifact hashes: `Partially met` (manifest workflow exists; artifact hashing/version lifecycle incomplete).
+  - Scenario compare and what-if planning UX: `Not met` (current UI is dashboard scaffold, no scenario comparison flow yet).
+  - Product sign-off on usability/visual direction: `Not met` (no recorded sign-off artifacts).
+- Concrete next actions:
+  - Extend QASM run records with immutable artifact hash/version metadata and verification checks.
+  - Implement scenario comparison and wave-editing workflows in Next.js.
+  - Execute usability review and capture sign-off criteria/results in dev docs.
+
+### Phase 5: Hardening + Production Readiness
+
+- Completion state: `Not started`
+- Delivered artifacts:
+  - Foundational quality controls only (lint/test/contracts/integration smoke in CI).
+- Acceptance criteria status:
+  - SLO attainment for API/scoring/proof paths: `Not met`.
+  - Vulnerability remediation/acceptance workflow: `Not met`.
+  - On-call runbook + incident drill pass: `Not met`.
+- Concrete next actions:
+  - Add observability SLO dashboard and automated SLO conformance checks.
+  - Add security scan + triage workflow and documented exception process.
+  - Author DR/on-call runbooks and execute at least one incident simulation drill.
+
 ## 6. CI/CD, Testing, and Quality Gates
 
 ### 6.1 CI/CD Pipeline

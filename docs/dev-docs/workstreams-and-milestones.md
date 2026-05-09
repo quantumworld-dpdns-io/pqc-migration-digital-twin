@@ -137,6 +137,50 @@ Acceptance criteria:
 
 ## 3. Milestone Schedule
 
+## 3A. Status Scoreboard (As of 2026-05-09)
+
+Status legend: `done`, `in-progress`, `not-started`.
+
+### Workstream Status (WS1-WS9)
+
+| Workstream | Status | Evidence (repo artifacts) |
+| --- | --- | --- |
+| WS1 Platform and Architecture | in-progress | `docs/api/gateway-openapi.json`; `src/go/gateway/server.go`; `tests/contracts/test_repo_contract_smoke.py`; `docs/dev-docs/implementation-progress-log.md` |
+| WS2 Asset Discovery and Inventory | in-progress | `src/go/discovery/scanner.go`; `src/go/discovery/scanners_stub.go`; `src/go/discovery/scanner_test.go`; `src/go/discovery/README.md` |
+| WS3 HNDL Exposure Analysis | in-progress | `src/python/hndl_analysis/scorer.py`; `src/python/hndl_analysis/policy_templates.py`; `src/python/tests/test_hndl_scoring.py` |
+| WS4 Risk Scoring Engine | in-progress | `src/rust/risk-engine/src/lib.rs`; `src/rust/risk-service/src/main.rs`; `src/rust/risk-engine/Cargo.toml` |
+| WS5 ZK Migration Proofs | in-progress | `src/rust/zk-proof/src/lib.rs`; `src/rust/zk-proof/Cargo.toml`; `docs/dev-docs/implementation-progress-log.md` |
+| WS6 QASM Workflow Pipeline | in-progress | `src/python/qasm_workflows/manifest.py`; `src/python/qasm_workflows/runner.py`; `src/qasm/examples/bell_pair.qasm`; `src/python/tests/test_runner.py` |
+| WS7 Frontend Product Experience | in-progress | `src/web/app/page.tsx`; `src/web/components/HndlHeatmap.tsx`; `src/web/components/RiskMatrix.tsx`; `src/web/tests/dashboard.smoke.test.mjs` |
+| WS8 Security, Compliance, and Reliability | not-started | Security/reliability hardening artifacts and DR runbooks not yet present in `docs/` or `src/`; current state is scaffold + baseline tests only (`Makefile`, `tests/contracts/test_repo_contract_smoke.py`). |
+| WS9 Agentic Efficiency and Cost Governance | not-started | Token budget policies/cost dashboards not yet present; no WS9-specific policy or observability artifact found under `docs/` or `src/`. |
+
+### Milestone Status (M0-M5)
+
+| Milestone | Status | Evidence (repo artifacts) |
+| --- | --- | --- |
+| M0 Architecture Baseline Complete | done | `Makefile`; `docs/api/gateway-openapi.json`; `src/go/gateway/server.go`; `docker-compose.microservices.yml`; `docs/dev-docs/implementation-progress-log.md` (Updates #16-#20) |
+| M1 Discovery MVP Complete | in-progress | Discovery service and gateway path exist: `src/go/discovery/scanner.go`, `src/go/gateway/server.go`; integration smoke exists: `tests/integration/docker_microservices_smoke.sh`; connector breadth and full inventory graph acceptance criteria still open. |
+| M2 Exposure + Risk Prioritization Complete | in-progress | HNDL + risk service scaffolds exist (`src/python/hndl_analysis/*`, `src/rust/risk-engine/*`) and are wired through gateway/proxy paths; end-to-end prioritization UX/acceptance thresholds not yet complete. |
+| M3 ZK Proof Governance Complete | not-started | Proof crate/service scaffold exists (`src/rust/zk-proof/src/lib.rs`), but governance acceptance artifacts (independent verifier process, governance sign-off evidence format) are not yet documented in `docs/`. |
+| M4 QASM-Driven Planning UX Complete | not-started | QASM runner/examples exist (`src/python/qasm_workflows/*`, `src/qasm/examples/*`), but scenario comparison planning UX and approval workflow deliverables are not yet present in `src/web/`. |
+| M5 Production Readiness and GA | not-started | Hardening/DR/compliance/FinOps release artifacts are not yet present as complete deliverables; current repo reflects scaffold maturity. |
+
+### Milestone Forecast (Calendarized From Current Scaffold Maturity)
+
+Assumptions:
+- Baseline scaffold is complete (`M0` done), but WS2-WS7 require implementation depth beyond scaffold and WS8-WS9 are not started.
+- Forecast keeps the original milestone sequencing with realistic delivery ramp from current state.
+
+| Milestone | Forecast | Confidence | Rationale |
+| --- | --- | --- | --- |
+| M0 | done on 2026-05-09 | high | Core contracts, multi-service scaffold, tests, and Docker smoke are already in repo. |
+| M1 | target 2026-06-19 | medium | Discovery MVP plumbing exists; remaining work is production-grade connector depth, normalization completeness, and inventory quality gates. |
+| M2 | target 2026-07-17 | medium | HNDL/risk foundations exist; needs integrated prioritization outputs and threshold-backed validation. |
+| M3 | target 2026-08-14 | low-medium | ZK technical scaffold exists, but governance workflow/evidence packaging is mostly ahead. |
+| M4 | target 2026-09-11 | low-medium | QASM and UI components exist independently; integrated scenario planning UX still substantial. |
+| M5 | target 2026-10-09 | low | WS8/WS9 are not started and typically have integration-heavy, cross-workstream critical path risk. |
+
 ## M0: Architecture Baseline Complete (End Week 2)
 
 Dependencies:
@@ -216,4 +260,3 @@ Coordination cadence:
 - **Gate C (Security and Privacy)**: secrets handling, encryption, least privilege, immutable audits validated.
 - **Gate D (Operational Readiness)**: runbooks, SLO dashboards, incident drills complete.
 - **Gate E (Cost Discipline)**: token and infra spend within approved budget envelopes.
-

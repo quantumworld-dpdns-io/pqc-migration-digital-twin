@@ -135,6 +135,64 @@ Status labels:
 - KawaiiGPT briefing: policy awareness material only.
 - Google UCP: commerce checkout protocol, unrelated to migration-planning workflows.
 
+## Implementation tracking overlay (current delivery view)
+
+This overlay tracks execution state for the tools marked `Selected` in the suitability map. It does not change suitability decisions; it adds implementation status for delivery management.
+
+| Tool | Implementation state | Owner lane | Current checkpoint |
+|---|---|---|---|
+| PQC Libraries (liboqs family) | implemented now | Core simulation + policy engine | Adapter and algorithm inventory model active in planner core. |
+| Model Context Protocol (MCP) | implemented now | Agent tool interface | Internal MCP servers for inventory and evidence lookup in active use. |
+| OpenAPI Tool Calling | configured in CI | Service/API contracts | Schema validation and contract checks enforced in CI gates. |
+| Codex Desktop | implemented now | Engineering workflow | Default assistant workflow in daily development loop. |
+| OpenTelemetry for LLM Apps | configured in CI | Observability baseline | Trace/metric emission and basic telemetry checks wired into CI verification. |
+| DuckDB | implemented now | Local analytics/simulation | Scenario simulation queries and offline packs running in current builds. |
+| Apache Arrow | implemented now | Data interchange | Columnar boundaries in active data movement paths. |
+| Ollama | implemented now | Local inference | Local model serving profile available for developer and demo workflows. |
+| Redis (basic + JS patterns + success program guidance) | implemented now | Cache/state | TTL and bounded-key session state patterns in active use. |
+| Agent Skills | planned next | Agent capability packaging | Sprint onboarding target for versioned reusable planner skills. |
+| LangGraph & CrewAI | planned next | Orchestration | Start with LangGraph baseline flow; defer CrewAI unless role-based delegation becomes necessary. |
+| Arize Phoenix | planned next | Evaluation lab | Add non-prod prompt/tool trace diagnostics lane. |
+| Apache DataFusion | planned next | Rust analytics services | Stage embedded query path for higher-volume scenario analytics. |
+| Qdrant | planned next | Retrieval | Stand up single-tenant collection and metadata filter schema. |
+| vLLM | planned next | Shared inference | Introduce staging inference backend for concurrent agent workloads. |
+| Wasmtime | planned next | Sandbox runtime | Define plugin ABI and first policy-check module proof of concept. |
+| Qiskit | planned next | Scenario modeling | Add quantum-risk scenario notebook set and assumptions pack. |
+
+## Onboarding sequence (next 2 sprints)
+
+### Sprint 1 (Weeks 1-2): lock P0 delivery and CI guardrails
+
+1. Finalize tool ownership:
+   - Assign DRI per lane: `core simulation`, `agent tooling`, `observability`, `data`, `inference`, `cache/state`.
+2. Complete CI enforcement for active P0 tools:
+   - Enforce OpenAPI schema validation on pull requests.
+   - Enforce OpenTelemetry instrumentation smoke checks in CI.
+3. Baseline implementation hardening:
+   - Confirm liboqs adapter coverage for selected algorithms.
+   - Confirm Redis TTL/bounded-key policy checks.
+   - Confirm DuckDB/Arrow/Ollama developer workflows documented in runbooks.
+4. Exit criteria:
+   - All `implemented now` tools have passing CI checks and runbook links.
+   - `configured in CI` checks are blocking on main branch merges.
+
+### Sprint 2 (Weeks 3-4): start P1 onboarding with measurable milestones
+
+1. Orchestration and retrieval bootstrap:
+   - Land LangGraph baseline planner flow behind feature flag.
+   - Deploy Qdrant with initial collection schema + metadata filters.
+2. Shared inference and observability expansion:
+   - Stand up vLLM staging endpoint with concurrency/load smoke test.
+   - Add Arize Phoenix in evaluation environment and capture first trace set.
+3. Analytics/runtime extension pilots:
+   - Add one DataFusion-backed analytic path for a high-volume scenario query.
+   - Define Wasmtime plugin ABI and run one sandboxed policy-check prototype.
+4. Scenario-science enablement:
+   - Add initial Qiskit scenario package for threat-model assumption validation.
+5. Exit criteria:
+   - At least 4 `planned next` tools promoted to either `implemented now` or `configured in CI`.
+   - Remaining `planned next` tools have named blockers and target sprint assignment.
+
 ## Implementation sequence (actionable)
 
 1. `P0` foundation: PQC libraries, MCP + OpenAPI tool contracts, OpenTelemetry, DuckDB + Arrow, Redis, Ollama.

@@ -148,3 +148,15 @@ Main agent coordinating parallel workers with non-overlapping ownership.
   - validates Go gateway route parity with spec.
 - Updated test docs to include OpenAPI contract checks.
 - Local verification: JSON parse check + `make lint` + `make test` passed (with expected local skip where `pytest` is unavailable).
+
+### Update 2026-05-09 #21
+- Completed multi-agent plan-completion documentation pass across `docs/dev-docs`.
+- Updated all three core plan docs with execution status overlays:
+  - `implementation-plan.md`
+  - `workstreams-and-milestones.md`
+  - `software-tools-selection.md`
+- Added controller-level completion docs:
+  - `plan-completion-report.md`
+  - `production-readiness-checklist.md`
+  - `program-status-master.md`
+- Outcome: planning package is now fully cross-linked with explicit `completed` vs `remaining` criteria and execution ordering.
