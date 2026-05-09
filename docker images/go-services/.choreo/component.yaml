@@ -1,0 +1,29 @@
+schemaVersion: "1.2"
+
+endpoints:
+  - name: gateway
+    displayName: Go Gateway (API Router)
+    service:
+      basePath: /
+      port: 8080
+    type: REST
+    networkVisibilities:
+      - Project
+
+  - name: discovery
+    displayName: Go Discovery (Asset Scanner)
+    service:
+      basePath: /
+      port: 8081
+    type: REST
+    networkVisibilities:
+      - Project
+
+dependencies:
+  connectionReferences:
+    - name: python-services-analysis
+      resourceRef: service:/python-services/analysis
+    - name: python-services-qasm
+      resourceRef: service:/python-services/qasm
+    - name: rust-risk-engine
+      resourceRef: service:/rust-risk/risk-engine
