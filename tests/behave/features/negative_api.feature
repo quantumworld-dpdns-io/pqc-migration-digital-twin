@@ -3,7 +3,7 @@ Feature: Gateway negative API cases
 
   Scenario: GET risk endpoint is rejected
     Given the gateway base url is configured
-    When I send a GET request to "/api/v1/governance/exceptions"
+    When I send a GET request to "/api/v1/risk"
     Then the response status should be 405
 
   Scenario: POST governance exceptions endpoint with malformed json is rejected

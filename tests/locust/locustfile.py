@@ -4,7 +4,7 @@ from locust import HttpUser, task
 class NegativeApiUser(HttpUser):
     @task
     def get_risk_is_rejected(self):
-        with self.client.get('/api/v1/governance/exceptions', name='NEG GET /api/v1/governance/exceptions', catch_response=True) as response:
+        with self.client.get('/api/v1/risk', name='NEG GET /api/v1/risk', catch_response=True) as response:
             if response.status_code != 405:
                 response.failure(f'expected 405, got {response.status_code}')
             else:

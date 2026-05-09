@@ -6,7 +6,7 @@ ${GATEWAY_BASE_URL}    http://localhost:8080
 
 *** Test Cases ***
 Negative GET On Risk Endpoint Returns 405
-    ${response}=    GET    ${GATEWAY_BASE_URL}/api/v1/governance/exceptions    expected_status=405
+    ${response}=    GET    ${GATEWAY_BASE_URL}/api/v1/risk    expected_status=405
     Should Be Equal As Integers    ${response.status_code}    405
 
 Negative Malformed JSON On Governance Exceptions Endpoint Returns 400

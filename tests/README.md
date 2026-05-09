@@ -13,7 +13,7 @@ This directory contains repository quality gates and cross-service validation as
 ## Negative API coverage added
 
 - Unsupported method on risk endpoint: `GET /api/v1/risk` expects `405`.
-- Malformed JSON payload on risk endpoint: `POST /api/v1/risk` expects `400`.
+- Malformed JSON payload on governance exceptions endpoint: `POST /api/v1/governance/exceptions` expects `400`.
 - Invalid audit limit: `GET /api/v1/audit/events?limit=-1` expects `400`.
 - Missing required governance fields: `POST /api/v1/governance/exceptions` with empty `asset_id/reason/owner` expects `400`.
 - Unsupported governance method: `DELETE /api/v1/governance/exceptions` expects `405`.

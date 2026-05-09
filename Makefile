@@ -73,7 +73,8 @@ test:
 	if command -v robot >/dev/null 2>&1; then \
 		if [ -n "$$GATEWAY_BASE_URL" ] && [ -f tests/robot/negative_api.robot ]; then \
 			echo "[test][python][robot] tests/robot/negative_api.robot"; \
-			robot --variable GATEWAY_BASE_URL:$$GATEWAY_BASE_URL tests/robot/negative_api.robot; \
+			mkdir -p tests/robot/results; \
+			robot --outputdir tests/robot/results --variable GATEWAY_BASE_URL:$$GATEWAY_BASE_URL tests/robot/negative_api.robot; \
 		else \
 			echo "[test][python][robot] Skipping: set GATEWAY_BASE_URL and ensure tests/robot/negative_api.robot exists."; \
 		fi; \
