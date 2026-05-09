@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -122,6 +123,38 @@ func TestGatewayProxiesDownstreamServices(t *testing.T) {
 			}
 		})
 	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/events", nil)
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+
+	var auditOut map[string][]map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &auditOut); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	events := auditOut["events"]
+	if len(events) != len(cases) {
+		t.Fatalf("expected %d audit events, got %d", len(cases), len(events))
+	}
+	for i, tc := range cases {
+		ev := events[i]
+		if ev["route"] != tc.path {
+			t.Fatalf("expected event route %s, got %v", tc.path, ev["route"])
+		}
+		if ev["method"] != tc.method {
+			t.Fatalf("expected event method %s, got %v", tc.method, ev["method"])
+		}
+		if ev["outcome"] != "success" {
+			t.Fatalf("expected event outcome success, got %v", ev["outcome"])
+		}
+		ts, ok := ev["timestamp"].(string)
+		if !ok || strings.TrimSpace(ts) == "" {
+			t.Fatalf("expected non-empty timestamp, got %v", ev["timestamp"])
+		}
+	}
 }
 
 func TestServiceEndpointsMethodNotAllowed(t *testing.T) {
@@ -146,5 +179,40 @@ func TestServiceEndpointsMethodNotAllowed(t *testing.T) {
 				t.Fatalf("expected status %d, got %d", http.StatusMethodNotAllowed, rr.Code)
 			}
 		})
+	}
+}
+
+func TestAuditEventsLimitQuery(t *testing.T) {
+	discovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/assets" {
+			t.Fatalf("unexpected discovery path: %s", r.URL.Path)
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"count": 1})
+	}))
+	defer discovery.Close()
+	t.Setenv("DISCOVERY_BASE_URL", discovery.URL)
+
+	mux := NewMux()
+	for i := 0; i < 3; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/assets", nil)
+		rr := httptest.NewRecorder()
+		mux.ServeHTTP(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+		}
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/audit/events?limit=2", nil)
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+	var out map[string][]map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &out); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if got := len(out["events"]); got != 2 {
+		t.Fatalf("expected 2 events, got %d", got)
 	}
 }

@@ -1,8 +1,16 @@
+use serde::{Deserialize, Serialize};
 use shared_contracts::RiskScore;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Proof {
     pub statement_hash: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProofBundle {
+    pub statement: String,
+    pub score: RiskScore,
+    pub proof_hash: String,
 }
 
 /// MVP scaffold API for deterministic proving integration.
@@ -28,6 +36,17 @@ pub fn verify(statement: &str, public_score: &RiskScore, proof: &Proof) -> bool 
     expected == *proof
 }
 
+/// Verifies a full proof bundle payload.
+pub fn verify_bundle(bundle: &ProofBundle) -> bool {
+    verify(
+        &bundle.statement,
+        &bundle.score,
+        &Proof {
+            statement_hash: bundle.proof_hash.clone(),
+        },
+    )
+}
+
 fn stable_hash_hex(bytes: &[u8]) -> String {
     // FNV-1a 64-bit for deterministic lightweight hashing in this MVP scaffold.
     let mut hash: u64 = 0xcbf29ce484222325;
@@ -40,7 +59,7 @@ fn stable_hash_hex(bytes: &[u8]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{prove, verify};
+    use super::{prove, verify, verify_bundle, ProofBundle};
     use shared_contracts::{RiskBand, RiskScore};
 
     #[test]
@@ -93,5 +112,42 @@ mod tests {
         proof.statement_hash = "not-hex".to_string();
 
         assert!(!verify(statement, &score, &proof));
+    }
+
+    #[test]
+    fn verify_bundle_accepts_valid_bundle() {
+        let score = RiskScore {
+            value: 410,
+            band: RiskBand::Medium,
+        };
+        let statement = "applicant-42";
+        let proof = prove(statement, &score);
+        let bundle = ProofBundle {
+            statement: statement.to_string(),
+            score,
+            proof_hash: proof.statement_hash,
+        };
+
+        assert!(verify_bundle(&bundle));
+    }
+
+    #[test]
+    fn verify_bundle_rejects_tampered_bundle() {
+        let score = RiskScore {
+            value: 410,
+            band: RiskBand::Medium,
+        };
+        let statement = "applicant-42";
+        let proof = prove(statement, &score);
+        let bundle = ProofBundle {
+            statement: statement.to_string(),
+            score: RiskScore {
+                value: 411,
+                band: RiskBand::Medium,
+            },
+            proof_hash: proof.statement_hash,
+        };
+
+        assert!(!verify_bundle(&bundle));
     }
 }

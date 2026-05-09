@@ -4,5 +4,6 @@ members = [
   "risk-engine",
   "zk-proof",
   "risk-service",
+  "proof-verifier",
 ]
 resolver = "2"

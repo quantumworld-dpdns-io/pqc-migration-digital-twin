@@ -176,3 +176,7 @@ Main agent coordinating parallel workers with non-overlapping ownership.
   - `make lint`
   - `make test`
   - `make docker-smoke` (end-to-end across all microservices).
+
+### Update 2026-05-09 #23
+- Placeholder: Phase 3 docs updated to reflect scaffolded verifier path and scaffolded audit path.
+- Remaining: complete verifier execution flow, audit-event persistence/lifecycle, and governance dashboard/exception tracking.

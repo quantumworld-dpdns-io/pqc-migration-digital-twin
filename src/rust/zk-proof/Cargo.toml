@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 shared-contracts = { path = "../shared-contracts" }
+serde = { version = "1", features = ["derive"] }
 
 [lib]
 path = "src/lib.rs"

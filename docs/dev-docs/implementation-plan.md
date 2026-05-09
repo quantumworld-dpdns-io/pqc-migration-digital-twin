@@ -296,14 +296,15 @@ Evidence basis:
   - ZK proof crate and tests: `src/rust/zk-proof/src/lib.rs`.
   - Proof panel UI component: `src/web/components/ProofPanel.tsx`.
   - Gateway proof endpoint shape and OpenAPI path definitions.
+  - Verifier path scaffold and audit path scaffold are present (structure only; not production-complete).
 - Acceptance criteria status:
-  - Independent verifier validation of proof packages: `Partially met` (core proof logic present; external verifier workflow not yet delivered).
+  - Independent verifier validation of proof packages: `Partially met` (verifier path scaffold exists; end-to-end external verification workflow is not complete).
   - No secret material leakage in logs/artifacts: `Partially met` (design intent present; no dedicated leakage test suite committed).
-  - Complete audit events for generate/verify flow: `Not met` (audit event model and persistence pipeline not implemented).
+  - Complete audit events for generate/verify flow: `Partially met` (audit path scaffold exists; persistence + full event lifecycle are not complete).
 - Concrete next actions:
-  - Build verifier CLI/service path that validates exported proof bundles outside core runtime.
+  - Implement verifier CLI/service behavior on the scaffolded path and validate exported proof bundles outside core runtime.
   - Add redaction/leakage regression tests for proof generation logs/artifacts.
-  - Implement `audit_event` persistence and proof lifecycle event emission.
+  - Implement `audit_event` persistence, proof lifecycle event emission, and verification of end-to-end audit completeness.
 
 ### Phase 4: QASM Workflows + Advanced Planning UX
 

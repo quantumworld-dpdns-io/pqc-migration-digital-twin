@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -16,6 +17,41 @@ type serviceConfig struct {
 	pythonURL    string
 	rustURL      string
 	qasmURL      string
+}
+
+type auditEvent struct {
+	Timestamp string `json:"timestamp"`
+	Route     string `json:"route"`
+	Method    string `json:"method"`
+	Outcome   string `json:"outcome"`
+}
+
+type auditStore struct {
+	mu     sync.RWMutex
+	events []auditEvent
+}
+
+func newAuditStore() *auditStore {
+	return &auditStore{events: make([]auditEvent, 0)}
+}
+
+func (s *auditStore) add(event auditEvent) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.events = append(s.events, event)
+}
+
+func (s *auditStore) list(limit int) []auditEvent {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	events := s.events
+	if limit > 0 && limit < len(events) {
+		events = events[len(events)-limit:]
+	}
+	out := make([]auditEvent, len(events))
+	copy(out, events)
+	return out
 }
 
 // NewMux creates the gateway HTTP mux and proxies requests to downstream services.
@@ -27,16 +63,64 @@ func NewMux() *http.ServeMux {
 		qasmURL:      envOrDefault("QASM_BASE_URL", "http://qasm-examples:8084"),
 	}
 	client := &http.Client{Timeout: 5 * time.Second}
+	audit := newAuditStore()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
-	mux.HandleFunc("/api/v1/discovery", discoveryHandler(client, cfg))
-	mux.HandleFunc("/api/v1/assets", assetsHandler(client, cfg))
-	mux.HandleFunc("/api/v1/risk", riskHandler(client, cfg))
-	mux.HandleFunc("/api/v1/risk/backlog", backlogHandler(client, cfg))
-	mux.HandleFunc("/api/v1/proof", proofHandler(client, cfg))
-	mux.HandleFunc("/api/v1/qasm", qasmHandler(client, cfg))
+	mux.HandleFunc("/api/v1/discovery", withAudit("/api/v1/discovery", audit, discoveryHandler(client, cfg)))
+	mux.HandleFunc("/api/v1/assets", withAudit("/api/v1/assets", audit, assetsHandler(client, cfg)))
+	mux.HandleFunc("/api/v1/risk", withAudit("/api/v1/risk", audit, riskHandler(client, cfg)))
+	mux.HandleFunc("/api/v1/risk/backlog", withAudit("/api/v1/risk/backlog", audit, backlogHandler(client, cfg)))
+	mux.HandleFunc("/api/v1/proof", withAudit("/api/v1/proof", audit, proofHandler(client, cfg)))
+	mux.HandleFunc("/api/v1/qasm", withAudit("/api/v1/qasm", audit, qasmHandler(client, cfg)))
+	mux.HandleFunc("/api/v1/audit/events", auditEventsHandler(audit))
 	return mux
+}
+
+func withAudit(route string, store *auditStore, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rec := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
+		next(rec, r)
+		outcome := "success"
+		if rec.statusCode >= 400 {
+			outcome = "error"
+		}
+		store.add(auditEvent{
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+			Route:     route,
+			Method:    r.Method,
+			Outcome:   outcome,
+		})
+	}
+}
+
+func auditEventsHandler(store *auditStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		limit := 0
+		if raw := r.URL.Query().Get("limit"); raw != "" {
+			n, err := strconv.Atoi(raw)
+			if err != nil || n < 0 {
+				http.Error(w, "invalid limit", http.StatusBadRequest)
+				return
+			}
+			limit = n
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"events": store.list(limit)})
+	}
+}
+
+type statusRecorder struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (r *statusRecorder) WriteHeader(statusCode int) {
+	r.statusCode = statusCode
+	r.ResponseWriter.WriteHeader(statusCode)
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

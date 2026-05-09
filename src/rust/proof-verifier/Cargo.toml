@@ -1,0 +1,11 @@
+[package]
+name = "proof-verifier"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde_json = "1"
+zk-proof = { path = "../zk-proof" }
+
+[dev-dependencies]
+assert_cmd = "2"
