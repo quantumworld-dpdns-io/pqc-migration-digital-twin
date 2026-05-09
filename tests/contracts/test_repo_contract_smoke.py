@@ -27,7 +27,9 @@ def test_gateway_openapi_contract_is_present_and_valid() -> None:
     required_paths = {
         "/health": {"get"},
         "/api/v1/discovery": {"post"},
+        "/api/v1/assets": {"get"},
         "/api/v1/risk": {"post"},
+        "/api/v1/risk/backlog": {"post"},
         "/api/v1/proof": {"post"},
         "/api/v1/qasm": {"post"},
     }
@@ -56,7 +58,9 @@ def test_gateway_code_routes_match_openapi_contract() -> None:
     required_method_checks = {
         "health": "r.Method != http.MethodGet",
         "discovery": "r.Method != http.MethodPost",
+        "assets": "r.Method != http.MethodGet",
         "risk": "r.Method != http.MethodPost",
+        "risk backlog": "r.Method != http.MethodPost",
         "proof": "r.Method != http.MethodPost",
         "qasm": "r.Method != http.MethodPost",
     }

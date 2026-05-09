@@ -23,7 +23,9 @@ for i in {1..30}; do
 done
 
 curl -fsS -X POST http://localhost:8080/api/v1/discovery -H 'content-type: application/json' -d '{"address":"example.com","port":443}' >/dev/null
+curl -fsS http://localhost:8080/api/v1/assets >/dev/null
 curl -fsS -X POST http://localhost:8080/api/v1/risk -H 'content-type: application/json' -d '{"total_assets":100,"quantum_vulnerable_assets":40}' >/dev/null
+curl -fsS -X POST http://localhost:8080/api/v1/risk/backlog -H 'content-type: application/json' -d '{"policy":"balanced","asset_rows":[{"asset_id":"asset-a","total_assets":100,"quantum_vulnerable_assets":65},{"asset_id":"asset-b","total_assets":100,"quantum_vulnerable_assets":20}]}' >/dev/null
 curl -fsS -X POST http://localhost:8080/api/v1/proof -H 'content-type: application/json' -d '{"credit_score":720,"debt_to_income_bps":3500,"late_payments":1,"existing_loans":2}' >/dev/null
 curl -fsS -X POST http://localhost:8080/api/v1/qasm -H 'content-type: application/json' -d '{}' >/dev/null
 

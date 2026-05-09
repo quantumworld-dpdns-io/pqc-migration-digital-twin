@@ -160,3 +160,19 @@ Main agent coordinating parallel workers with non-overlapping ownership.
   - `production-readiness-checklist.md`
   - `program-status-master.md`
 - Outcome: planning package is now fully cross-linked with explicit `completed` vs `remaining` criteria and execution ordering.
+
+### Update 2026-05-09 #22
+- Completed Phase 1/2 implementation wave with parallel agents.
+- Go discovery now includes deduplicating in-memory asset persistence and endpoints:
+  - `GET /assets`
+  - `GET|POST /scan` with persisted counts.
+- Python analysis now includes ranked backlog export:
+  - `POST /hndl/backlog`.
+- Rust risk engine now includes deterministic 10k-profile performance verification with checksum guard.
+- Gateway/OpenAPI/contracts/integration updated for new routes:
+  - `GET /api/v1/assets`
+  - `POST /api/v1/risk/backlog`.
+- Validation passed:
+  - `make lint`
+  - `make test`
+  - `make docker-smoke` (end-to-end across all microservices).

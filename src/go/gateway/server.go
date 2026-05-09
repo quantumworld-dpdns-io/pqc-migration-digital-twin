@@ -31,7 +31,9 @@ func NewMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/api/v1/discovery", discoveryHandler(client, cfg))
+	mux.HandleFunc("/api/v1/assets", assetsHandler(client, cfg))
 	mux.HandleFunc("/api/v1/risk", riskHandler(client, cfg))
+	mux.HandleFunc("/api/v1/risk/backlog", backlogHandler(client, cfg))
 	mux.HandleFunc("/api/v1/proof", proofHandler(client, cfg))
 	mux.HandleFunc("/api/v1/qasm", qasmHandler(client, cfg))
 	return mux
@@ -55,11 +57,26 @@ func discoveryHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 		body := readJSONBody(r)
 		address := asString(body["address"], "localhost")
 		port := asInt(body["port"], 443)
-		url := cfg.discoveryURL + "/scan?address=" + address + "&port=" + strconv.Itoa(port)
-
-		payload, code, err := doGETJSON(client, url)
+		out := map[string]any{"address": address, "port": port}
+		payload, code, err := doPOSTJSON(client, cfg.discoveryURL+"/scan", out)
 		if err != nil {
 			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "discovery"})
+			return
+		}
+		writeJSON(w, code, payload)
+	}
+}
+
+func assetsHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		payload, code, err := doGETJSON(client, cfg.discoveryURL+"/assets")
+		if err != nil {
+			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "assets"})
 			return
 		}
 		writeJSON(w, code, payload)
@@ -82,6 +99,35 @@ func riskHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 		payload, code, err := doPOSTJSON(client, cfg.pythonURL+"/hndl/score", out)
 		if err != nil {
 			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "risk"})
+			return
+		}
+		writeJSON(w, code, payload)
+	}
+}
+
+func backlogHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		in := readJSONBody(r)
+		out := map[string]any{
+			"policy":     asString(in["policy"], "balanced"),
+			"asset_rows": in["asset_rows"],
+		}
+		if out["asset_rows"] == nil {
+			out["asset_rows"] = []map[string]any{
+				{"asset_id": "asset-a", "total_assets": 100, "quantum_vulnerable_assets": 65},
+				{"asset_id": "asset-b", "total_assets": 100, "quantum_vulnerable_assets": 25},
+				{"asset_id": "asset-c", "total_assets": 100, "quantum_vulnerable_assets": 10},
+			}
+		}
+
+		payload, code, err := doPOSTJSON(client, cfg.pythonURL+"/hndl/backlog", out)
+		if err != nil {
+			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "risk-backlog"})
 			return
 		}
 		writeJSON(w, code, payload)

@@ -32,18 +32,28 @@ func TestHealthEndpointMethodNotAllowed(t *testing.T) {
 
 func TestGatewayProxiesDownstreamServices(t *testing.T) {
 	discovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/scan" {
-			t.Fatalf("unexpected discovery path: %s", r.URL.Path)
+		if r.URL.Path == "/scan" {
+			writeJSON(w, http.StatusOK, map[string]any{"service": "go-discovery", "status": "ok"})
+			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"service": "go-discovery", "status": "ok"})
+		if r.URL.Path == "/assets" {
+			writeJSON(w, http.StatusOK, map[string]any{"count": 1, "assets": []map[string]any{{"asset_id": "a"}}})
+			return
+		}
+		t.Fatalf("unexpected discovery path: %s", r.URL.Path)
 	}))
 	defer discovery.Close()
 
 	python := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/hndl/score" {
-			t.Fatalf("unexpected python path: %s", r.URL.Path)
+		if r.URL.Path == "/hndl/score" {
+			writeJSON(w, http.StatusOK, map[string]any{"service": "python-analysis", "status": "ok", "score": 86})
+			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"service": "python-analysis", "status": "ok", "score": 86})
+		if r.URL.Path == "/hndl/backlog" {
+			writeJSON(w, http.StatusOK, map[string]any{"policy": "balanced", "backlog": []map[string]any{{"asset_id": "a", "rank": 1}}})
+			return
+		}
+		t.Fatalf("unexpected python path: %s", r.URL.Path)
 	}))
 	defer python.Close()
 
@@ -70,20 +80,30 @@ func TestGatewayProxiesDownstreamServices(t *testing.T) {
 
 	mux := NewMux()
 	cases := []struct {
-		path    string
-		body    map[string]any
-		service string
+		path      string
+		method    string
+		body      map[string]any
+		expectKey string
+		expectVal any
 	}{
-		{path: "/api/v1/discovery", body: map[string]any{"address": "example.com", "port": 443}, service: "go-discovery"},
-		{path: "/api/v1/risk", body: map[string]any{"total_assets": 100, "quantum_vulnerable_assets": 20}, service: "python-analysis"},
-		{path: "/api/v1/proof", body: map[string]any{"credit_score": 700}, service: "rust-risk"},
-		{path: "/api/v1/qasm", body: map[string]any{}, service: "qasm-examples"},
+		{path: "/api/v1/discovery", method: http.MethodPost, body: map[string]any{"address": "example.com", "port": 443}, expectKey: "service", expectVal: "go-discovery"},
+		{path: "/api/v1/assets", method: http.MethodGet, body: nil, expectKey: "count", expectVal: float64(1)},
+		{path: "/api/v1/risk", method: http.MethodPost, body: map[string]any{"total_assets": 100, "quantum_vulnerable_assets": 20}, expectKey: "service", expectVal: "python-analysis"},
+		{path: "/api/v1/risk/backlog", method: http.MethodPost, body: map[string]any{"policy": "balanced"}, expectKey: "policy", expectVal: "balanced"},
+		{path: "/api/v1/proof", method: http.MethodPost, body: map[string]any{"credit_score": 700}, expectKey: "service", expectVal: "rust-risk"},
+		{path: "/api/v1/qasm", method: http.MethodPost, body: map[string]any{}, expectKey: "service", expectVal: "qasm-examples"},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.path, func(t *testing.T) {
-			payload, _ := json.Marshal(tc.body)
-			req := httptest.NewRequest(http.MethodPost, tc.path, bytes.NewReader(payload))
+			var reader *bytes.Reader
+			if tc.body != nil {
+				payload, _ := json.Marshal(tc.body)
+				reader = bytes.NewReader(payload)
+			} else {
+				reader = bytes.NewReader(nil)
+			}
+			req := httptest.NewRequest(tc.method, tc.path, reader)
 			req.Header.Set("Content-Type", "application/json")
 			rr := httptest.NewRecorder()
 
@@ -97,19 +117,29 @@ func TestGatewayProxiesDownstreamServices(t *testing.T) {
 			if err := json.Unmarshal(rr.Body.Bytes(), &out); err != nil {
 				t.Fatalf("invalid JSON: %v", err)
 			}
-			if out["service"] != tc.service {
-				t.Fatalf("expected service %q, got %v", tc.service, out["service"])
+			if out[tc.expectKey] != tc.expectVal {
+				t.Fatalf("expected %s=%v, got %v", tc.expectKey, tc.expectVal, out[tc.expectKey])
 			}
 		})
 	}
 }
 
 func TestServiceEndpointsMethodNotAllowed(t *testing.T) {
-	paths := []string{"/api/v1/discovery", "/api/v1/risk", "/api/v1/proof", "/api/v1/qasm"}
+	cases := []struct {
+		path   string
+		method string
+	}{
+		{path: "/api/v1/discovery", method: http.MethodGet},
+		{path: "/api/v1/assets", method: http.MethodPost},
+		{path: "/api/v1/risk", method: http.MethodGet},
+		{path: "/api/v1/risk/backlog", method: http.MethodGet},
+		{path: "/api/v1/proof", method: http.MethodGet},
+		{path: "/api/v1/qasm", method: http.MethodGet},
+	}
 	mux := NewMux()
-	for _, path := range paths {
-		t.Run(path, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, path, nil)
+	for _, tc := range cases {
+		t.Run(tc.path, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, nil)
 			rr := httptest.NewRecorder()
 			mux.ServeHTTP(rr, req)
 			if rr.Code != http.StatusMethodNotAllowed {

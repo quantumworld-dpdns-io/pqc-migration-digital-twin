@@ -23,6 +23,7 @@ pub fn score(profile: &ApplicantProfile) -> RiskScore {
 mod tests {
     use super::score;
     use shared_contracts::{ApplicantProfile, RiskBand};
+    use std::time::{Duration, Instant};
 
     #[test]
     fn scoring_is_deterministic() {
@@ -53,5 +54,54 @@ mod tests {
         let scored = score(&input);
         assert!(scored.value >= 650);
         assert_eq!(scored.band, RiskBand::High);
+    }
+
+    fn profile_from_seed(mut seed: u64) -> ApplicantProfile {
+        fn next(seed: &mut u64) -> u64 {
+            *seed = seed
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            *seed
+        }
+
+        let credit_score = 300 + (next(&mut seed) % 551) as u16;
+        let debt_to_income_bps = (next(&mut seed) % 10_001) as u16;
+        let late_payments = (next(&mut seed) % 21) as u8;
+        let existing_loans = (next(&mut seed) % 21) as u8;
+
+        ApplicantProfile {
+            credit_score,
+            debt_to_income_bps,
+            late_payments,
+            existing_loans,
+        }
+    }
+
+    #[test]
+    fn scores_10k_profiles_with_stable_checksum_under_ci_threshold() {
+        const SAMPLE_COUNT: usize = 10_000;
+        const MAX_DURATION: Duration = Duration::from_millis(1_500);
+        const CHECKSUM_EXPECTED: u64 = 17_392_749_781_766_021_131;
+
+        let start = Instant::now();
+        let mut checksum: u64 = 0;
+
+        for i in 0..SAMPLE_COUNT {
+            let profile = profile_from_seed((i as u64) + 1);
+            let scored = score(&profile);
+            checksum = checksum
+                .wrapping_mul(1_000_003)
+                .wrapping_add(scored.value as u64)
+                .wrapping_add((scored.band as u64) << 16);
+        }
+
+        let elapsed = start.elapsed();
+        assert!(
+            elapsed <= MAX_DURATION,
+            "10k-score run took {:?}, threshold {:?}",
+            elapsed,
+            MAX_DURATION
+        );
+        assert_eq!(checksum, CHECKSUM_EXPECTED);
     }
 }

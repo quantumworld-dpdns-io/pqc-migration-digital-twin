@@ -6,7 +6,9 @@
     "description": "Gateway proxy API for discovery, risk scoring, proof generation, and QASM examples."
   },
   "servers": [
-    { "url": "http://localhost:8080" }
+    {
+      "url": "http://localhost:8080"
+    }
   ],
   "paths": {
     "/health": {
@@ -19,9 +21,16 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["status"],
+                  "required": [
+                    "status"
+                  ],
                   "properties": {
-                    "status": { "type": "string", "enum": ["ok"] }
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    }
                   }
                 }
               }
@@ -40,8 +49,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "address": { "type": "string" },
-                  "port": { "type": "integer", "minimum": 1 }
+                  "address": {
+                    "type": "string"
+                  },
+                  "port": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
                 }
               }
             }
@@ -54,10 +68,20 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["target", "findings"],
+                  "required": [
+                    "target",
+                    "findings"
+                  ],
                   "properties": {
-                    "target": { "type": "object" },
-                    "findings": { "type": "array", "items": { "type": "object" } }
+                    "target": {
+                      "type": "object"
+                    },
+                    "findings": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
                   }
                 }
               }
@@ -76,9 +100,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "total_assets": { "type": "number", "minimum": 0 },
-                  "quantum_vulnerable_assets": { "type": "number", "minimum": 0 },
-                  "policy": { "type": "string" }
+                  "total_assets": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "quantum_vulnerable_assets": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "policy": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -91,11 +123,21 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["policy", "exposure_ratio", "score"],
+                  "required": [
+                    "policy",
+                    "exposure_ratio",
+                    "score"
+                  ],
                   "properties": {
-                    "policy": { "type": "string" },
-                    "exposure_ratio": { "type": "number" },
-                    "score": { "type": "number" }
+                    "policy": {
+                      "type": "string"
+                    },
+                    "exposure_ratio": {
+                      "type": "number"
+                    },
+                    "score": {
+                      "type": "number"
+                    }
                   }
                 }
               }
@@ -114,11 +156,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "statement": { "type": "string" },
-                  "credit_score": { "type": "integer" },
-                  "debt_to_income_bps": { "type": "integer" },
-                  "late_payments": { "type": "integer" },
-                  "existing_loans": { "type": "integer" }
+                  "statement": {
+                    "type": "string"
+                  },
+                  "credit_score": {
+                    "type": "integer"
+                  },
+                  "debt_to_income_bps": {
+                    "type": "integer"
+                  },
+                  "late_payments": {
+                    "type": "integer"
+                  },
+                  "existing_loans": {
+                    "type": "integer"
+                  }
                 }
               }
             }
@@ -131,12 +183,25 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["statement", "score_value", "score_band", "proof_hash"],
+                  "required": [
+                    "statement",
+                    "score_value",
+                    "score_band",
+                    "proof_hash"
+                  ],
                   "properties": {
-                    "statement": { "type": "string" },
-                    "score_value": { "type": "integer" },
-                    "score_band": { "type": "string" },
-                    "proof_hash": { "type": "string" }
+                    "statement": {
+                      "type": "string"
+                    },
+                    "score_value": {
+                      "type": "integer"
+                    },
+                    "score_band": {
+                      "type": "string"
+                    },
+                    "proof_hash": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -155,7 +220,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" }
+                  "name": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -168,6 +235,91 @@
               "application/json": {
                 "schema": {
                   "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets": {
+      "get": {
+        "summary": "List deduplicated discovered assets",
+        "responses": {
+          "200": {
+            "description": "Asset list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "count",
+                    "assets"
+                  ],
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    },
+                    "assets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/risk/backlog": {
+      "post": {
+        "summary": "Export ranked migration backlog",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "policy": {
+                    "type": "string"
+                  },
+                  "asset_rows": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ranked backlog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "policy",
+                    "backlog"
+                  ],
+                  "properties": {
+                    "policy": {
+                      "type": "string"
+                    },
+                    "backlog": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
                 }
               }
             }

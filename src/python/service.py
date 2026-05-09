@@ -7,7 +7,7 @@ import json
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from hndl_analysis import ExposureInput, calculate_exposure, get_policy_template, score_exposure
+from hndl_analysis import ExposureInput, calculate_exposure, get_policy_template, rank_backlog_rows, score_exposure
 from qasm_workflows.manifest import QasmManifest
 from qasm_workflows.runner import run_manifest
 
@@ -39,6 +39,9 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/hndl/score":
             self._handle_hndl(payload)
             return
+        if self.path == "/hndl/backlog":
+            self._handle_backlog(payload)
+            return
         if self.path == "/qasm/run":
             self._handle_qasm(payload)
             return
@@ -67,6 +70,19 @@ class Handler(BaseHTTPRequestHandler):
                 "score": score,
             },
         )
+
+    def _handle_backlog(self, payload: dict) -> None:
+        try:
+            policy_name = str(payload.get("policy", "balanced"))
+            asset_rows = payload.get("asset_rows", [])
+            if not isinstance(asset_rows, list):
+                raise ValueError("asset_rows must be a list")
+            ranked = rank_backlog_rows(asset_rows, policy_name=policy_name)
+        except Exception as exc:  # noqa: BLE001
+            self._json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
+            return
+
+        self._json(HTTPStatus.OK, {"policy": policy_name, "backlog": ranked})
 
     def _handle_qasm(self, payload: dict) -> None:
         try:
