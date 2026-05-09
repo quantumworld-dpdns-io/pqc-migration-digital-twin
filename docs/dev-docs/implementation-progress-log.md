@@ -129,3 +129,13 @@ Main agent coordinating parallel workers with non-overlapping ownership.
   - `GET /health` on ports `8080..8084`
   - functional endpoint checks on each service (`gateway`, `discovery`, `python-analysis`, `rust-risk`, `qasm-examples`).
 - `docker compose ps` confirms all containers are `Up` with expected port mappings.
+
+### Update 2026-05-09 #19
+- Implemented gateway service-to-service proxy integration:
+  - `/api/v1/discovery` -> `go-discovery /scan`
+  - `/api/v1/risk` -> `python-analysis /hndl/score`
+  - `/api/v1/proof` -> `rust-risk /score`
+  - `/api/v1/qasm` -> `qasm-examples /examples`
+- Added compose healthchecks and gateway dependency ordering on healthy upstream services.
+- Added CI Docker integration job and executable smoke script: `tests/integration/docker_microservices_smoke.sh`.
+- Ran `make docker-smoke` successfully (build + health wait + end-to-end API checks).
