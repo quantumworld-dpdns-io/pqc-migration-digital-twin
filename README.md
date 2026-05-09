@@ -1,14 +1,17 @@
 # PQC Migration Digital Twin
 
-Post-quantum cryptography migration planner for enterprise estates.  
+Post-quantum cryptography migration planner for enterprise estates.
 The platform inventories certificates, TLS/SSH/VPN keys, and harvest-now-decrypt-later (HNDL) exposure, then prioritizes remediation with risk scoring and zero-knowledge migration proofs.
 
 ## Vision
 
 Enable security and platform teams to migrate cryptographic infrastructure to PQC with evidence, not guesswork:
-- Full cryptographic asset visibility across heterogeneous systems.
-- Quantified migration risk and business impact.
-- Verifiable migration attestations that preserve sensitive operational data.
+
+Full cryptographic asset visibility across heterogeneous systems.
+
+Quantified migration risk and business impact.
+
+Verifiable migration attestations that preserve sensitive operational data.
 
 ## Core Capabilities
 
@@ -61,6 +64,7 @@ cd pqc-migration-digital-twin
 ```
 
 Planned local prerequisites:
+
 - `Go` (for ingest services)
 - `Rust` (for risk/proof engine)
 - `Python 3.11+` (for modeling/simulation)
@@ -68,8 +72,7 @@ Planned local prerequisites:
 
 ## Run Targets
 
-Current state: foundational scaffold.  
-Planned standard targets (via `Makefile`/task runner):
+Current state: foundational scaffold.Planned standard targets (via `Makefile`/task runner):
 
 - `make bootstrap`: install toolchains and local dependencies.
 - `make dev`: run API/services/frontend in local dev mode.
@@ -84,6 +87,7 @@ Planned standard targets (via `Makefile`/task runner):
 ## Docker Microservices
 
 The following components are Docker-based microservices:
+
 - `src/go/gateway` on port `8080`
 - `src/go/discovery` on port `8081`
 - `src/python` on port `8082`
@@ -117,6 +121,7 @@ curl -s http://localhost:8084/health
 - `Phase 5 - Production Hardening`: scale, policy packs, observability, and compliance integrations.
 
 Planning artifacts:
+
 - `docs/` for architecture decisions and long-lived references.
 - `dev-docs/` for implementation plans, milestones, and execution checklists.
 
