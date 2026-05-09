@@ -1,18 +1,18 @@
 export function ProofPanel() {
   return (
     <div className="proof-panel">
-      <div className="proof-item">
-        <h3>ZK Proof Stream</h3>
-        <p>Latest batched zk proof receipts for migration events are ready for verifier replay.</p>
-      </div>
-      <div className="proof-item">
-        <h3>Attestation Chain</h3>
-        <p>Signed checkpoints link each cutover step with timestamped attestation records.</p>
-      </div>
-      <div className="proof-item">
-        <h3>Audit Package</h3>
-        <p>Compliance bundle includes control mappings, signer metadata, and export manifest hashes.</p>
-      </div>
+      <article className="proof-item">
+        <h3>Bundle Generation</h3>
+        <p>Deterministic proof package output with policy bindings.</p>
+      </article>
+      <article className="proof-item">
+        <h3>Verifier Lane</h3>
+        <p>Independent verifier checks with signed result records.</p>
+      </article>
+      <article className="proof-item">
+        <h3>Audit Linkage</h3>
+        <p>Traceability from request through verification and retention.</p>
+      </article>
     </div>
   );
 }

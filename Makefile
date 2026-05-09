@@ -29,20 +29,11 @@ dev:
 
 contracts:
 	@set -e; \
-	if command -v pytest >/dev/null 2>&1; then \
-		if [ -d tests/contracts ]; then \
-			pytest -q tests/contracts; \
-		else \
-			echo "[contracts] Skipping: tests/contracts not found."; \
-		fi; \
-	elif python3 -c "import pytest" >/dev/null 2>&1; then \
-		if [ -d tests/contracts ]; then \
-			python3 -m pytest -q tests/contracts; \
-		else \
-			echo "[contracts] Skipping: tests/contracts not found."; \
-		fi; \
+	if [ -f tests/doctest/repo_contract_doctest.py ]; then \
+		echo "[contracts][doctest] tests/doctest/repo_contract_doctest.py"; \
+		python3 -m doctest -v tests/doctest/repo_contract_doctest.py; \
 	else \
-		echo "[contracts] Skipping: pytest is not installed."; \
+		echo "[contracts][doctest] Skipping: tests/doctest/repo_contract_doctest.py not found."; \
 	fi
 
 test:
@@ -63,33 +54,44 @@ test:
 	else \
 		echo "[test][rust] Skipping: cargo or src/rust/Cargo.toml not found."; \
 	fi; \
-	if command -v pytest >/dev/null 2>&1; then \
-		ran=0; \
-		for p in tests src/python/tests; do \
-			if [ -d "$$p" ]; then \
-				echo "[test][python] $$p"; \
-				pytest -q "$$p"; \
-				ran=1; \
-			fi; \
-		done; \
-		if [ "$$ran" -eq 0 ]; then \
-			echo "[test][python] Skipping: tests/ and src/python/tests not found."; \
-		fi; \
-	elif python3 -c "import pytest" >/dev/null 2>&1; then \
-		ran=0; \
-		for p in tests src/python/tests; do \
-			if [ -d "$$p" ]; then \
-				echo "[test][python] $$p"; \
-				python3 -m pytest -q "$$p"; \
-				ran=1; \
-			fi; \
-		done; \
-		if [ "$$ran" -eq 0 ]; then \
-			echo "[test][python] Skipping: tests/ and src/python/tests not found."; \
+	if [ -f tests/doctest/repo_contract_doctest.py ]; then \
+		echo "[test][python][doctest] tests/doctest/repo_contract_doctest.py"; \
+		python3 -m doctest -v tests/doctest/repo_contract_doctest.py; \
+	else \
+		echo "[test][python][doctest] Skipping: tests/doctest/repo_contract_doctest.py not found."; \
+	fi; \
+	if command -v behave >/dev/null 2>&1; then \
+		if [ -n "$$GATEWAY_BASE_URL" ] && [ -d tests/behave/features ]; then \
+			echo "[test][python][behave] tests/behave/features"; \
+			behave tests/behave/features; \
+		else \
+			echo "[test][python][behave] Skipping: set GATEWAY_BASE_URL and ensure tests/behave/features exists."; \
 		fi; \
 	else \
-		echo "[test][python] Skipping: pytest is not installed."; \
+		echo "[test][python][behave] Skipping: behave is not installed."; \
 	fi; \
+	if command -v robot >/dev/null 2>&1; then \
+		if [ -n "$$GATEWAY_BASE_URL" ] && [ -f tests/robot/negative_api.robot ]; then \
+			echo "[test][python][robot] tests/robot/negative_api.robot"; \
+			mkdir -p tests/robot/results; \
+			robot --outputdir tests/robot/results --variable GATEWAY_BASE_URL:$$GATEWAY_BASE_URL tests/robot/negative_api.robot; \
+		else \
+			echo "[test][python][robot] Skipping: set GATEWAY_BASE_URL and ensure tests/robot/negative_api.robot exists."; \
+		fi; \
+	else \
+		echo "[test][python][robot] Skipping: robot is not installed."; \
+	fi; \
+	if command -v locust >/dev/null 2>&1; then \
+		if [ -n "$$GATEWAY_BASE_URL" ] && [ -f tests/locust/locustfile.py ]; then \
+			echo "[test][python][locust] tests/locust/locustfile.py"; \
+			locust -f tests/locust/locustfile.py --host "$$GATEWAY_BASE_URL" --headless -u 1 -r 1 -t 5s --only-summary; \
+		else \
+			echo "[test][python][locust] Skipping: set GATEWAY_BASE_URL and ensure tests/locust/locustfile.py exists."; \
+		fi; \
+	else \
+		echo "[test][python][locust] Skipping: locust is not installed."; \
+	fi; \
+	echo "[test][python][legacy] Skipping: src/python/tests still uses legacy pytest-based tests."; \
 	if [ -f src/web/package.json ] && command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then \
 		if node -e "const p=require('./src/web/package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then \
 			echo "[test][node] src/web"; \

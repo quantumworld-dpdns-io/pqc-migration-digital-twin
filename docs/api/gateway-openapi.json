@@ -327,6 +327,95 @@
         }
       }
     },
+    "/api/v1/governance/exceptions": {
+      "get": {
+        "summary": "List governance exceptions",
+        "responses": {
+          "200": {
+            "description": "Exception list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "exceptions"
+                  ],
+                  "properties": {
+                    "exceptions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/GovernanceException"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create governance exception",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GovernanceExceptionCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created exception record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernanceException"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields"
+          }
+        }
+      }
+    },
+    "/api/v1/governance/verifier-drift": {
+      "get": {
+        "summary": "Get verifier drift summary",
+        "responses": {
+          "200": {
+            "description": "Verifier drift status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "current_verifier_version",
+                    "latest_verifier_version",
+                    "drift"
+                  ],
+                  "properties": {
+                    "current_verifier_version": {
+                      "type": "string"
+                    },
+                    "latest_verifier_version": {
+                      "type": "string"
+                    },
+                    "drift": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit/events": {
       "get": {
         "summary": "List gateway audit events",
@@ -390,6 +479,69 @@
           },
           "400": {
             "description": "Invalid limit parameter"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GovernanceExceptionCreateRequest": {
+        "type": "object",
+        "required": [
+          "asset_id",
+          "reason",
+          "owner"
+        ],
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          }
+        }
+      },
+      "GovernanceException": {
+        "type": "object",
+        "required": [
+          "exception_id",
+          "asset_id",
+          "reason",
+          "owner",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "exception_id": {
+            "type": "string"
+          },
+          "asset_id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open"
+            ]
+          },
+          "created_at": {
+            "type": "string"
           }
         }
       }

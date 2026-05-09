@@ -12,6 +12,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+/src/rust/target/debug
 .ignore/
 
 # Node / JavaScript / TypeScript
@@ -60,3 +61,9 @@ tmp/
 *.class
 /.ignore
 /.ignore/software-tools
+
+# Test reports
+log.html
+report.html
+output.xml
+tests/robot/results/

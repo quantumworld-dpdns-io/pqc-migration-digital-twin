@@ -1,11 +1,11 @@
+export type HealthStatus = 'green' | 'amber' | 'red';
+
 export type InventoryItem = {
   system: string;
   algorithm: string;
   owner: string;
-  status: 'green' | 'amber' | 'red';
+  status: HealthStatus;
 };
-
-export type HealthStatus = 'green' | 'amber' | 'red';
 
 export type HeatmapCell = {
   label: string;

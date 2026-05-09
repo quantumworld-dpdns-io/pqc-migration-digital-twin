@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -31,8 +32,28 @@ type auditStore struct {
 	events []auditEvent
 }
 
+type governanceException struct {
+	ExceptionID string `json:"exception_id"`
+	AssetID     string `json:"asset_id"`
+	Reason      string `json:"reason"`
+	Owner       string `json:"owner"`
+	ExpiresAt   string `json:"expires_at,omitempty"`
+	Status      string `json:"status"`
+	CreatedAt   string `json:"created_at"`
+}
+
+type exceptionStore struct {
+	mu      sync.RWMutex
+	seq     uint64
+	records []governanceException
+}
+
 func newAuditStore() *auditStore {
 	return &auditStore{events: make([]auditEvent, 0)}
+}
+
+func newExceptionStore() *exceptionStore {
+	return &exceptionStore{records: make([]governanceException, 0)}
 }
 
 func (s *auditStore) add(event auditEvent) {
@@ -54,6 +75,32 @@ func (s *auditStore) list(limit int) []auditEvent {
 	return out
 }
 
+func (s *exceptionStore) create(assetID, reason, owner, expiresAt string) governanceException {
+	now := time.Now().UTC()
+	id := atomic.AddUint64(&s.seq, 1)
+	record := governanceException{
+		ExceptionID: "ex-" + strconv.FormatInt(now.UnixNano(), 10) + "-" + strconv.FormatUint(id, 10),
+		AssetID:     assetID,
+		Reason:      reason,
+		Owner:       owner,
+		ExpiresAt:   expiresAt,
+		Status:      "open",
+		CreatedAt:   now.Format(time.RFC3339),
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.records = append(s.records, record)
+	return record
+}
+
+func (s *exceptionStore) list() []governanceException {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	out := make([]governanceException, len(s.records))
+	copy(out, s.records)
+	return out
+}
+
 // NewMux creates the gateway HTTP mux and proxies requests to downstream services.
 func NewMux() *http.ServeMux {
 	cfg := serviceConfig{
@@ -64,6 +111,7 @@ func NewMux() *http.ServeMux {
 	}
 	client := &http.Client{Timeout: 5 * time.Second}
 	audit := newAuditStore()
+	exceptions := newExceptionStore()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
@@ -73,6 +121,8 @@ func NewMux() *http.ServeMux {
 	mux.HandleFunc("/api/v1/risk/backlog", withAudit("/api/v1/risk/backlog", audit, backlogHandler(client, cfg)))
 	mux.HandleFunc("/api/v1/proof", withAudit("/api/v1/proof", audit, proofHandler(client, cfg)))
 	mux.HandleFunc("/api/v1/qasm", withAudit("/api/v1/qasm", audit, qasmHandler(client, cfg)))
+	mux.HandleFunc("/api/v1/governance/exceptions", withAudit("/api/v1/governance/exceptions", audit, governanceExceptionsHandler(exceptions)))
+	mux.HandleFunc("/api/v1/governance/verifier-drift", withAudit("/api/v1/governance/verifier-drift", audit, verifierDriftHandler()))
 	mux.HandleFunc("/api/v1/audit/events", auditEventsHandler(audit))
 	return mux
 }
@@ -266,6 +316,44 @@ func qasmHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 			return
 		}
 		writeJSON(w, code, payload)
+	}
+}
+
+func governanceExceptionsHandler(store *exceptionStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			writeJSON(w, http.StatusOK, map[string]any{"exceptions": store.list()})
+		case http.MethodPost:
+			in := readJSONBody(r)
+			assetID := asString(in["asset_id"], "")
+			reason := asString(in["reason"], "")
+			owner := asString(in["owner"], "")
+			expiresAt := asString(in["expires_at"], "")
+			if assetID == "" || reason == "" || owner == "" {
+				http.Error(w, "asset_id, reason, and owner are required", http.StatusBadRequest)
+				return
+			}
+			writeJSON(w, http.StatusCreated, store.create(assetID, reason, owner, expiresAt))
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	}
+}
+
+func verifierDriftHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		current := envOrDefault("CURRENT_VERIFIER_VERSION", "v0.1.0")
+		latest := envOrDefault("LATEST_VERIFIER_VERSION", current)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"current_verifier_version": current,
+			"latest_verifier_version":  latest,
+			"drift":                    current != latest,
+		})
 	}
 }
 

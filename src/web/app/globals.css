@@ -81,7 +81,8 @@ h1 {
 }
 
 .panel:nth-child(1),
-.panel:nth-child(4) {
+.panel:nth-child(4),
+.panel:nth-child(5) {
   grid-column: span 12;
 }
 
@@ -231,6 +232,49 @@ th {
   color: var(--muted);
 }
 
+.governance-panel {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.drift-wrap {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.drift-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: rgba(8, 16, 23, 0.78);
+}
+
+.drift-card h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.88rem;
+}
+
+.drift-card p {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.drift-card strong {
+  color: var(--text);
+}
+
+.drift-warning {
+  border-color: rgba(245, 158, 11, 0.85);
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.35);
+}
+
+.drift-ok {
+  border-color: rgba(52, 211, 153, 0.8);
+  box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.3);
+}
+
 @media (max-width: 920px) {
   .panel:nth-child(2),
   .panel:nth-child(3) {
@@ -238,6 +282,10 @@ th {
   }
 
   .proof-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .drift-wrap {
     grid-template-columns: 1fr;
   }
 }
