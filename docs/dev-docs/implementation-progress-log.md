@@ -120,3 +120,12 @@ Main agent coordinating parallel workers with non-overlapping ownership.
   - `src/go`, `src/python`, `src/rust`, `src/qasm/examples`.
 - Added compose orchestration and Make targets for build/up/down.
 - Local validation: `make lint` and `make test` pass for Go/Rust/Web; Python/contract tests remain environment-gated by missing local `pytest`.
+
+### Update 2026-05-09 #18
+- Executed end-to-end Docker validation with elevated permissions.
+- `make docker-build`: all 5 images built successfully.
+- `make docker-up`: all 5 services started.
+- Live checks passed:
+  - `GET /health` on ports `8080..8084`
+  - functional endpoint checks on each service (`gateway`, `discovery`, `python-analysis`, `rust-risk`, `qasm-examples`).
+- `docker compose ps` confirms all containers are `Up` with expected port mappings.
