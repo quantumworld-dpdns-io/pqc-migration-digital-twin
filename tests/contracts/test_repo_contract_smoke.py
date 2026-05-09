@@ -32,6 +32,7 @@ def test_gateway_openapi_contract_is_present_and_valid() -> None:
         "/api/v1/risk/backlog": {"post"},
         "/api/v1/proof": {"post"},
         "/api/v1/qasm": {"post"},
+        "/api/v1/audit/events": {"get"},
     }
 
     paths = spec.get("paths", {})
@@ -63,6 +64,7 @@ def test_gateway_code_routes_match_openapi_contract() -> None:
         "risk backlog": "r.Method != http.MethodPost",
         "proof": "r.Method != http.MethodPost",
         "qasm": "r.Method != http.MethodPost",
+        "audit events": "r.Method != http.MethodGet",
     }
     for label, marker in required_method_checks.items():
         assert marker in text, f"missing method check for {label}: {marker}"

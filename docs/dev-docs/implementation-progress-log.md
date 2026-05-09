@@ -180,3 +180,14 @@ Main agent coordinating parallel workers with non-overlapping ownership.
 ### Update 2026-05-09 #23
 - Placeholder: Phase 3 docs updated to reflect scaffolded verifier path and scaffolded audit path.
 - Remaining: complete verifier execution flow, audit-event persistence/lifecycle, and governance dashboard/exception tracking.
+
+### Update 2026-05-09 #24
+- Completed parallel Phase 3 implementation wave in code:
+  - Rust: added workspace `proof-verifier` CLI for proof bundle verification with valid/tampered fixture tests.
+  - Go gateway: added in-memory audit event persistence plus `GET /api/v1/audit/events` with optional `limit` query.
+- Closed contract gap by extending gateway OpenAPI and contract-smoke checks for `GET /api/v1/audit/events`.
+- Validation passed locally:
+  - `go test ./...` in `src/go/gateway`
+  - `cargo test --workspace` in `src/rust`
+  - `make lint`
+  - `make test` (Python/contract portions still skip locally when `pytest` is not installed).
