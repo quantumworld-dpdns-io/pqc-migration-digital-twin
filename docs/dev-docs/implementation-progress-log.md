@@ -114,3 +114,9 @@ Main agent coordinating parallel workers with non-overlapping ownership.
   - `src/go` (gateway + discovery), `src/python`, `src/rust`, `src/qasm/examples`.
 - Added per-service Dockerfiles, root `.dockerignore`, and `docker-compose.microservices.yml`.
 - Added Makefile orchestration targets: `docker-build`, `docker-up`, `docker-down`.
+
+### Update 2026-05-09 #17
+- Docker microservice milestone complete for required paths:
+  - `src/go`, `src/python`, `src/rust`, `src/qasm/examples`.
+- Added compose orchestration and Make targets for build/up/down.
+- Local validation: `make lint` and `make test` pass for Go/Rust/Web; Python/contract tests remain environment-gated by missing local `pytest`.
