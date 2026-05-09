@@ -89,3 +89,7 @@ Main agent coordinating parallel workers with non-overlapping ownership.
 ## Controller Status
 - Parallel completion round: `completed`
 - Open technical TODOs in code/CI scaffolds: `none found` (excluding historical notes in this log)
+
+### Update 2026-05-09 #12
+- Started continuation round to reduce environment-related skips.
+- Parallel streams: root CI/Makefile Python coverage, src/python test packaging metadata, src/web lightweight Node smoke tests.
