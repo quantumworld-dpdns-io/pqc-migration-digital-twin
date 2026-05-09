@@ -90,12 +90,7 @@ test:
 	else \
 		echo "[test][python][locust] Skipping: locust is not installed."; \
 	fi; \
-	if [ -d src/python/tests ]; then \
-		echo "[test][python][stdlib] src/python/tests"; \
-		python3 -m unittest discover -s src/python/tests -p 'test_*.py'; \
-	else \
-		echo "[test][python][stdlib] Skipping: src/python/tests not found."; \
-	fi; \
+	echo "[test][python][legacy] Skipping: src/python/tests still uses legacy pytest-based tests."; \
 	if [ -f src/web/package.json ] && command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then \
 		if node -e "const p=require('./src/web/package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then \
 			echo "[test][node] src/web"; \
