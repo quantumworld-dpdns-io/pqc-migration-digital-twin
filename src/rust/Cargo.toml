@@ -3,5 +3,6 @@ members = [
   "shared-contracts",
   "risk-engine",
   "zk-proof",
+  "risk-service",
 ]
 resolver = "2"

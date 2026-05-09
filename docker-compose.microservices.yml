@@ -1,0 +1,35 @@
+services:
+  go-gateway:
+    build:
+      context: .
+      dockerfile: src/go/gateway/Dockerfile
+    ports:
+      - "8080:8080"
+
+  go-discovery:
+    build:
+      context: .
+      dockerfile: src/go/discovery/Dockerfile
+    ports:
+      - "8081:8081"
+
+  python-analysis:
+    build:
+      context: .
+      dockerfile: src/python/Dockerfile
+    ports:
+      - "8082:8082"
+
+  rust-risk:
+    build:
+      context: .
+      dockerfile: src/rust/Dockerfile
+    ports:
+      - "8083:8083"
+
+  qasm-examples:
+    build:
+      context: .
+      dockerfile: src/qasm/examples/Dockerfile
+    ports:
+      - "8084:8084"

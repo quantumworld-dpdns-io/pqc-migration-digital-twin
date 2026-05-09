@@ -77,6 +77,35 @@ Planned standard targets (via `Makefile`/task runner):
 - `make lint`: run formatting, linting, and static analysis checks.
 - `make risk-sim`: execute migration risk simulation scenarios.
 - `make proof-demo`: generate and verify sample migration proofs.
+- `make docker-build`: build all microservice images.
+- `make docker-up`: run Docker-based microservices (`go`, `python`, `rust`, `qasm`).
+- `make docker-down`: stop Docker microservices.
+
+## Docker Microservices
+
+The following components are Docker-based microservices:
+- `src/go/gateway` on port `8080`
+- `src/go/discovery` on port `8081`
+- `src/python` on port `8082`
+- `src/rust` (`risk-service`) on port `8083`
+- `src/qasm/examples` on port `8084`
+
+Use:
+
+```bash
+make docker-build
+make docker-up
+```
+
+Then sample health checks:
+
+```bash
+curl -s http://localhost:8080/health
+curl -s http://localhost:8081/health
+curl -s http://localhost:8082/health
+curl -s http://localhost:8083/health
+curl -s http://localhost:8084/health
+```
 
 ## Practical Phased Build Overview
 

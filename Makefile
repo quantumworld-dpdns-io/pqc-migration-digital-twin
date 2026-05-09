@@ -1,4 +1,4 @@
-.PHONY: help bootstrap dev test lint contracts risk-sim proof-demo
+.PHONY: help bootstrap dev test lint contracts risk-sim proof-demo docker-build docker-up docker-down
 
 help:
 	@echo "Available targets:"
@@ -9,6 +9,9 @@ help:
 	@echo "  make test        # run available language test suites + contracts"
 	@echo "  make risk-sim    # run Rust risk engine tests"
 	@echo "  make proof-demo  # run Rust proof module tests"
+	@echo "  make docker-build # build all microservice images"
+	@echo "  make docker-up    # start all microservices with docker compose"
+	@echo "  make docker-down  # stop microservices"
 
 bootstrap:
 	@set -e; \
@@ -164,4 +167,28 @@ proof-demo:
 		(cd src/rust && cargo test -p zk-proof); \
 	else \
 		echo "[proof-demo] Skipping: cargo or zk-proof crate not found."; \
+	fi
+
+docker-build:
+	@set -e; \
+	if command -v docker >/dev/null 2>&1; then \
+		docker compose -f docker-compose.microservices.yml build; \
+	else \
+		echo "[docker-build] Skipping: docker is not installed."; \
+	fi
+
+docker-up:
+	@set -e; \
+	if command -v docker >/dev/null 2>&1; then \
+		docker compose -f docker-compose.microservices.yml up -d; \
+	else \
+		echo "[docker-up] Skipping: docker is not installed."; \
+	fi
+
+docker-down:
+	@set -e; \
+	if command -v docker >/dev/null 2>&1; then \
+		docker compose -f docker-compose.microservices.yml down; \
+	else \
+		echo "[docker-down] Skipping: docker is not installed."; \
 	fi
