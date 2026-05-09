@@ -1,0 +1,10 @@
+[package]
+name = "zk-proof"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+shared-contracts = { path = "../shared-contracts" }
+
+[lib]
+path = "src/lib.rs"

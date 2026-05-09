@@ -1,0 +1,7 @@
+[workspace]
+members = [
+  "shared-contracts",
+  "risk-engine",
+  "zk-proof",
+]
+resolver = "2"

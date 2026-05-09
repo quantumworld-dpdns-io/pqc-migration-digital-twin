@@ -7,9 +7,146 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  lint:
+    name: Lint (${{ matrix.lang }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [go, rust, python, node]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        if: matrix.lang == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set up Rust
+        if: matrix.lang == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Python
+        if: matrix.lang == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        if: matrix.lang == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Lint (placeholder)
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ matrix.lang }}" in
+            go)
+              if [ -f go.mod ]; then
+                echo "TODO: run go fmt/lint checks"
+              else
+                echo "No Go module found; skipping"
+              fi
+              ;;
+            rust)
+              if [ -f Cargo.toml ]; then
+                echo "TODO: run cargo fmt/clippy"
+              else
+                echo "No Cargo.toml found; skipping"
+              fi
+              ;;
+            python)
+              if compgen -G "*.py" > /dev/null || [ -d src ] || [ -d tests ]; then
+                echo "TODO: run ruff/mypy/pytest -m lint profile"
+              else
+                echo "No Python sources detected; skipping"
+              fi
+              ;;
+            node)
+              if [ -f package.json ]; then
+                echo "TODO: run npm lint"
+              else
+                echo "No package.json found; skipping"
+              fi
+              ;;
+          esac
+
+  test:
+    name: Test (${{ matrix.lang }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lang: [go, rust, python, node]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        if: matrix.lang == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set up Rust
+        if: matrix.lang == 'rust'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Python
+        if: matrix.lang == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node.js
+        if: matrix.lang == 'node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Test (placeholder)
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "${{ matrix.lang }}" in
+            go)
+              if [ -f go.mod ]; then
+                echo "TODO: run go test ./..."
+              else
+                echo "No Go module found; skipping"
+              fi
+              ;;
+            rust)
+              if [ -f Cargo.toml ]; then
+                echo "TODO: run cargo test --all"
+              else
+                echo "No Cargo.toml found; skipping"
+              fi
+              ;;
+            python)
+              if [ -d tests ]; then
+                echo "TODO: run pytest"
+              else
+                echo "No tests directory found; skipping"
+              fi
+              ;;
+            node)
+              if [ -f package.json ]; then
+                echo "TODO: run npm test"
+              else
+                echo "No package.json found; skipping"
+              fi
+              ;;
+          esac
+
+  contracts:
+    name: Contract Compatibility
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Placeholder build step
-        run: echo "Add your build/test commands here"
+      - name: Contract gate placeholder
+        run: |
+          echo "TODO: enforce OpenAPI/protobuf/schema compatibility checks"
+          echo "Placeholder contract test path: tests/contracts/"
