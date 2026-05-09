@@ -5,6 +5,8 @@ export type InventoryItem = {
   status: 'green' | 'amber' | 'red';
 };
 
+export type HealthStatus = 'green' | 'amber' | 'red';
+
 export type HeatmapCell = {
   label: string;
   score: number;
@@ -15,4 +17,18 @@ export type RiskItem = {
   likelihood: 'Low' | 'Medium' | 'High';
   impact: 'Low' | 'Medium' | 'High';
   score: number;
+};
+
+export type GovernanceException = {
+  id: string;
+  control: string;
+  owner: string;
+  status: 'Open' | 'Mitigating' | 'Approved';
+  expiry: string;
+};
+
+export type VerifierDrift = {
+  verifier: string;
+  currentVersion: string;
+  latestVersion: string;
 };
