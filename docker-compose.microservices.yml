@@ -1,11 +1,35 @@
 services:
+  # ── Database (local dev only) ──────────────────────────────────────────────
+  # In Choreo: remove this service and inject SUPABASE_URL / DATABASE_URL
+  # as Choreo Secrets pointing to your Supabase Cloud project.
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pqc_digital_twin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── Services ───────────────────────────────────────────────────────────────
   go-gateway:
     build:
       context: .
       dockerfile: src/go/gateway/Dockerfile
     ports:
       - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pqc_digital_twin?sslmode=disable
     depends_on:
+      postgres:
+        condition: service_healthy
       go-discovery:
         condition: service_healthy
       python-analysis:
@@ -26,6 +50,11 @@ services:
       dockerfile: src/go/discovery/Dockerfile
     ports:
       - "8081:8081"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pqc_digital_twin?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8081/health >/dev/null || exit 1"]
       interval: 10s
@@ -38,6 +67,11 @@ services:
       dockerfile: src/python/Dockerfile
     ports:
       - "8082:8082"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pqc_digital_twin?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8082/health', timeout=2)"]
       interval: 10s
@@ -50,6 +84,11 @@ services:
       dockerfile: src/rust/Dockerfile
     ports:
       - "8083:8083"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pqc_digital_twin?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8083/health >/dev/null || exit 1"]
       interval: 10s
@@ -62,8 +101,16 @@ services:
       dockerfile: src/qasm/examples/Dockerfile
     ports:
       - "8084:8084"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/pqc_digital_twin?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8084/health', timeout=2)"]
       interval: 10s
       timeout: 3s
       retries: 5
+
+volumes:
+  postgres_data:
