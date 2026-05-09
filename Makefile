@@ -89,7 +89,7 @@ test:
 	if [ -f src/web/package.json ] && command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then \
 		if node -e "const p=require('./src/web/package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then \
 			echo "[test][node] src/web"; \
-			(cd src/web && npm test -- --watch=false); \
+			(cd src/web && npm test); \
 		else \
 			echo "[test][node] Skipping: no test script in src/web/package.json."; \
 		fi; \

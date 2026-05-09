@@ -101,3 +101,10 @@ Main agent coordinating parallel workers with non-overlapping ownership.
 ### Update 2026-05-09 #14
 - Completed src/web test stream.
 - Added Node built-in smoke tests and wired `npm test` in web package.
+
+### Update 2026-05-09 #15
+- Completed continuation round.
+- Root automation now includes Python coverage for both `tests/` and `src/python/tests` in `Makefile` and CI.
+- Added `src/python` dev dependency metadata and README for pytest usage.
+- Added `src/web` Node built-in smoke tests and `npm test` wiring.
+- `make test` now executes Go/Rust/Web tests locally; Python and contracts still skip only when `pytest` is absent in local environment.
