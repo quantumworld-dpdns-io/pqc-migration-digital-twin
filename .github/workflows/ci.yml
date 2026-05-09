@@ -39,37 +39,55 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Lint (placeholder)
+      - name: Lint
         shell: bash
         run: |
           set -euo pipefail
           case "${{ matrix.lang }}" in
             go)
-              if [ -f go.mod ]; then
-                echo "TODO: run go fmt/lint checks"
+              if command -v gofmt >/dev/null 2>&1 && [ -d src/go ]; then
+                files="$(find src/go -type f -name '*.go')"
+                if [ -n "$files" ]; then
+                  out="$(gofmt -l $files)"
+                  if [ -n "$out" ]; then
+                    echo "$out"
+                    echo "[lint][go] gofmt check failed"
+                    exit 1
+                  fi
+                  echo "[lint][go] gofmt check passed"
+                else
+                  echo "[lint][go] no Go files found; skipping"
+                fi
               else
-                echo "No Go module found; skipping"
+                echo "[lint][go] gofmt not available or src/go missing; skipping"
               fi
               ;;
             rust)
-              if [ -f Cargo.toml ]; then
-                echo "TODO: run cargo fmt/clippy"
+              if [ -f src/rust/Cargo.toml ]; then
+                (cd src/rust && cargo fmt --all --check)
+                (cd src/rust && cargo clippy --workspace --all-targets -- -D warnings)
               else
-                echo "No Cargo.toml found; skipping"
+                echo "[lint][rust] src/rust/Cargo.toml missing; skipping"
               fi
               ;;
             python)
-              if compgen -G "*.py" > /dev/null || [ -d src ] || [ -d tests ]; then
-                echo "TODO: run ruff/mypy/pytest -m lint profile"
+              if [ -d tests ]; then
+                python -m compileall -q tests
               else
-                echo "No Python sources detected; skipping"
+                echo "[lint][python] tests directory missing; skipping"
               fi
               ;;
             node)
-              if [ -f package.json ]; then
-                echo "TODO: run npm lint"
+              if [ -f src/web/package.json ]; then
+                cd src/web
+                if [ -f package-lock.json ]; then
+                  npm ci
+                else
+                  npm install --no-audit --no-fund
+                fi
+                npm run lint
               else
-                echo "No package.json found; skipping"
+                echo "[lint][node] src/web/package.json missing; skipping"
               fi
               ;;
           esac
@@ -106,37 +124,53 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Test (placeholder)
+      - name: Test
         shell: bash
         run: |
           set -euo pipefail
           case "${{ matrix.lang }}" in
             go)
-              if [ -f go.mod ]; then
-                echo "TODO: run go test ./..."
+              if [ -d src/go ]; then
+                for modfile in src/go/*/go.mod; do
+                  [ -f "$modfile" ] || continue
+                  moddir="$(dirname "$modfile")"
+                  (cd "$moddir" && go test ./...)
+                done
               else
-                echo "No Go module found; skipping"
+                echo "[test][go] src/go missing; skipping"
               fi
               ;;
             rust)
-              if [ -f Cargo.toml ]; then
-                echo "TODO: run cargo test --all"
+              if [ -f src/rust/Cargo.toml ]; then
+                (cd src/rust && cargo test --workspace)
               else
-                echo "No Cargo.toml found; skipping"
+                echo "[test][rust] src/rust/Cargo.toml missing; skipping"
               fi
               ;;
             python)
               if [ -d tests ]; then
-                echo "TODO: run pytest"
+                python -m pip install --upgrade pip
+                python -m pip install pytest
+                pytest -q tests
               else
-                echo "No tests directory found; skipping"
+                echo "[test][python] tests directory missing; skipping"
               fi
               ;;
             node)
-              if [ -f package.json ]; then
-                echo "TODO: run npm test"
+              if [ -f src/web/package.json ]; then
+                cd src/web
+                if [ -f package-lock.json ]; then
+                  npm ci
+                else
+                  npm install --no-audit --no-fund
+                fi
+                if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then
+                  npm test -- --watch=false
+                else
+                  echo "[test][node] no test script defined; skipping"
+                fi
               else
-                echo "No package.json found; skipping"
+                echo "[test][node] src/web/package.json missing; skipping"
               fi
               ;;
           esac
@@ -146,7 +180,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Contract gate placeholder
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run contract smoke tests
         run: |
-          echo "TODO: enforce OpenAPI/protobuf/schema compatibility checks"
-          echo "Placeholder contract test path: tests/contracts/"
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+          pytest -q tests/contracts
