@@ -26,11 +26,44 @@ def step_get(context, path: str):
         context.status_code = err.code
 
 
+@when('I send a DELETE request to "{path}"')
+def step_delete(context, path: str):
+    req = urllib.request.Request(context.base_url + path, method='DELETE')
+    try:
+        with urllib.request.urlopen(req) as resp:
+            context.status_code = resp.getcode()
+    except urllib.error.HTTPError as err:
+        context.status_code = err.code
+        context.body = err.read().decode('utf-8')
+
+
 @when('I send a malformed JSON POST request to "{path}"')
 def step_post_bad_json(context, path: str):
     req = urllib.request.Request(
         context.base_url + path,
         data=b'{"asset_id": "A1",',
+        method='POST',
+        headers={'Content-Type': 'application/json'},
+    )
+    try:
+        with urllib.request.urlopen(req) as resp:
+            context.status_code = resp.getcode()
+            context.body = resp.read().decode('utf-8')
+    except urllib.error.HTTPError as err:
+        context.status_code = err.code
+        context.body = err.read().decode('utf-8')
+
+
+@when('I send an invalid JSON POST request to "{path}"')
+def step_post_invalid_json(context, path: str):
+    payload = {
+        "asset_id": "",
+        "reason": "",
+        "owner": "",
+    }
+    req = urllib.request.Request(
+        context.base_url + path,
+        data=json.dumps(payload).encode('utf-8'),
         method='POST',
         headers={'Content-Type': 'application/json'},
     )
