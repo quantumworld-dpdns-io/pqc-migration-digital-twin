@@ -16,8 +16,8 @@ This directory contains test scaffolding for the repository quality gates define
 ## Implemented contract smoke checks
 
 - Gateway API surface contract:
-  - Required endpoints in `src/go/gateway/server.go` (`/health` and `/api/v1/*` routes).
-  - Required response payload keys used by downstream consumers.
+  - Versioned OpenAPI spec in `docs/api/gateway-openapi.json`.
+  - Required endpoints and HTTP methods (`/health`, `/api/v1/*`) exist and match implementation routes in `src/go/gateway/server.go`.
 - Rust workspace contract:
   - `src/rust/Cargo.toml` workspace members resolve to real crates.
   - `shared-contracts` exports core domain contract types (`ApplicantProfile`, `RiskScore`, `RiskBand`).

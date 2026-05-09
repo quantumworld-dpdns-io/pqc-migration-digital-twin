@@ -139,3 +139,12 @@ Main agent coordinating parallel workers with non-overlapping ownership.
 - Added compose healthchecks and gateway dependency ordering on healthy upstream services.
 - Added CI Docker integration job and executable smoke script: `tests/integration/docker_microservices_smoke.sh`.
 - Ran `make docker-smoke` successfully (build + health wait + end-to-end API checks).
+
+### Update 2026-05-09 #20
+- Added versioned OpenAPI contract for gateway at `docs/api/gateway-openapi.json`.
+- Enforced contract alignment in `tests/contracts/test_repo_contract_smoke.py`:
+  - validates OpenAPI 3.x structure,
+  - validates required paths/methods,
+  - validates Go gateway route parity with spec.
+- Updated test docs to include OpenAPI contract checks.
+- Local verification: JSON parse check + `make lint` + `make test` passed (with expected local skip where `pytest` is unavailable).
