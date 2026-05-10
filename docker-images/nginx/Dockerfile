@@ -1,4 +1,4 @@
-FROM nginx:alpine
+FROM nginx:1.27-alpine3.21
 RUN addgroup -S appgroup && adduser -S -G appgroup -u 10014 appuser \
     && mkdir -p /var/cache/nginx/client_temp \
                 /var/cache/nginx/proxy_temp \
@@ -14,4 +14,6 @@ RUN addgroup -S appgroup && adduser -S -G appgroup -u 10014 appuser \
 COPY nginx.conf /etc/nginx/nginx.conf
 USER 10014
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+    CMD wget -qO- http://localhost:8080/health >/dev/null || exit 1
 CMD ["nginx", "-g", "daemon off;"]
