@@ -20,7 +20,7 @@ Purpose: map production-readiness controls to concrete evidence artifacts alread
 | GOV-01 | Release governance gate references artifacts | `docs/dev-docs/phase1/production-readiness-checklist.md` | Final go/no-go record linking all evidence | Needs run evidence |
 
 ## Known gaps outside this skeleton
-- SBOM generation + signed provenance artifacts are not yet wired in CI.
+- SBOM generation is now wired in CI for repository baseline; remaining gap is full per-image SBOM coverage plus signed provenance attestation.
 - External/internal pen-test closure evidence is not yet stored in this repo.
 - Production SLO dashboard and burn-rate alert evidence are not yet linked.
 
