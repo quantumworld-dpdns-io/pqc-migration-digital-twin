@@ -40,6 +40,8 @@ The following are now evidenced in this branch snapshot:
 - CI security-readiness lane with Trivy gates and SBOM artifact generation in `.github/workflows/ci.yml`.
 - CI consolidation-image evidence and policy gates in `.github/workflows/ci.yml`:
   `dockerfile-build-evidence` (4-image build evidence artifacts) and `checkov-dockerfiles` (Dockerfile policy scan), both required by `integration-docker`.
+- Runtime performance evidence for 10k-equivalent scenario:
+  `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json` produced by `scripts/run-benchmark-10k.sh`.
 
 Impact:
 - improves Phase 2 implementation confidence and automation depth,
@@ -47,20 +49,21 @@ Impact:
 - establishes RED instrumentation baseline but does not complete RED dashboard/alerting deliverables,
 - establishes RED dashboard/alert policy baseline and governance checks, but does not prove deployed-monitoring execution evidence,
 - improves CI supply-chain/build-policy evidence depth and now includes baseline fault-injection plus restart/degraded-path resilience evidence,
+- closes baseline runtime evidence for 10k-equivalent benchmark execution (governance sign-off still pending),
 - does **not** change overall program status that Phase 5 remains incomplete.
 
 ## What Remains To Finish The Full Plan
 1. Discovery depth and data quality:
 - Production-grade connectors and benchmarked dedup/fingerprint accuracy.
 2. Risk and analytics scale gates:
-- 10k-asset performance SLO benchmarks and exportable prioritized backlog.
+- production sign-off for 10k-equivalent benchmark evidence and exportable prioritized backlog.
 3. ZK governance completion:
 - Independent verifier workflow, artifact lifecycle persistence, audit-event coverage.
 4. UX depth:
 - Scenario compare, wave editor, and milestone orchestration UI acceptance.
 5. Phase 5 readiness:
 - Security hardening, SBOM/provenance, DR drills, SLO dashboards, compliance evidence pack, release governance sign-off.
-  Note: documentation baselines for SLO/RED alerting, backup/restore, and release-evidence template are present; execution evidence and approval artifacts remain open.
+  Note (reconciled 2026-05-10): documentation baselines for SLO/RED alerting, backup/restore, release evidence template, and baseline 10k-equivalent runtime benchmark evidence are present; execution approval artifacts and external sign-offs remain open.
 
 ## Execution Order For Remaining Work
 1. Close Phase 1/2 acceptance gaps.

@@ -11,7 +11,7 @@ The repository has a solid **MVP foundation through Phases 0-4** (service scaffo
 |---|---|---|---|
 | Phase 0: Foundations | Mostly complete (MVP) | `Makefile`; `.github/workflows/ci.yml`; `docs/api/gateway-openapi.json`; `tests/contracts/test_repo_contract_smoke.py` | No protobuf contracts committed yet; signed provenance and full per-image SBOM coverage are not yet present in CI evidence. |
 | Phase 1: Asset Discovery + Inventory Graph | Partial | `src/go/discovery/scanner.go`; `src/go/discovery/scanners_stub.go`; `src/go/discovery/cmd/discovery/main.go`; `src/web/components/InventoryTable.tsx` | Connectors are stubs (not production adapters); no evidence of 3+ real source systems per asset class; dedup/fingerprint accuracy benchmark not present. |
-| Phase 2: HNDL Exposure + Risk Scoring | Partial | `src/python/hndl_analysis/*`; `src/python/service.py` (`/hndl/score`); `src/rust/risk-engine/src/lib.rs`; `src/rust/risk-service/src/main.rs`; tests under `src/python/tests` and `src/go/gateway/gateway_test.go` | No demonstrated 10k-asset SLO benchmark; no export flow for ranked backlog; policy tuning appears code-driven, not externally managed. |
+| Phase 2: HNDL Exposure + Risk Scoring | Partial | `src/python/hndl_analysis/*`; `src/python/service.py` (`/hndl/score`); `src/rust/risk-engine/src/lib.rs`; `src/rust/risk-service/src/main.rs`; tests under `src/python/tests` and `src/go/gateway/gateway_test.go`; benchmark harness + run artifact: `scripts/run-benchmark-10k.sh`, `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json` | 10k-equivalent benchmark sign-off/governance closure is still pending; no export flow for ranked backlog; policy tuning appears code-driven, not externally managed. |
 | Phase 3: ZK Migration Proofs + Governance | Partial | `src/rust/zk-proof/src/lib.rs`; `src/rust/risk-service/src/main.rs` (proof hash in response); `src/web/components/ProofPanel.tsx`; verifier path scaffold + audit path scaffold present | Scaffold exists, but full independent verifier workflow, proof artifact registry/lifecycle store, and governance dashboard/exception tracking are not implemented. |
 | Phase 4: QASM Workflows + Advanced Planning UX | Partial | `src/python/qasm_workflows/manifest.py`; `src/python/qasm_workflows/runner.py`; `src/qasm/examples/*`; `src/web/app/page.tsx`; `src/web/components/*` | No full orchestration canvas/wave editor/milestone board acceptance evidence; scenario compare and what-if planning are not validated by E2E UX tests. |
 | Phase 5: Hardening + Production Readiness | Not complete | `docker-compose.microservices.yml`; `tests/integration/docker_microservices_smoke.sh`; `tests/integration/docker_resilience_smoke.sh`; CI hardening/integration jobs in `.github/workflows/ci.yml` | Missing formal SLO dashboards + error budgets, DR drill execution evidence, security hardening closure (authN/authZ, pen-test), compliance evidence pack, and release/on-call sign-off. |
@@ -49,6 +49,11 @@ The following are now evidenced in this branch snapshot:
 - 10k-equivalent benchmark harness execution evidence:
   `scripts/run-benchmark-10k.sh` with run artifact
   `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`.
+
+Date-stamped runtime evidence reconciliation (2026-05-10):
+- Runtime resilience evidence is now directly present via `tests/integration/docker_resilience_smoke.sh` and the CI lane `integration-resilience` in `.github/workflows/ci.yml`.
+- Runtime 10k-equivalent perf evidence is directly present via `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`.
+- External approvals/sign-off artifacts (go/no-go, release approvals, on-call readiness approval) remain outside direct repo-runtime proof and stay open.
 
 Current health/observability baseline evidence:
 - `src/go/gateway/server.go` (`GET /health`)
