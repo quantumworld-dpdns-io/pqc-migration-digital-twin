@@ -33,7 +33,7 @@ These are treated as provisional until merged into the authoritative branch used
   `src/web/tests/api-client.error-handling.test.mjs` (API error/status behavior tests).
 
 ## Immediate Priority Gaps (Before GA)
-1. Add security gates (SCA/SAST, image scanning, SBOM + provenance/signing) into CI/CD.
+1. Expand security gates from baseline to full coverage (all images/services), and add signed provenance for SBOM artifacts.
 2. Define and measure SLOs for gateway, scoring, and proof paths with automated burn-rate alerting.
 3. Build DR runbooks and execute at least one timed recovery drill with RTO/RPO evidence.
 4. Produce compliance evidence pack (controls matrix, audit evidence, exception approvals).
