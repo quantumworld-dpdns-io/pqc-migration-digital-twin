@@ -2,7 +2,7 @@
 Library    RequestsLibrary
 
 *** Variables ***
-${GATEWAY_BASE_URL}    http://localhost:8080
+${GATEWAY_BASE_URL}    %{GATEWAY_BASE_URL=http://localhost:8080}
 
 *** Test Cases ***
 Negative GET On Risk Endpoint Returns 405
