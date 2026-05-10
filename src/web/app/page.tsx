@@ -4,10 +4,22 @@ import { InventoryTable } from '../components/InventoryTable';
 import { Panel } from '../components/Panel';
 import { ProofPanel } from '../components/ProofPanel';
 import { RiskMatrix } from '../components/RiskMatrix';
-import { getAssets, getRiskScore } from '../lib/api';
+import { getAssets, getRiskScore, Asset } from '../lib/api';
 import type { GovernanceException, HeatmapCell, InventoryItem, RiskItem, VerifierDrift } from '../lib/types';
+import dynamic from 'next/dynamic';
+
+const DigitalTwinScene = dynamic(() => import('../components/three/DigitalTwinScene'), { 
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full bg-black/20 animate-pulse rounded-xl flex items-center justify-center text-zinc-500">Initializing Digital Twin Scene...</div>
+});
 
 // ── Static fallback data (used when gateway is unreachable) ──────────────────
+
+const fallbackAssets: Asset[] = [
+  { id: '1', address: '10.0.0.1', port: 443, is_vulnerable: true, discovered_at: '', protocol: 'TLSv1.2', cipher_suite: 'RSA-AES256-GCM' },
+  { id: '2', address: '10.0.0.5', port: 8443, is_vulnerable: true, discovered_at: '', protocol: 'TLSv1.2', cipher_suite: 'ECDHE-RSA-AES128-SHA' },
+  { id: '3', address: '192.168.1.10', port: 443, is_vulnerable: false, discovered_at: '', protocol: 'TLSv1.3', cipher_suite: 'TLS_AES_256_GCM_SHA384' },
+];
 
 const fallbackInventory: InventoryItem[] = [
   { system: 'Root CA Issuance', algorithm: 'RSA-2048', owner: 'PKI Ops', status: 'amber' },
@@ -58,18 +70,19 @@ async function fetchOrFallback<T>(fetcher: () => Promise<T>, fallback: T): Promi
 
 export default async function DashboardPage() {
   const [assetsResult, riskResult] = await Promise.all([
-    fetchOrFallback(getAssets, []),
+    fetchOrFallback(getAssets, { count: 0, assets: [] }),
     fetchOrFallback(
       () => getRiskScore({ total_assets: 100, quantum_vulnerable_assets: 40 }),
       null,
     ),
   ]);
-  const assets = assetsResult.data;
+  const assetsResponse = assetsResult.data;
+  const assets = assetsResponse.assets.length > 0 ? assetsResponse.assets : fallbackAssets;
   const risk = riskResult.data;
   const isLiveMode = assetsResult.isLive || riskResult.isLive;
 
-  const inventory: InventoryItem[] = assets.length > 0
-    ? assets.map(a => ({
+  const inventory: InventoryItem[] = assetsResponse.assets.length > 0
+    ? assetsResponse.assets.map(a => ({
         system: `${a.address}:${a.port}`,
         algorithm: a.cipher_suite ?? a.protocol ?? 'Unknown',
         owner: 'Discovered',
@@ -79,7 +92,7 @@ export default async function DashboardPage() {
 
   const risks: RiskItem[] = risk
     ? [
-        { threat: 'Quantum Vulnerability Score', likelihood: 'High', impact: 'High', score: Math.round(risk.risk_score / 10) },
+        { threat: 'Quantum Vulnerability Score', likelihood: 'High', impact: 'High', score: Math.round(risk.score / 10) },
         ...fallbackRisks.slice(1),
       ]
     : fallbackRisks;
@@ -91,13 +104,19 @@ export default async function DashboardPage() {
         <h1>Operational Dashboard</h1>
         {risk && (
           <p className="risk-badge">
-            Live risk level: <strong>{risk.risk_level}</strong>
+            Live risk score: <strong>{risk.score}</strong> (Ratio: {risk.exposure_ratio})
           </p>
         )}
         <p className="risk-badge">
           Data mode: <strong>{isLiveMode ? 'Live gateway' : 'Fallback dataset'}</strong>
         </p>
       </header>
+
+      <section className="mb-8">
+        <Panel title="Real-time Network Twin" subtitle="Live 3D spatial representation of discovered assets">
+          <DigitalTwinScene assets={assets} />
+        </Panel>
+      </section>
 
       <div className="layout-grid">
         <Panel title="Inventory" subtitle={assets.length > 0 ? `${assets.length} assets discovered` : 'Cryptographic asset baseline'}>
