@@ -7,6 +7,14 @@ function getGatewayUrl(): string {
   return raw.replace(/\/$/, '');
 }
 
+function getGatewayToken(): string | undefined {
+  // Note: Client-side access requires NEXT_PUBLIC_ prefix.
+  return (
+    process.env.GATEWAY_TOKEN ??
+    process.env.NEXT_PUBLIC_GATEWAY_TOKEN
+  );
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -24,11 +32,22 @@ async function request<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   const gatewayUrl = getGatewayUrl();
+  const token = getGatewayToken();
   const url = `${gatewayUrl}${path}`;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    // Choreo / WSO2 typically expects 'Bearer <token>'
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(url, {
     method,
     signal,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
     next: { revalidate: 30 },
   });
