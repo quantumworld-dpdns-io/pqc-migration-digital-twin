@@ -51,7 +51,7 @@ cover.out
 
 # Rust
 target/
-Cargo.lock
+# Cargo.lock is intentionally committed for binary workspace crates (docker-images/rust-risk)
 
 # Generic build artifacts
 dist/
