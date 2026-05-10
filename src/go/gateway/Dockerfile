@@ -1,9 +1,9 @@
 FROM golang:1.22-alpine AS build
 WORKDIR /src
-# database module must be present before gateway so the replace directive resolves
 COPY src/go/database/ ./database/
-COPY src/go/gateway/go.mod ./go.mod
-COPY src/go/gateway/ .
+COPY src/go/gateway/ ./gateway/
+RUN printf 'go 1.22\nuse (\n\t./gateway\n\t./database\n)\n' > go.work
+WORKDIR /src/gateway
 ENV GOFLAGS="-mod=mod"
 RUN go build -o /out/gateway ./cmd/gateway
 
