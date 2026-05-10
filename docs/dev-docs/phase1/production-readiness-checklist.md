@@ -18,14 +18,14 @@ Status legend (updated 2026-05-10): `[done]` = evidenced in repo, `[pending]` = 
 - [ ] `[pending]` Execute fault-injection tests (downstream timeout, partial outage, malformed payload bursts).
 - [ ] `[pending]` Verify graceful shutdown and restart behavior for all services.
 
-Observability/health reconciliation (2026-05-10):
-- Request-ID generation/propagation and structured logging are implemented for Go gateway/discovery, Python analysis, and Rust risk service.
-- `/live` and `/ready` probe endpoints are implemented for those same services in addition to `/health`.
-- RED metrics export remains pending.
+Observability/RED reconciliation (2026-05-10):
+- Implemented baseline observability for API services: request-ID generation/echo plus structured request logs in `src/go/gateway/server.go`, `src/go/discovery/cmd/discovery/main.go`, `src/python/service.py`, `src/rust/risk-service/src/main.rs`, and `src/qasm/examples/service/qasm_service.py`.
+- Implemented probe semantics for those services: `/health`, `/live`, and `/ready` (service files above).
+- RED metrics status: `pending` for explicit metrics export/instrumentation (`/metrics` or equivalent counters/histograms are not yet evidenced in this repo snapshot).
 
 ## SLO and Performance
 - [ ] `[pending]` Finalize SLOs for: gateway API, HNDL scoring, risk/proof generation.
-- [ ] `[pending]` Implement dashboards showing latency (p50/p95/p99), error rate, and throughput per service.
+- [ ] `[pending]` Implement RED dashboards showing latency (p50/p95/p99), error rate, and throughput per service.
 - [ ] `[pending]` Define error budgets and alert rules (including burn-rate alerts).
 - [ ] `[pending]` Run load/perf tests that include a 10k-asset-equivalent scoring scenario.
 - [ ] `[pending]` Capture benchmark evidence and sign off that targets are met.

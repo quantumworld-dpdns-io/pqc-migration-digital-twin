@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import threading
+import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
 
@@ -27,6 +28,30 @@ def test_health_endpoints_and_request_id_header() -> None:
                 assert resp.status == 200
                 assert payload["status"] == "ok"
                 assert resp.headers.get("X-Request-Id") == "test-req-id"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_metrics_endpoint_exports_red_counters() -> None:
+    server, base_url = _start_server()
+    try:
+        with urllib.request.urlopen(f"{base_url}/health") as resp:  # noqa: S310
+            assert resp.status == 200
+
+        try:
+            urllib.request.urlopen(f"{base_url}/missing")  # noqa: S310
+            raise AssertionError("expected 404")
+        except urllib.error.HTTPError as err:
+            assert err.code == 404
+
+        with urllib.request.urlopen(f"{base_url}/metrics") as resp:  # noqa: S310
+            assert resp.status == 200
+            assert resp.headers.get("Content-Type", "").startswith("text/plain")
+            body = resp.read().decode("utf-8")
+            assert "request_count " in body
+            assert "error_count " in body
+            assert "latency_ms_sum " in body
     finally:
         server.shutdown()
         server.server_close()
