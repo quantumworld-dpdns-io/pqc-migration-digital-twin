@@ -1,10 +1,11 @@
 FROM rust:1.78-slim AS build
 WORKDIR /workspace
-COPY src/rust/Cargo.toml src/rust/Cargo.lock ./
-COPY src/rust/shared-contracts ./shared-contracts
-COPY src/rust/risk-engine ./risk-engine
-COPY src/rust/zk-proof ./zk-proof
-COPY src/rust/risk-service ./risk-service
+COPY Cargo.toml Cargo.lock ./
+COPY shared-contracts ./shared-contracts
+COPY risk-engine ./risk-engine
+COPY zk-proof ./zk-proof
+COPY risk-service ./risk-service
+COPY proof-verifier ./proof-verifier
 RUN cargo build --release -p risk-service
 
 FROM debian:bookworm-slim
