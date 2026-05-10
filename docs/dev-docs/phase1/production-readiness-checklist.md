@@ -13,14 +13,14 @@ Status legend (updated 2026-05-10): `[done]` = evidenced in repo, `[pending]` = 
 
 ## Reliability and Operations
 - [x] `[done]` Define production runbooks for startup, rollback, dependency outage, and degraded-mode operation. Evidence: `docs/dev-docs/phase1/phase5/01-operations-runbooks.md`
-- [x] `[done]` Add structured logs and request IDs for core API paths. Evidence: `src/go/gateway/server.go`, `src/go/discovery/cmd/discovery/main.go`, `src/python/service.py`, `src/rust/risk-service/src/main.rs`.
-- [x] `[done]` Add health/readiness/liveness semantics beyond basic `/health` checks. Evidence: `GET /live` and `GET /ready` implemented in `src/go/gateway/server.go`, `src/go/discovery/cmd/discovery/main.go`, `src/python/service.py`, `src/rust/risk-service/src/main.rs`.
+- [x] `[done]` Add structured logs and request IDs for all externally reachable API services. Evidence: `src/go/gateway/server.go`, `src/go/discovery/cmd/discovery/main.go`, `src/python/service.py`, `src/rust/risk-service/src/main.rs`, `src/qasm/examples/service/qasm_service.py`.
+- [x] `[done]` Add health/readiness/liveness semantics for all externally reachable API services. Evidence: `GET /live` and `GET /ready` implemented in `src/go/gateway/server.go`, `src/go/discovery/cmd/discovery/main.go`, `src/python/service.py`, `src/rust/risk-service/src/main.rs`, and `src/qasm/examples/service/qasm_service.py`.
 - [ ] `[pending]` Execute fault-injection tests (downstream timeout, partial outage, malformed payload bursts).
 - [ ] `[pending]` Verify graceful shutdown and restart behavior for all services.
 
 Observability/health reconciliation (2026-05-10):
-- Request-ID generation/propagation and structured logging are now implemented for Go gateway/discovery, Python analysis, and Rust risk service.
-- `/live` and `/ready` probe endpoints are now implemented for those same services in addition to `/health`.
+- Request-ID generation/propagation and structured logging are implemented for Go gateway/discovery, Python analysis, and Rust risk service.
+- `/live` and `/ready` probe endpoints are implemented for those same services in addition to `/health`.
 - RED metrics export remains pending.
 
 ## SLO and Performance

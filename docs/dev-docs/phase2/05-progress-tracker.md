@@ -3,7 +3,7 @@
 Last updated: 2026-05-10
 Scope: Deliverables listed in `00-overview.md`
 
-Reconciliation note (2026-05-10): in-flight observability/health work is tracked under Phase 5 readiness and does not change Phase 2 deliverable completion unless corresponding code and tests are merged and verifiable in this branch snapshot.
+Reconciliation note (2026-05-10): observability/health changes are now merged and verifiable in this branch snapshot, and they are tracked under Phase 5 readiness. Phase 2 deliverable completion remains unchanged.
 
 ## Status Summary
 

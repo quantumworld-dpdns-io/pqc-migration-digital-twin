@@ -21,25 +21,27 @@ The repository has a solid **MVP foundation through Phases 0-4** (service scaffo
 - Multi-service packaging and health checks exist: `docker-compose.microservices.yml`, service Dockerfiles in `src/go/*/Dockerfile`, `src/python/Dockerfile`, `src/rust/Dockerfile`, `src/qasm/examples/Dockerfile`.
 - CI runs lint/test/contracts and Docker smoke integration: `.github/workflows/ci.yml`.
 
-## Pending-Until-Merged Assumptions (Concurrent Worker Outputs, 2026-05-10)
+## Reconciled Additions In This Branch (2026-05-10)
 
-These are treated as provisional until merged into the authoritative branch used for this report:
+The following are now evidenced in this branch snapshot:
 
-- nginx env-split hardening work in `docker-images/nginx/*` (`NGINX_ENV`, `server-local.conf`, `server-choreo.conf`).
+- nginx env-split hardening in `docker-images/nginx/*` (`NGINX_ENV`, `server-local.conf`, `server-choreo.conf`).
 - Local cert script validator and CI hook:
   `scripts/validate-local-certs-script.sh`, `Makefile`, `.github/workflows/ci.yml`.
 - Frontend resilience/status improvements:
   `src/web/app/page.tsx` (live vs fallback data mode) and
   `src/web/tests/api-client.error-handling.test.mjs` (API error/status behavior tests).
-- Observability/health enhancements now merged for core services:
-  request-id middleware/headers, structured request logs, and `/live` + `/ready` endpoints in Go gateway/discovery, Python analysis, and Rust risk service.
+- Observability/health enhancements in core services:
+  request-id middleware/headers, structured request logs, and `/live` + `/ready` endpoints in Go gateway/discovery, Python analysis, Rust risk service, and qasm examples service.
+- CI security-readiness lane for vulnerability gating and SBOM artifact output:
+  `.github/workflows/ci.yml` (`security-readiness`, Trivy fail-on `HIGH,CRITICAL`, SPDX SBOM upload).
 
 Current health/observability baseline evidence:
 - `src/go/gateway/server.go` (`GET /health`)
 - `src/go/discovery/cmd/discovery/main.go` (`/health`)
 - `src/python/service.py` (`/health`)
 - `src/rust/risk-service/src/main.rs` (`/health`)
-- `src/qasm/examples/service/qasm_service.py` (`/health`)
+- `src/qasm/examples/service/qasm_service.py` (`/health`, `/live`, `/ready`, `X-Request-Id`, structured logs)
 - `docker-images/nginx/locations.conf` (`/health` routed to gateway)
 - `src/go/gateway/server.go` and `src/go/discovery/cmd/discovery/main.go` (`X-Request-Id`, structured logs, `/live`, `/ready`)
 - `src/python/service.py` and `src/rust/risk-service/src/main.rs` (`X-Request-Id`, structured logs, `/live`, `/ready`)
