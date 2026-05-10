@@ -7,7 +7,7 @@ cleanup() {
 }
 trap cleanup TERM INT
 
-python /app/src/qasm/examples/service/qasm_service.py &
+python /app/qasm_examples/service/qasm_service.py &
 QASM_PID=$!
 
 exec python /app/service.py
