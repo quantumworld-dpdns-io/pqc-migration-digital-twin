@@ -23,7 +23,7 @@ export type GovernanceException = {
   id: string;
   control: string;
   owner: string;
-  status: 'Open' | 'Mitigating' | 'Approved';
+  status: 'Open' | 'Mitigating' | 'Approved' | 'Closed';
   expiry: string;
 };
 

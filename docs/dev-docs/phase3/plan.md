@@ -11,6 +11,8 @@ The following dependencies will be added to `src/web`:
 - `lucide-react`: For consistent iconography across 2D/3D overlays.
 - `framer-motion`: For smooth transitions between 2D panels and 3D scenes.
 
+> **Note on Dependencies:** To resolve peer dependency conflicts between React 18 and newer versions of `@react-three/fiber`/@`drei`, a `.npmrc` file has been added with `legacy-peer-deps=true`. This ensures stable builds on Vercel and local environments.
+
 ## 3. Digital Twin 3D Visualization Strategy
 ### 3.1 Network Topology Explorer
 - **Component:** `src/web/components/three/NetworkScene.tsx`
