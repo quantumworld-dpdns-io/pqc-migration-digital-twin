@@ -1,5 +1,11 @@
-const GATEWAY_URL =
-  process.env.NEXT_PUBLIC_GATEWAY_URL?.replace(/\/$/, '') ?? '';
+function getGatewayUrl(): string {
+  // Prefer server-only URL in SSR, then public URL for browser/direct mode.
+  const raw =
+    process.env.GATEWAY_URL ??
+    process.env.NEXT_PUBLIC_GATEWAY_URL ??
+    '';
+  return raw.replace(/\/$/, '');
+}
 
 export class ApiError extends Error {
   constructor(
@@ -17,7 +23,8 @@ async function request<T>(
   body?: unknown,
   signal?: AbortSignal,
 ): Promise<T> {
-  const url = `${GATEWAY_URL}${path}`;
+  const gatewayUrl = getGatewayUrl();
+  const url = `${gatewayUrl}${path}`;
   const res = await fetch(url, {
     method,
     signal,

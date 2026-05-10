@@ -41,7 +41,7 @@ const verifierDrift: VerifierDrift[] = [
 // ── Server component — fetches live data, falls back to static ───────────────
 
 async function fetchOrFallback<T>(fetcher: () => Promise<T>, fallback: T): Promise<T> {
-  if (!process.env.NEXT_PUBLIC_GATEWAY_URL) return fallback;
+  if (!process.env.GATEWAY_URL && !process.env.NEXT_PUBLIC_GATEWAY_URL) return fallback;
   try {
     return await fetcher();
   } catch {
