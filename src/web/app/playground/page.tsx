@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Panel } from '../../components/Panel';
 import { PageHeader } from '../../components/PageHeader';
 import { getQasm, generateProof, QasmResponse, ProofResponse } from '../../lib/api';
+import { DigitalTwinScene } from '../../components/three/DigitalTwinScene';
 
 export default function PlaygroundPage() {
   const [qasmName, setQasmName] = useState('bell_pair');
@@ -48,7 +49,7 @@ export default function PlaygroundPage() {
         title="Quantum playground"
         description="Invoke QASM examples and proof pathways against the gateway — intended for demos and integration smoke tests."
       />
-
+      <DigitalTwinScene assets={[]} />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
         <Panel title="QASM explorer" subtitle="Inspect quantum circuit payloads returned by the service" accent="emerald">
           <div className="space-y-4">
