@@ -65,7 +65,6 @@ Current RED metrics evidence status:
   `src/python/service.py`,
   `src/rust/risk-service/src/main.rs`,
   `src/qasm/examples/service/qasm_service.py`.
-- Remaining gaps: production dashboards (p50/p95/p99, throughput, error-rate), error-budget alerting, and SLO governance evidence.
 - Remaining gaps: deployed monitoring dashboards/alerts with run evidence, benchmark execution evidence (10k-equivalent), and release sign-off traces.
 
 Fault-injection and graceful-shutdown evidence status (2026-05-10):
