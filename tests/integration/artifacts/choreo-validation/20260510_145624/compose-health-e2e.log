@@ -2,9 +2,9 @@
  Network pqc-migration-digital-twin_default  Created
  Container pqc-migration-digital-twin-postgres-1  Creating
  Container pqc-migration-digital-twin-postgres-1  Created
- Container pqc-migration-digital-twin-python-services-1  Creating
- Container pqc-migration-digital-twin-go-services-1  Creating
  Container pqc-migration-digital-twin-rust-risk-1  Creating
+ Container pqc-migration-digital-twin-go-services-1  Creating
+ Container pqc-migration-digital-twin-python-services-1  Creating
  Container pqc-migration-digital-twin-rust-risk-1  Created
  Container pqc-migration-digital-twin-go-services-1  Created
  Container pqc-migration-digital-twin-python-services-1  Created
@@ -17,16 +17,16 @@
  Container pqc-migration-digital-twin-postgres-1  Waiting
  Container pqc-migration-digital-twin-postgres-1  Healthy
  Container pqc-migration-digital-twin-postgres-1  Healthy
- Container pqc-migration-digital-twin-rust-risk-1  Starting
+ Container pqc-migration-digital-twin-go-services-1  Starting
  Container pqc-migration-digital-twin-python-services-1  Starting
  Container pqc-migration-digital-twin-postgres-1  Healthy
- Container pqc-migration-digital-twin-go-services-1  Starting
- Container pqc-migration-digital-twin-python-services-1  Started
+ Container pqc-migration-digital-twin-rust-risk-1  Starting
  Container pqc-migration-digital-twin-rust-risk-1  Started
+ Container pqc-migration-digital-twin-python-services-1  Started
  Container pqc-migration-digital-twin-go-services-1  Started
+ Container pqc-migration-digital-twin-rust-risk-1  Waiting
  Container pqc-migration-digital-twin-go-services-1  Waiting
  Container pqc-migration-digital-twin-python-services-1  Waiting
- Container pqc-migration-digital-twin-rust-risk-1  Waiting
  Container pqc-migration-digital-twin-go-services-1  Healthy
  Container pqc-migration-digital-twin-rust-risk-1  Healthy
  Container pqc-migration-digital-twin-python-services-1  Healthy
@@ -35,7 +35,7 @@
 COMPOSE_UP=PASS
 health_status=200
 /api/v1/discovery=200
-/api/v1/assets=405
+/api/v1/assets=200
 /api/v1/risk=200
 /api/v1/risk/backlog=200
 /api/v1/proof=200
@@ -44,9 +44,9 @@ health_status=200
  Container pqc-migration-digital-twin-nginx-1  Stopped
  Container pqc-migration-digital-twin-nginx-1  Removing
  Container pqc-migration-digital-twin-nginx-1  Removed
+ Container pqc-migration-digital-twin-python-services-1  Stopping
  Container pqc-migration-digital-twin-rust-risk-1  Stopping
  Container pqc-migration-digital-twin-go-services-1  Stopping
- Container pqc-migration-digital-twin-python-services-1  Stopping
  Container pqc-migration-digital-twin-go-services-1  Stopped
  Container pqc-migration-digital-twin-go-services-1  Removing
  Container pqc-migration-digital-twin-go-services-1  Removed

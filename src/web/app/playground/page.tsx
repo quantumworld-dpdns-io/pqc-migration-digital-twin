@@ -2,12 +2,18 @@
 
 import React, { useState } from 'react';
 import { Panel } from '../../components/Panel';
+import { PageHeader } from '../../components/PageHeader';
 import { getQasm, generateProof, QasmResponse, ProofResponse } from '../../lib/api';
 
 export default function PlaygroundPage() {
   const [qasmName, setQasmName] = useState('bell_pair');
   const [qasmResult, setQasmResult] = useState<QasmResponse | null>(null);
-  const [proofInputs, setProofInputs] = useState({ credit_score: 750, debt_to_income_bps: 2000, late_payments: 0, existing_loans: 1 });
+  const [proofInputs, setProofInputs] = useState({
+    credit_score: 750,
+    debt_to_income_bps: 2000,
+    late_payments: 0,
+    existing_loans: 1,
+  });
   const [proofResult, setProofResult] = useState<ProofResponse | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -16,7 +22,7 @@ export default function PlaygroundPage() {
     try {
       const resp = await getQasm({ name: qasmName });
       setQasmResult(resp);
-    } catch (err) {
+    } catch {
       alert('Failed to fetch QASM');
     } finally {
       setLoading(false);
@@ -28,7 +34,7 @@ export default function PlaygroundPage() {
     try {
       const resp = await generateProof(proofInputs);
       setProofResult(resp);
-    } catch (err) {
+    } catch {
       alert('Failed to generate proof');
     } finally {
       setLoading(false);
@@ -36,77 +42,95 @@ export default function PlaygroundPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <header>
-        <p className="text-emerald-500 font-mono text-sm uppercase tracking-widest">Experimental Lab</p>
-        <h1 className="text-4xl font-bold mt-2">Quantum Playground</h1>
-      </header>
+    <div className="space-y-10 md:space-y-12">
+      <PageHeader
+        kicker="Experimental lab"
+        title="Quantum playground"
+        description="Invoke QASM examples and proof pathways against the gateway — intended for demos and integration smoke tests."
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Panel title="QASM Explorer" subtitle="Browse and inspect quantum circuit examples">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
+        <Panel title="QASM explorer" subtitle="Inspect quantum circuit payloads returned by the service" accent="emerald">
           <div className="space-y-4">
-            <div className="flex gap-2">
-              <input 
-                type="text" 
-                value={qasmName} 
-                onChange={(e) => setQasmName(e.target.value)}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+              <input
+                type="text"
+                value={qasmName}
+                onChange={e => setQasmName(e.target.value)}
                 placeholder="Example name (e.g. bell_pair)"
-                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-md px-4 py-2 text-white"
+                className="input-cyber flex-1 font-mono text-sm"
               />
-              <button 
+              <button
+                type="button"
                 onClick={handleFetchQasm}
                 disabled={loading}
-                className="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-md font-bold transition-colors"
+                className="btn-primary btn-emerald shrink-0 px-6 py-2.5 sm:w-auto"
               >
                 Fetch
               </button>
             </div>
-            {qasmResult && (
-              <pre className="bg-black p-4 rounded-lg border border-zinc-800 text-xs text-emerald-400 overflow-x-auto h-64">
+            {qasmResult ? (
+              <pre className="max-h-72 overflow-auto rounded-xl border border-emerald-500/15 bg-black/40 p-4 font-mono text-[11px] leading-relaxed text-emerald-400/95">
                 {JSON.stringify(qasmResult, null, 2)}
               </pre>
+            ) : (
+              <p className="rounded-xl border border-dashed border-white/[0.07] bg-black/15 px-4 py-8 text-center text-sm text-zinc-600">
+                Run a fetch to render circuit JSON here.
+              </p>
             )}
           </div>
         </Panel>
 
-        <Panel title="ZK Proof Generator" subtitle="Generate PQC-resistant proofs for financial statements">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {Object.keys(proofInputs).map((key) => (
+        <Panel title="ZK-style proof" subtitle="Exercise the proof endpoint with tunable financial inputs" accent="indigo">
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {(Object.keys(proofInputs) as (keyof typeof proofInputs)[]).map(key => (
                 <div key={key}>
-                  <label className="block text-xs font-medium text-zinc-500 uppercase mb-1">{key.replace(/_/g, ' ')}</label>
-                  <input 
-                    type="number" 
-                    value={(proofInputs as any)[key]} 
-                    onChange={(e) => setProofInputs({...proofInputs, [key]: parseInt(e.target.value)})}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-md px-3 py-1 text-sm text-white"
+                  <label className="field-label" htmlFor={`proof-${key}`}>
+                    {key.replace(/_/g, ' ')}
+                  </label>
+                  <input
+                    id={`proof-${key}`}
+                    type="number"
+                    value={proofInputs[key]}
+                    onChange={e =>
+                      setProofInputs({ ...proofInputs, [key]: parseInt(e.target.value, 10) || 0 })
+                    }
+                    className="input-cyber font-mono text-sm"
                   />
                 </div>
               ))}
             </div>
-            <button 
+            <button
+              type="button"
               onClick={handleGenProof}
               disabled={loading}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-md font-bold transition-colors"
+              className="btn-primary w-full bg-gradient-to-b from-indigo-500 to-indigo-700 py-3 font-semibold text-white shadow-lg shadow-indigo-950/40"
             >
-              Generate ZK Proof
+              Generate proof
             </button>
-            {proofResult && (
-              <div className="bg-zinc-900/50 p-4 rounded-lg border border-indigo-900/30 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-500 text-sm">Statement:</span>
-                  <span className="text-white font-mono">{proofResult.statement}</span>
+            {proofResult ? (
+              <div className="space-y-4 rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-5">
+                <div className="flex flex-col gap-1 border-b border-white/[0.06] pb-4 sm:flex-row sm:items-start sm:justify-between">
+                  <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Statement</span>
+                  <span className="font-mono text-sm text-zinc-100">{proofResult.statement}</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-500 text-sm">Score Band:</span>
-                  <span className="px-2 py-0.5 rounded bg-indigo-900 text-indigo-100 text-xs font-bold">{proofResult.score_band}</span>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs text-zinc-500">Score band</span>
+                  <span className="rounded-lg bg-indigo-500/20 px-3 py-1 font-mono text-xs font-semibold text-indigo-200">
+                    {proofResult.score_band}
+                  </span>
                 </div>
-                <div className="pt-2 border-t border-zinc-800">
-                  <p className="text-zinc-500 text-xs mb-1">Proof Hash:</p>
-                  <p className="text-emerald-400 font-mono text-[10px] break-all">{proofResult.proof_hash}</p>
+                <div>
+                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+                    Proof hash
+                  </p>
+                  <p className="break-all font-mono text-[11px] leading-relaxed text-emerald-400/95">
+                    {proofResult.proof_hash}
+                  </p>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
         </Panel>
       </div>

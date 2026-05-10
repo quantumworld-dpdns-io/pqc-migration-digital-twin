@@ -7,12 +7,18 @@ import { RiskMatrix } from '../components/RiskMatrix';
 import { StatCard } from '../components/StatCard';
 import { getAssets, getRiskScore, Asset } from '../lib/api';
 import type { GovernanceException, HeatmapCell, InventoryItem, RiskItem, VerifierDrift } from '../lib/types';
+import { PageHeader } from '../components/PageHeader';
 import { ShieldAlert, Globe, Server, CheckCircle2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
-const DigitalTwinScene = dynamic(() => import('../components/three/DigitalTwinScene'), { 
+const DigitalTwinScene = dynamic(() => import('../components/three/DigitalTwinScene'), {
   ssr: false,
-  loading: () => <div className="h-[500px] w-full bg-black/20 animate-pulse rounded-2xl flex items-center justify-center text-zinc-500 font-mono text-xs tracking-widest uppercase">Initializing Digital Twin Neural Link...</div>
+  loading: () => (
+    <div className="flex h-[min(520px,70vh)] w-full flex-col items-center justify-center gap-4 rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.04] to-transparent font-mono">
+      <span className="inline-flex h-10 w-10 animate-spin rounded-full border-2 border-emerald-500/20 border-t-emerald-500" />
+      <p className="text-[11px] uppercase tracking-[0.25em] text-zinc-500">Loading twin scene…</p>
+    </div>
+  ),
 });
 
 // ── Static fallback data ──────────────────
@@ -100,30 +106,42 @@ export default async function DashboardPage() {
     : fallbackRisks;
 
   const vulnerableCount = assets.filter(a => a.is_vulnerable).length;
+  const vulnPct =
+    assets.length > 0 ? Math.min(100, Math.round((vulnerableCount / assets.length) * 100)) : 0;
 
   return (
-    <main className="dashboard space-y-10">
-      <header className="hero space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <p className="kicker">Operational Command</p>
-            <h1 className="text-5xl font-extrabold tracking-tighter">Enterprise Digital Twin</h1>
-          </div>
-          <div className="risk-badge px-4 py-2 bg-white/[0.03] border border-white/5 rounded-2xl flex items-center gap-3">
-            <div className={`w-2 h-2 rounded-full ${isLiveMode ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
-            <span className="text-xs font-mono uppercase tracking-widest text-zinc-400">
-              System Mode: <strong className="text-zinc-100">{isLiveMode ? 'Live Neural Link' : 'Simulation Fallback'}</strong>
+    <div className="dashboard space-y-12">
+      <PageHeader
+        kicker="Operational command"
+        title="Enterprise Digital Twin"
+        description="Unified view of cryptographic posture, migration risk, and twin synchronization across your estate."
+        actions={
+          <div className="risk-badge flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3">
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${isLiveMode ? 'animate-pulse bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)]' : 'bg-amber-500'}`}
+            />
+            <span className="text-left text-[11px] font-mono uppercase leading-snug tracking-[0.12em] text-zinc-500">
+              Mode{' '}
+              <strong className="block pt-0.5 text-sm font-semibold tracking-normal text-zinc-100">
+                {isLiveMode ? 'Live link' : 'Simulation fallback'}
+              </strong>
             </span>
           </div>
-        </div>
+        }
+      />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard label="Total Assets" value={assets.length} icon={Server} color="indigo" />
-          <StatCard label="Vulnerable" value={vulnerableCount} subValue={`${Math.round((vulnerableCount/assets.length)*100)}%`} icon={ShieldAlert} color="rose" />
-          <StatCard label="Network Reach" value="Subnet A/B" subValue="Discovered" icon={Globe} color="amber" />
-          <StatCard label="Verifier Status" value="Healthy" icon={CheckCircle2} color="emerald" />
-        </div>
-      </header>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
+        <StatCard label="Total Assets" value={assets.length} icon={Server} color="indigo" />
+        <StatCard
+          label="Vulnerable"
+          value={vulnerableCount}
+          subValue={assets.length > 0 ? `${vulnPct}% of fleet` : undefined}
+          icon={ShieldAlert}
+          color="rose"
+        />
+        <StatCard label="Network Reach" value="Subnet A/B" subValue="Discovered" icon={Globe} color="amber" />
+        <StatCard label="Verifier Status" value="Healthy" icon={CheckCircle2} color="emerald" />
+      </div>
 
       <div className="layout-grid">
         {/* Main Centerpiece: 3D Twin */}
@@ -163,6 +181,6 @@ export default async function DashboardPage() {
           </Panel>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

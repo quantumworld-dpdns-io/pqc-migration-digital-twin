@@ -46,50 +46,52 @@ body {
   min-height: 100vh;
 }
 
-/* Sidebar Styling */
-aside {
-  background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  border-right: 1px solid var(--glass-border);
+/* Main content canvas */
+.app-main {
+  position: relative;
+  isolation: isolate;
 }
 
-aside nav a {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+.app-main::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(16, 185, 129, 0.07), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(99, 102, 241, 0.05), transparent);
 }
 
-aside nav a:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-main);
-  transform: translateX(4px);
+.page-title {
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+  background: linear-gradient(165deg, #f8fafc 20%, #94a3b8 95%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-aside nav a.active {
-  background: rgba(16, 185, 129, 0.1);
-  color: var(--neon-emerald);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
-
-/* Panel / Card Overhaul */
+/* Panel / Card */
 .panel {
-  background: var(--bg-card);
-  backdrop-filter: blur(8px);
+  background: linear-gradient(165deg, rgba(18, 22, 30, 0.92) 0%, rgba(10, 12, 18, 0.85) 100%);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: var(--shadow-glow);
-  transition: border-color 0.3s ease;
+  border-radius: 20px;
+  padding: 1.5rem 1.65rem;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .panel:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .panel-head h2 {
@@ -234,5 +236,103 @@ button:active:not(:disabled) {
 @media (max-width: 1024px) {
   .col-span-6, .col-span-4 {
     grid-column: span 12;
+  }
+}
+
+/* Form controls (shared pages) */
+.field-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.input-cyber {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+.input-cyber::placeholder {
+  color: var(--text-dim);
+}
+
+.input-cyber:focus {
+  outline: none;
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-emerald {
+  background: linear-gradient(180deg, #059669 0%, #047857 100%);
+  color: white;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
+}
+
+.btn-emerald:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.skeleton-line {
+  height: 0.75rem;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.09) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }

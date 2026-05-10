@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { Panel } from '../../components/Panel';
+import { PageHeader } from '../../components/PageHeader';
 import { runDiscovery, Asset } from '../../lib/api';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Radar } from 'lucide-react';
 
 export default function DiscoveryPage() {
   const [address, setAddress] = useState('127.0.0.1');
@@ -19,100 +20,124 @@ export default function DiscoveryPage() {
     try {
       const resp = await runDiscovery({ address, port });
       setResults(resp.findings);
-    } catch (err: any) {
-      setError(err.message || 'Failed to run discovery');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to run discovery';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-12">
-      <header>
-        <p className="kicker">Asset Identification</p>
-        <h1 className="text-5xl font-extrabold tracking-tighter">Network Discovery</h1>
-      </header>
+    <div className="space-y-10 md:space-y-12">
+      <PageHeader
+        kicker="Asset identification"
+        title="Network Discovery"
+        description="Probe endpoints for TLS and cryptographic surface data. Results stream into the twin inventory when the gateway is reachable."
+      />
 
-      <div className="layout-grid">
+      <div className="layout-grid gap-6 md:gap-8">
         <div className="col-span-full lg:col-span-5">
-          <Panel title="Trigger Scan" subtitle="Probe network endpoints for cryptographic configurations">
-            <form onSubmit={handleScan} className="space-y-6">
-              <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Target Address</label>
-                <input 
-                  type="text" 
-                  value={address} 
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none ring-offset-bg-darker transition-all"
-                  placeholder="e.g. 127.0.0.1"
+          <Panel title="Scan target" subtitle="Define host and port for the discovery agent" accent="emerald">
+            <form onSubmit={handleScan} className="space-y-5">
+              <div>
+                <label className="field-label" htmlFor="disc-address">
+                  Target address
+                </label>
+                <input
+                  id="disc-address"
+                  type="text"
+                  value={address}
+                  onChange={e => setAddress(e.target.value)}
+                  className="input-cyber font-mono text-[0.9rem]"
+                  placeholder="e.g. 10.0.0.12"
+                  autoComplete="off"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Target Port</label>
-                <input 
-                  type="number" 
-                  value={port} 
-                  onChange={(e) => setPort(parseInt(e.target.value))}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none transition-all"
+              <div>
+                <label className="field-label" htmlFor="disc-port">
+                  Port
+                </label>
+                <input
+                  id="disc-port"
+                  type="number"
+                  value={port}
+                  onChange={e => setPort(parseInt(e.target.value, 10) || 0)}
+                  className="input-cyber font-mono"
+                  min={1}
+                  max={65535}
                 />
               </div>
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold py-4 rounded-xl shadow-[0_4px_20px_rgba(16,185,129,0.2)] transition-all flex items-center justify-center gap-2"
-              >
+              <button type="submit" disabled={loading} className="btn-primary btn-emerald w-full py-3.5">
                 {loading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Initializing Handshake...</span>
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Handshake in progress…
                   </>
-                ) : 'Start Remote Scan'}
+                ) : (
+                  'Start remote scan'
+                )}
               </button>
             </form>
           </Panel>
         </div>
 
         <div className="col-span-full lg:col-span-7">
-          <Panel title="Simulation Feedback" subtitle="Real-time telemetry from the discovery agent">
-            <div className="flex flex-col items-center justify-center h-full min-h-[400px] border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
+          <Panel title="Telemetry" subtitle="Live feedback from the discovery worker" accent="indigo">
+            <div className="flex min-h-[420px] flex-col rounded-2xl border border-dashed border-white/[0.08] bg-black/20">
               {loading ? (
-                <div className="flex flex-col items-center gap-6">
+                <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-16">
                   <div className="relative">
-                    <div className="w-16 h-16 border-4 border-emerald-500/20 rounded-full"></div>
-                    <div className="absolute inset-0 w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="h-16 w-16 rounded-full border-4 border-emerald-500/15" />
+                    <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
                   </div>
-                  <div className="text-center">
-                    <p className="text-emerald-500 font-bold mb-1">Scanning Subnet...</p>
-                    <p className="text-xs text-zinc-500 font-mono uppercase tracking-widest">Intercepting TLS Hello</p>
+                  <div className="space-y-1 text-center">
+                    <p className="font-semibold text-emerald-400">Scanning endpoint…</p>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-600">
+                      TLS handshake · cipher probe
+                    </p>
                   </div>
                 </div>
               ) : results ? (
-                <div className="w-full h-full p-2 space-y-3 overflow-y-auto max-h-[500px]">
-                  <p className="text-xs font-bold text-emerald-500 mb-4 px-4">{results.length} cryptographic entities identified.</p>
-                  {results.map((a, i) => (
-                    <div key={i} className="flex items-center justify-between px-6 py-4 rounded-xl bg-white/[0.03] border border-white/5 group hover:border-emerald-500/30 transition-all">
-                      <div>
-                        <p className="text-sm font-bold text-zinc-200">{a.address}</p>
-                        <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Port {a.port} • Discovered via SSH-Scan</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-mono text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-md">{a.cipher_suite || 'AES-GCM-256'}</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="flex max-h-[520px] flex-1 flex-col gap-3 overflow-y-auto p-4">
+                  <p className="px-2 font-mono text-[11px] uppercase tracking-wider text-emerald-500/90">
+                    {results.length} cryptographic entit{results.length === 1 ? 'y' : 'ies'} found
+                  </p>
+                  <ul className="space-y-2">
+                    {results.map(a => (
+                      <li
+                        key={`${a.address}:${a.port}:${a.id}`}
+                        className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 transition-colors hover:border-emerald-500/25"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-zinc-200">{a.address}</p>
+                          <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+                            Port {a.port}
+                            {a.protocol ? ` · ${a.protocol}` : ''}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-lg bg-emerald-500/10 px-2.5 py-1 font-mono text-[11px] text-emerald-400">
+                          {a.cipher_suite ?? '—'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ) : error ? (
-                <div className="p-8 text-center space-y-2">
-                  <div className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertTriangle size={24} />
+                <div className="flex flex-1 flex-col items-center justify-center gap-3 px-8 py-16 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-400">
+                    <AlertTriangle size={26} />
                   </div>
-                  <p className="text-rose-400 font-bold">Discovery Failure</p>
-                  <p className="text-xs text-zinc-600 max-w-xs">{error}</p>
+                  <p className="font-semibold text-rose-300">Discovery failed</p>
+                  <p className="max-w-sm text-sm leading-relaxed text-zinc-500">{error}</p>
                 </div>
               ) : (
-                <div className="text-center space-y-2 opacity-30">
-                  <p className="font-bold tracking-widest uppercase text-xs">Waiting for Signal</p>
-                  <p className="text-[10px] text-zinc-500">No active discovery session detected</p>
+                <div className="empty-state flex flex-1 flex-col items-center justify-center gap-3 px-6 py-20">
+                  <Radar className="text-zinc-700" size={36} strokeWidth={1.25} />
+                  <p className="font-medium text-zinc-500">Awaiting scan</p>
+                  <p className="max-w-xs text-xs text-zinc-600">
+                    Submit a target to populate this panel with discovery results.
+                  </p>
                 </div>
               )}
             </div>

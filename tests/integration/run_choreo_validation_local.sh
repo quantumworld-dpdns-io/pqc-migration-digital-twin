@@ -47,15 +47,20 @@ echo "health_status=$health_status" | tee -a "$STACK_LOG"
 for p in "/api/v1/discovery" "/api/v1/assets" "/api/v1/risk" "/api/v1/risk/backlog" "/api/v1/proof" "/api/v1/qasm"
 do
   body_file="$OUT$(echo "$p" | tr "/" "_").json"
+  method="POST"
   case "$p" in
     "/api/v1/discovery") payload='{}' ;;
-    "/api/v1/assets") payload='{"limit":5}' ;;
+    "/api/v1/assets") payload=''; method="GET" ;;
     "/api/v1/risk") payload='{"asset":"asset-001","risk":0.5}' ;;
     "/api/v1/risk/backlog") payload='{"threats":[{"id":"t1","score":0.9}],"capacity":5}' ;;
     "/api/v1/proof") payload='{"artifact":"hello","key":"demo"}' ;;
     "/api/v1/qasm") payload='{"program":"OPENQASM 2.0; qreg q[1]; creg c[1]; measure q[0] -> c[0];"}' ;;
   esac
-  code=$(curl -s -o "$body_file" -w "%{http_code}" -H "Content-Type: application/json" -d "$payload" "$BASE$p" || true)
+  if [ "$method" = "GET" ]; then
+    code=$(curl -s -o "$body_file" -w "%{http_code}" "$BASE$p" || true)
+  else
+    code=$(curl -s -o "$body_file" -w "%{http_code}" -H "Content-Type: application/json" -d "$payload" "$BASE$p" || true)
+  fi
   echo "$p=$code" | tee -a "$STACK_LOG"
 done
 

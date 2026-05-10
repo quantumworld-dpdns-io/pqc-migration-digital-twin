@@ -11,7 +11,7 @@
     "compose_down": "PASS",
     "health_status": "200",
     "/api/v1/discovery": "200",
-    "/api/v1/assets": "405",
+    "/api/v1/assets": "200",
     "/api/v1/risk": "200",
     "/api/v1/risk/backlog": "200",
     "/api/v1/proof": "200",

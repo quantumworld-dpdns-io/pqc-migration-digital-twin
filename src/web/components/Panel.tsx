@@ -7,23 +7,22 @@ type PanelProps = {
   accent?: 'emerald' | 'rose' | 'amber' | 'indigo';
 };
 
-export function Panel({ title, subtitle, children, accent = 'emerald' }: PanelProps) {
-  const accentColors = {
-    emerald: 'border-emerald-500/20',
-    rose: 'border-rose-500/20',
-    amber: 'border-amber-500/20',
-    indigo: 'border-indigo-500/20',
-  };
+const accentBar = {
+  emerald: 'from-emerald-500/90 to-emerald-600/40',
+  rose: 'from-rose-500/90 to-rose-600/40',
+  amber: 'from-amber-500/90 to-amber-600/40',
+  indigo: 'from-indigo-500/90 to-indigo-600/40',
+};
 
+export function Panel({ title, subtitle, children, accent = 'emerald' }: PanelProps) {
   return (
-    <section className={`panel relative group border-t-2 ${accentColors[accent]}`}>
-      {/* Decorative corner accents */}
-      <div className="absolute top-0 right-0 w-8 h-8 border-t border-r border-white/10 rounded-tr-2xl pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-8 h-8 border-b border-l border-white/10 rounded-bl-2xl pointer-events-none"></div>
-      
-      <header className="panel-head mb-6">
-        <h2 className="text-white font-bold tracking-tight">{title}</h2>
-        {subtitle ? <p className="text-zinc-500 text-xs mt-1">{subtitle}</p> : null}
+    <section className="panel overflow-hidden">
+      <div className={`mb-6 h-px w-16 rounded-full bg-gradient-to-r ${accentBar[accent]}`} aria-hidden />
+      <header className="panel-head mb-6 space-y-1.5">
+        <h2 className="text-[1.05rem] font-semibold tracking-tight text-zinc-50">{title}</h2>
+        {subtitle ? (
+          <p className="max-w-prose text-[13px] leading-relaxed text-zinc-500">{subtitle}</p>
+        ) : null}
       </header>
       <div className="panel-body">{children}</div>
     </section>
