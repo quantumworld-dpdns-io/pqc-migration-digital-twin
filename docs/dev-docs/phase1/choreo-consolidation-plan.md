@@ -1,7 +1,7 @@
 # Choreo Consolidation Plan — 4-Component Architecture
 
 **Date:** 2026-05-10  
-**Status:** In Progress  
+**Status:** In Progress (reconciled to repo evidence on 2026-05-10)  
 **Reason:** Choreo free tier limits deployments to 4 components maximum.
 
 ---
@@ -164,11 +164,20 @@ All 4 Dockerfiles include a non-root user with UID **10014** and an explicit `US
 
 ## 9. Checklist
 
-- [ ] All 4 Dockerfiles build successfully locally
-- [ ] `docker-compose.microservices.yml` stack starts and all healthchecks pass
-- [ ] `docker-compose.microservices-chore-dev.yml` validates against Choreo
-- [ ] AlwaysData `DATABASE_URL` added as Choreo Secret on each component
-- [ ] nginx upstream env vars set in Choreo to point at internal service endpoints
-- [ ] Checkov scan passes (0 failures) on all 4 Dockerfiles
-- [ ] `/health` endpoint reachable via nginx public URL
-- [ ] All `/api/v1/` routes verified end-to-end through nginx → gateway
+Status legend: `[done]` = evidenced in repo, `[pending]` = not yet evidenced in repo, `[external]` = requires Choreo/ops execution.
+
+- [ ] `[pending]` All 4 Dockerfiles build successfully locally.
+- [ ] `[pending]` `docker-compose.microservices.yml` stack starts and all healthchecks pass.
+- [ ] `[pending]` `docker-compose.microservices-chore-dev.yml` validates against Choreo.
+- [ ] `[external]` AlwaysData `DATABASE_URL` added as Choreo Secret on each component.
+- [ ] `[external]` nginx upstream env vars set in Choreo to point at internal service endpoints.
+- [ ] `[pending]` Checkov scan passes (0 failures) on all 4 Dockerfiles.
+- [ ] `[external]` `/health` endpoint reachable via nginx public URL.
+- [ ] `[pending]` All `/api/v1/` routes verified end-to-end through nginx → gateway.
+
+## 10. Verified Repo Evidence Snapshot (2026-05-10)
+
+- `[done]` nginx runtime split by environment (`NGINX_ENV=local|choreo`) with `server-local.conf` and `server-choreo.conf`.
+- `[done]` local certificate automation and validator script exist:
+  `scripts/generate-local-certs.sh` and `scripts/validate-local-certs-script.sh`.
+- `[done]` CI has script validation job (`.github/workflows/ci.yml`) and `make lint` invokes the script validator.

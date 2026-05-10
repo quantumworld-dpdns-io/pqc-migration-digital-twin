@@ -1,4 +1,4 @@
-# Program Status Master (As of 2026-05-09)
+# Program Status Master (As of 2026-05-10)
 
 ## Scope
 This file is the controller-level consolidation of:
@@ -20,6 +20,18 @@ This file is the controller-level consolidation of:
 - CI lanes for lint/test/contracts plus Docker integration smoke testing.
 - Workstream and milestone scoreboards with current delivery evidence.
 - Tool-selection suitability map with implementation tracking overlay and sprint onboarding sequence.
+
+## Pending-Until-Merged Assumptions (2026-05-10)
+
+Concurrent worker outputs indicate the following likely additions, but they remain provisional here until merged into the canonical branch:
+
+- nginx consolidation/hardening updates in `docker-images/nginx/*` (environment-specific server config selection).
+- script automation gate for local cert generation in `scripts/validate-local-certs-script.sh`, invoked by `Makefile` and CI workflow.
+- frontend dashboard mode indicator (live/fallback) and API-client error contract tests in `src/web/*`.
+
+Impact if merged:
+- improves Phase 2 implementation confidence and automation depth,
+- does **not** change overall program status that Phase 5 remains incomplete.
 
 ## What Remains To Finish The Full Plan
 1. Discovery depth and data quality:

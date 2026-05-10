@@ -222,10 +222,64 @@ jobs:
             echo "[contracts] src/python/tests missing; skipping"
           fi
 
+  security-readiness:
+    name: Security Readiness (Phase 5 Gates)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Rationale: enforce an actionable dependency vulnerability gate at PR time.
+      # We scan the repository filesystem (lockfiles/manifests) and fail on High/Critical findings.
+      - name: Dependency vulnerability gate (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          vuln-type: 'library'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '1'
+
+      # Rationale: add a concrete container-image gate using a real service image.
+      # Nginx edge image is fast to build and representative of deployable artifacts.
+      - name: Build nginx service image for container scanning
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build -t pqc-nginx-security-scan:ci docker-images/nginx
+
+      - name: Container vulnerability gate (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'image'
+          image-ref: 'pqc-nginx-security-scan:ci'
+          vuln-type: 'os,library'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '1'
+
+      # Rationale: produce a lightweight, portable SBOM artifact for compliance evidence.
+      # SPDX JSON from repository dependencies is sufficient for Phase 5 readiness baseline.
+      - name: Generate repository SBOM (SPDX JSON)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom-repo.spdx.json
+
+      - name: Upload SBOM artifact for evidence pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase5-sbom-spdx-json
+          path: sbom-repo.spdx.json
+          if-no-files-found: error
+
   integration-docker:
     name: Integration (Docker Microservices)
     runs-on: ubuntu-latest
-    needs: [scripts-validation, lint, test, contracts]
+    needs: [scripts-validation, lint, test, contracts, security-readiness]
     steps:
       - uses: actions/checkout@v4
       - name: Docker microservice smoke test

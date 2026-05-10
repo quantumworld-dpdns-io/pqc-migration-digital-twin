@@ -1,5 +1,7 @@
 # Implementation Plan Completion Report
 
+_Last reconciled: 2026-05-10_
+
 ## Executive Summary
 The repository has a solid **MVP foundation through Phases 0-4** (service scaffolds, gateway contracts, cross-language tests, Dockerized microservice smoke flow, and UI baseline). Most items are implemented as skeleton or lightweight functional paths rather than production-depth features. **Phase 5 (hardening + production readiness) is not complete** and requires explicit security, reliability, SLO, DR, and compliance execution before GA.
 
@@ -18,6 +20,17 @@ The repository has a solid **MVP foundation through Phases 0-4** (service scaffo
 - Gateway route surface and contract alignment are enforced: `docs/api/gateway-openapi.json`, `tests/contracts/test_repo_contract_smoke.py`, `src/go/gateway/server.go`.
 - Multi-service packaging and health checks exist: `docker-compose.microservices.yml`, service Dockerfiles in `src/go/*/Dockerfile`, `src/python/Dockerfile`, `src/rust/Dockerfile`, `src/qasm/examples/Dockerfile`.
 - CI runs lint/test/contracts and Docker smoke integration: `.github/workflows/ci.yml`.
+
+## Pending-Until-Merged Assumptions (Concurrent Worker Outputs, 2026-05-10)
+
+These are treated as provisional until merged into the authoritative branch used for this report:
+
+- nginx env-split hardening work in `docker-images/nginx/*` (`NGINX_ENV`, `server-local.conf`, `server-choreo.conf`).
+- Local cert script validator and CI hook:
+  `scripts/validate-local-certs-script.sh`, `Makefile`, `.github/workflows/ci.yml`.
+- Frontend resilience/status improvements:
+  `src/web/app/page.tsx` (live vs fallback data mode) and
+  `src/web/tests/api-client.error-handling.test.mjs` (API error/status behavior tests).
 
 ## Immediate Priority Gaps (Before GA)
 1. Add security gates (SCA/SAST, image scanning, SBOM + provenance/signing) into CI/CD.
