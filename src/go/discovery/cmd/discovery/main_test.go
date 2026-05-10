@@ -74,3 +74,29 @@ func TestScanRejectsInvalidPort(t *testing.T) {
 		t.Fatalf("expected 400 for invalid port, got %d", res.Code)
 	}
 }
+
+func TestHealthLiveReadyAndRequestID(t *testing.T) {
+	mux := newMux(discovery.NewAssetStore())
+
+	for _, path := range []string{"/health", "/live", "/ready"} {
+		t.Run(path, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			req.Header.Set("X-Request-Id", "disc-req-1")
+			res := httptest.NewRecorder()
+			mux.ServeHTTP(res, req)
+			if res.Code != http.StatusOK {
+				t.Fatalf("expected 200 for %s, got %d", path, res.Code)
+			}
+			if got := res.Header().Get("X-Request-Id"); got != "disc-req-1" {
+				t.Fatalf("expected request id echo for %s, got %q", path, got)
+			}
+		})
+	}
+
+	req2 := httptest.NewRequest(http.MethodGet, "/health", nil)
+	res2 := httptest.NewRecorder()
+	mux.ServeHTTP(res2, req2)
+	if strings.TrimSpace(res2.Header().Get("X-Request-Id")) == "" {
+		t.Fatalf("expected generated request id header to be present")
+	}
+}

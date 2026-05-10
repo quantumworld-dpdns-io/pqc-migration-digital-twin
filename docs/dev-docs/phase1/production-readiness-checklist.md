@@ -13,10 +13,15 @@ Status legend (updated 2026-05-10): `[done]` = evidenced in repo, `[pending]` = 
 
 ## Reliability and Operations
 - [x] `[done]` Define production runbooks for startup, rollback, dependency outage, and degraded-mode operation. Evidence: `docs/dev-docs/phase1/phase5/01-operations-runbooks.md`
-- [ ] `[pending]` Add structured logs, request IDs/trace IDs, and core RED metrics for all API paths.
-- [ ] `[pending]` Add health/readiness/liveness semantics beyond basic `/health` checks.
+- [x] `[done]` Add structured logs and request IDs for core API paths. Evidence: `src/go/gateway/server.go`, `src/go/discovery/cmd/discovery/main.go`, `src/python/service.py`, `src/rust/risk-service/src/main.rs`.
+- [x] `[done]` Add health/readiness/liveness semantics beyond basic `/health` checks. Evidence: `GET /live` and `GET /ready` implemented in `src/go/gateway/server.go`, `src/go/discovery/cmd/discovery/main.go`, `src/python/service.py`, `src/rust/risk-service/src/main.rs`.
 - [ ] `[pending]` Execute fault-injection tests (downstream timeout, partial outage, malformed payload bursts).
 - [ ] `[pending]` Verify graceful shutdown and restart behavior for all services.
+
+Observability/health reconciliation (2026-05-10):
+- Request-ID generation/propagation and structured logging are now implemented for Go gateway/discovery, Python analysis, and Rust risk service.
+- `/live` and `/ready` probe endpoints are now implemented for those same services in addition to `/health`.
+- RED metrics export remains pending.
 
 ## SLO and Performance
 - [ ] `[pending]` Finalize SLOs for: gateway API, HNDL scoring, risk/proof generation.

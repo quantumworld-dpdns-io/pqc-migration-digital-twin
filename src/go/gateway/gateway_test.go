@@ -31,6 +31,52 @@ func TestHealthEndpointMethodNotAllowed(t *testing.T) {
 	}
 }
 
+func TestLiveAndReadyEndpoints(t *testing.T) {
+	mux := NewMux()
+	for _, path := range []string{"/live", "/ready"} {
+		t.Run(path, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			rr := httptest.NewRecorder()
+			mux.ServeHTTP(rr, req)
+			if rr.Code != http.StatusOK {
+				t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+			}
+		})
+	}
+}
+
+func TestRequestIDHeaderGenerationAndPropagation(t *testing.T) {
+	var seenRequestID string
+	discovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seenRequestID = r.Header.Get("X-Request-Id")
+		writeJSON(w, http.StatusOK, map[string]any{"count": 1})
+	}))
+	defer discovery.Close()
+	t.Setenv("DISCOVERY_BASE_URL", discovery.URL)
+	mux := NewMux()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/assets", nil)
+	req.Header.Set("X-Request-Id", "req-123")
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+	if got := rr.Header().Get("X-Request-Id"); got != "req-123" {
+		t.Fatalf("expected response request id req-123, got %q", got)
+	}
+	if seenRequestID != "req-123" {
+		t.Fatalf("expected downstream request id req-123, got %q", seenRequestID)
+	}
+
+	req2 := httptest.NewRequest(http.MethodGet, "/health", nil)
+	rr2 := httptest.NewRecorder()
+	mux.ServeHTTP(rr2, req2)
+	if strings.TrimSpace(rr2.Header().Get("X-Request-Id")) == "" {
+		t.Fatalf("expected generated request id header to be present")
+	}
+}
+
 func TestGatewayProxiesDownstreamServices(t *testing.T) {
 	discovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/scan" {

@@ -4,6 +4,9 @@
 from __future__ import annotations
 
 import json
+import logging
+import time
+import uuid
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -13,21 +16,50 @@ from qasm_workflows.runner import run_manifest
 
 
 class Handler(BaseHTTPRequestHandler):
+    def _request_id(self) -> str:
+        inbound = self.headers.get("X-Request-Id")
+        if inbound and len(inbound) <= 128:
+            return inbound
+        return uuid.uuid4().hex
+
+    def _log_event(self, *, status: int, error: str | None = None) -> None:
+        logging.info(
+            json.dumps(
+                {
+                    "ts_ms": int(time.time() * 1000),
+                    "service": "python-analysis",
+                    "method": self.command,
+                    "path": self.path,
+                    "status": status,
+                    "request_id": getattr(self, "_current_request_id", None),
+                    "client_ip": self.client_address[0] if self.client_address else None,
+                    "error": error,
+                }
+            )
+        )
+
     def _json(self, code: int, payload: dict) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
+        self.send_header("X-Request-Id", self._current_request_id)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+        self._log_event(status=code)
 
     def do_GET(self) -> None:  # noqa: N802
+        self._current_request_id = self._request_id()
         if self.path == "/health":
+            self._json(HTTPStatus.OK, {"status": "ok", "service": "python-analysis"})
+            return
+        if self.path in {"/live", "/ready"}:
             self._json(HTTPStatus.OK, {"status": "ok", "service": "python-analysis"})
             return
         self._json(HTTPStatus.NOT_FOUND, {"error": "not found"})
 
     def do_POST(self) -> None:  # noqa: N802
+        self._current_request_id = self._request_id()
         content_len = int(self.headers.get("Content-Length", "0"))
         raw = self.rfile.read(content_len) if content_len else b"{}"
         try:
@@ -47,6 +79,9 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         self._json(HTTPStatus.NOT_FOUND, {"error": "not found"})
+
+    def log_message(self, format: str, *args: object) -> None:  # noqa: A003
+        return
 
     def _handle_hndl(self, payload: dict) -> None:
         try:
@@ -101,6 +136,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     server = ThreadingHTTPServer(("0.0.0.0", 8082), Handler)
     print("python analysis service listening on :8082")
     server.serve_forever()

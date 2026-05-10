@@ -28,9 +28,11 @@ Concurrent worker outputs indicate the following likely additions, but they rema
 - nginx consolidation/hardening updates in `docker-images/nginx/*` (environment-specific server config selection).
 - script automation gate for local cert generation in `scripts/validate-local-certs-script.sh`, invoked by `Makefile` and CI workflow.
 - frontend dashboard mode indicator (live/fallback) and API-client error contract tests in `src/web/*`.
+- observability/health hardening merged in core services (`src/go/gateway`, `src/go/discovery`, `src/python/service.py`, `src/rust/risk-service`) with request IDs, structured logs, and `/live` + `/ready` probes.
 
 Impact if merged:
 - improves Phase 2 implementation confidence and automation depth,
+- materially advances Phase 5 reliability/operations controls for observability and probe semantics,
 - does **not** change overall program status that Phase 5 remains incomplete.
 
 ## What Remains To Finish The Full Plan

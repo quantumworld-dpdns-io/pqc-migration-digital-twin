@@ -9,7 +9,7 @@ The repository has a solid **MVP foundation through Phases 0-4** (service scaffo
 
 | Phase | Status | Evidence in Repo | Residual Gaps |
 |---|---|---|---|
-| Phase 0: Foundations | Mostly complete (MVP) | `Makefile`; `.github/workflows/ci.yml`; `docs/api/gateway-openapi.json`; `tests/contracts/test_repo_contract_smoke.py` | No protobuf contracts committed yet; security scanning/SBOM/signing gates not present in CI. |
+| Phase 0: Foundations | Mostly complete (MVP) | `Makefile`; `.github/workflows/ci.yml`; `docs/api/gateway-openapi.json`; `tests/contracts/test_repo_contract_smoke.py` | No protobuf contracts committed yet; signed provenance and full per-image SBOM coverage are not yet present in CI evidence. |
 | Phase 1: Asset Discovery + Inventory Graph | Partial | `src/go/discovery/scanner.go`; `src/go/discovery/scanners_stub.go`; `src/go/discovery/cmd/discovery/main.go`; `src/web/components/InventoryTable.tsx` | Connectors are stubs (not production adapters); no evidence of 3+ real source systems per asset class; dedup/fingerprint accuracy benchmark not present. |
 | Phase 2: HNDL Exposure + Risk Scoring | Partial | `src/python/hndl_analysis/*`; `src/python/service.py` (`/hndl/score`); `src/rust/risk-engine/src/lib.rs`; `src/rust/risk-service/src/main.rs`; tests under `src/python/tests` and `src/go/gateway/gateway_test.go` | No demonstrated 10k-asset SLO benchmark; no export flow for ranked backlog; policy tuning appears code-driven, not externally managed. |
 | Phase 3: ZK Migration Proofs + Governance | Partial | `src/rust/zk-proof/src/lib.rs`; `src/rust/risk-service/src/main.rs` (proof hash in response); `src/web/components/ProofPanel.tsx`; verifier path scaffold + audit path scaffold present | Scaffold exists, but full independent verifier workflow, proof artifact registry/lifecycle store, and governance dashboard/exception tracking are not implemented. |
@@ -31,6 +31,18 @@ These are treated as provisional until merged into the authoritative branch used
 - Frontend resilience/status improvements:
   `src/web/app/page.tsx` (live vs fallback data mode) and
   `src/web/tests/api-client.error-handling.test.mjs` (API error/status behavior tests).
+- Observability/health enhancements now merged for core services:
+  request-id middleware/headers, structured request logs, and `/live` + `/ready` endpoints in Go gateway/discovery, Python analysis, and Rust risk service.
+
+Current health/observability baseline evidence:
+- `src/go/gateway/server.go` (`GET /health`)
+- `src/go/discovery/cmd/discovery/main.go` (`/health`)
+- `src/python/service.py` (`/health`)
+- `src/rust/risk-service/src/main.rs` (`/health`)
+- `src/qasm/examples/service/qasm_service.py` (`/health`)
+- `docker-images/nginx/locations.conf` (`/health` routed to gateway)
+- `src/go/gateway/server.go` and `src/go/discovery/cmd/discovery/main.go` (`X-Request-Id`, structured logs, `/live`, `/ready`)
+- `src/python/service.py` and `src/rust/risk-service/src/main.rs` (`X-Request-Id`, structured logs, `/live`, `/ready`)
 
 ## Immediate Priority Gaps (Before GA)
 1. Expand security gates from baseline to full coverage (all images/services), and add signed provenance for SBOM artifacts.
