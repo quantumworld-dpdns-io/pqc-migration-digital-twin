@@ -30,7 +30,7 @@ The following are now evidenced in this branch snapshot:
 - script automation gate for local cert generation in `scripts/validate-local-certs-script.sh`, invoked by `Makefile` and CI workflow.
 - frontend dashboard mode indicator (live/fallback) and API-client error contract tests in `src/web/*`.
 - observability/health hardening in core services (`src/go/gateway`, `src/go/discovery`, `src/python/service.py`, `src/rust/risk-service`, `src/qasm/examples/service`) with request IDs, structured logs, and `/live` + `/ready` probes.
-- RED metrics export baseline is now implemented in core services (`/metrics` with request/error/latency counters), while dashboards/alerting and error-budget governance remain pending.
+- RED metrics export baseline is now implemented in core services (`/metrics` with request/error/latency counters); dashboard/alert policy baseline now exists, while deployed-monitoring execution evidence remains pending.
 - governance/compliance documentation additions in `docs/dev-docs/phase1/phase5/*` (2026-05-10):
   SLO/error-budget spec (`04-slo-error-budget-spec.md`),
   backup/restore procedure (`05-backup-restore-procedure.md`),
