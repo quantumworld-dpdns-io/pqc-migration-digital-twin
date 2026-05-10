@@ -4,16 +4,18 @@ import { InventoryTable } from '../components/InventoryTable';
 import { Panel } from '../components/Panel';
 import { ProofPanel } from '../components/ProofPanel';
 import { RiskMatrix } from '../components/RiskMatrix';
+import { StatCard } from '../components/StatCard';
 import { getAssets, getRiskScore, Asset } from '../lib/api';
 import type { GovernanceException, HeatmapCell, InventoryItem, RiskItem, VerifierDrift } from '../lib/types';
+import { ShieldAlert, Globe, Server, CheckCircle2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const DigitalTwinScene = dynamic(() => import('../components/three/DigitalTwinScene'), { 
   ssr: false,
-  loading: () => <div className="h-[400px] w-full bg-black/20 animate-pulse rounded-xl flex items-center justify-center text-zinc-500">Initializing Digital Twin Scene...</div>
+  loading: () => <div className="h-[500px] w-full bg-black/20 animate-pulse rounded-2xl flex items-center justify-center text-zinc-500 font-mono text-xs tracking-widest uppercase">Initializing Digital Twin Neural Link...</div>
 });
 
-// ── Static fallback data (used when gateway is unreachable) ──────────────────
+// ── Static fallback data ──────────────────
 
 const fallbackAssets: Asset[] = [
   { id: '1', address: '10.0.0.1', port: 443, is_vulnerable: true, discovered_at: '', protocol: 'TLSv1.2', cipher_suite: 'RSA-AES256-GCM' },
@@ -50,7 +52,7 @@ const verifierDrift: VerifierDrift[] = [
   { verifier: 'risk-audit-verifier', currentVersion: '2.0.0', latestVersion: '2.0.0' },
 ];
 
-// ── Server component — fetches live data, falls back to static ───────────────
+// ── Server component ───────────────
 
 type FetchResult<T> = {
   data: T;
@@ -97,45 +99,43 @@ export default async function DashboardPage() {
       ]
     : fallbackRisks;
 
+  const vulnerableCount = assets.filter(a => a.is_vulnerable).length;
+
   return (
-    <main className="dashboard space-y-12">
-      <header className="hero flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <p className="kicker">Operational Digital Twin</p>
-          <h1>Enterprise Dashboard</h1>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {risk && (
-            <div className="risk-badge">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Risk: <strong>{risk.score}</strong></span>
-            </div>
-          )}
-          <div className="risk-badge">
-            <span className={`w-2 h-2 rounded-full ${isLiveMode ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-            <span>Mode: <strong>{isLiveMode ? 'Live Gateway' : 'Fallback Dataset'}</strong></span>
+    <main className="dashboard space-y-10">
+      <header className="hero space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <p className="kicker">Operational Command</p>
+            <h1 className="text-5xl font-extrabold tracking-tighter">Enterprise Digital Twin</h1>
           </div>
+          <div className="risk-badge px-4 py-2 bg-white/[0.03] border border-white/5 rounded-2xl flex items-center gap-3">
+            <div className={`w-2 h-2 rounded-full ${isLiveMode ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></div>
+            <span className="text-xs font-mono uppercase tracking-widest text-zinc-400">
+              System Mode: <strong className="text-zinc-100">{isLiveMode ? 'Live Neural Link' : 'Simulation Fallback'}</strong>
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard label="Total Assets" value={assets.length} icon={Server} color="indigo" />
+          <StatCard label="Vulnerable" value={vulnerableCount} subValue={`${Math.round((vulnerableCount/assets.length)*100)}%`} icon={ShieldAlert} color="rose" />
+          <StatCard label="Network Reach" value="Subnet A/B" subValue="Discovered" icon={Globe} color="amber" />
+          <StatCard label="Verifier Status" value="Healthy" icon={CheckCircle2} color="emerald" />
         </div>
       </header>
 
-      <section className="col-span-full">
-        <Panel title="Real-time Network Twin" subtitle="Live 3D spatial representation of discovered assets and security posture">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-emerald-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-            <DigitalTwinScene assets={assets} />
-          </div>
-        </Panel>
-      </section>
-
       <div className="layout-grid">
+        {/* Main Centerpiece: 3D Twin */}
         <div className="col-span-full xl:col-span-8">
-          <Panel title="Cryptographic Inventory" subtitle={`${assets.length} items identified in the current scan scope`}>
-            <InventoryTable items={inventory} />
+          <Panel title="Real-time Network Twin" subtitle="Live 3D spatial representation of discovered entities and security posture" accent="indigo">
+            <DigitalTwinScene assets={assets} />
           </Panel>
         </div>
 
-        <div className="col-span-full xl:col-span-4 space-y-6">
-          <Panel title="Risk Analysis" subtitle="HNDL signal intensity and exposure matrix">
+        {/* Sidebar Analysis */}
+        <div className="col-span-full xl:col-span-4 flex flex-col gap-8">
+          <Panel title="Risk Analysis" subtitle="HNDL signal intensity and exposure matrix" accent="rose">
             <div className="space-y-8">
               <HndlHeatmap cells={fallbackHeatmap} />
               <div className="pt-6 border-t border-white/5">
@@ -144,14 +144,22 @@ export default async function DashboardPage() {
             </div>
           </Panel>
           
-          <Panel title="Compliance Overview" subtitle="Verifier drift and policy exceptions">
+          <Panel title="Compliance Overview" subtitle="Verifier drift and policy exceptions" accent="amber">
             <GovernancePanel exceptions={governanceExceptions} drift={verifierDrift} />
           </Panel>
         </div>
 
+        {/* Supporting Evidence */}
         <div className="col-span-full">
-          <Panel title="Evidence & Verification" subtitle="Cryptographic proofs and audit-ready verification lanes">
+          <Panel title="Evidence & Verification" subtitle="Cryptographic proofs and audit-ready verification lanes" accent="emerald">
             <ProofPanel />
+          </Panel>
+        </div>
+
+        {/* Bottom Detail: Detailed Inventory */}
+        <div className="col-span-full">
+          <Panel title="Cryptographic Inventory" subtitle={`${assets.length} unique systems identified in the current twin scope`} accent="indigo">
+            <InventoryTable items={inventory} />
           </Panel>
         </div>
       </div>
