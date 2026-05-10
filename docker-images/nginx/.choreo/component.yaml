@@ -1,5 +1,10 @@
 schemaVersion: "1.2"
 
+build:
+  docker:
+    dockerfilePath: Dockerfile
+    dockerContext: .
+
 endpoints:
   - name: nginx-ingress
     displayName: PQC Digital Twin — Public API

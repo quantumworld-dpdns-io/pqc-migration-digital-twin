@@ -4,4 +4,4 @@ COPY nginx.conf /etc/nginx/nginx.conf
 USER 10014
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD ["wget", "-q", "--spider", "http://localhost:8080/health"]
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
