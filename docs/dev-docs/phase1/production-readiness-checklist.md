@@ -3,6 +3,8 @@
 Use this checklist as the GA gate for **Phase 5: Hardening + Production Readiness**.
 Status legend (updated 2026-05-10): `[done]` = directly evidenced in repo artifacts, `[pending]` = not evidenced yet or requires runtime execution evidence, `[external]` = depends on org/process outside repo.
 
+Evidence reconciliation note (2026-05-10): statuses below were revalidated against committed branch artifacts, including runtime-evidence files under `tests/integration/artifacts/`.
+
 ## Security
 - [ ] `[pending]` Publish and approve service threat model updates for gateway, discovery, python-analysis, rust-risk, qasm services.
 - [x] `[done]` Enable dependency/container vulnerability scanning in CI with blocking policy for Critical/High issues. Evidence: `.github/workflows/ci.yml` (`security-readiness` job with Trivy fail-on `HIGH,CRITICAL`).
@@ -36,7 +38,7 @@ Observability/RED reconciliation (2026-05-10):
 - [ ] `[pending]` Implement RED dashboards in a production monitoring system showing latency (p50/p95/p99), error rate, and throughput per service.
 - [ ] `[pending]` Configure and verify live error-budget and burn-rate alerting in production monitoring tooling.
 - [x] `[done]` Run load/perf test including a 10k-asset-equivalent scoring scenario. Evidence: `scripts/run-benchmark-10k.sh` with executed artifact `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`.
-- [ ] `[pending]` Capture benchmark evidence sign-off in release governance records (artifact exists; approval/sign-off record still pending).
+- [ ] `[external]` Capture benchmark evidence sign-off in release governance records (artifact exists; approval/sign-off record still pending). Evidence artifact: `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`.
 
 ## Disaster Recovery (DR)
 - [x] `[done]` Document RTO/RPO targets for each critical data path and service. Evidence: `docs/dev-docs/phase1/phase5/02-dr-drill-template.md`
