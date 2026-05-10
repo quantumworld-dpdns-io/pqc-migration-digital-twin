@@ -29,13 +29,13 @@ The following are now evidenced in this branch snapshot:
 - script automation gate for local cert generation in `scripts/validate-local-certs-script.sh`, invoked by `Makefile` and CI workflow.
 - frontend dashboard mode indicator (live/fallback) and API-client error contract tests in `src/web/*`.
 - observability/health hardening in core services (`src/go/gateway`, `src/go/discovery`, `src/python/service.py`, `src/rust/risk-service`, `src/qasm/examples/service`) with request IDs, structured logs, and `/live` + `/ready` probes.
-- RED metrics implementation is still pending: no explicit metrics export layer (`/metrics` or equivalent RED counters/histograms) is evidenced in this branch snapshot.
+- RED metrics export baseline is now implemented in core services (`/metrics` with request/error/latency counters), while dashboards/alerting remain pending.
 - CI security-readiness lane with Trivy gates and SBOM artifact generation in `.github/workflows/ci.yml`.
 
 Impact:
 - improves Phase 2 implementation confidence and automation depth,
 - materially advances Phase 5 reliability/operations controls for observability and probe semantics,
-- establishes RED-metrics prerequisites but does not complete RED instrumentation/dashboard deliverables,
+- establishes RED instrumentation baseline but does not complete RED dashboard/alerting deliverables,
 - does **not** change overall program status that Phase 5 remains incomplete.
 
 ## What Remains To Finish The Full Plan

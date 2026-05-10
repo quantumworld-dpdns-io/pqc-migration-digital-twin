@@ -77,6 +77,44 @@ func TestRequestIDHeaderGenerationAndPropagation(t *testing.T) {
 	}
 }
 
+func TestMetricsEndpointExportsRouteCounters(t *testing.T) {
+	mux := NewMux()
+
+	reqOK := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resOK := httptest.NewRecorder()
+	mux.ServeHTTP(resOK, reqOK)
+	if resOK.Code != http.StatusOK {
+		t.Fatalf("expected /health status 200, got %d", resOK.Code)
+	}
+
+	reqErr := httptest.NewRequest(http.MethodGet, "/api/v1/risk", nil)
+	resErr := httptest.NewRecorder()
+	mux.ServeHTTP(resErr, reqErr)
+	if resErr.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected /api/v1/risk status 405, got %d", resErr.Code)
+	}
+
+	metricsReq := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	metricsRes := httptest.NewRecorder()
+	mux.ServeHTTP(metricsRes, metricsReq)
+	if metricsRes.Code != http.StatusOK {
+		t.Fatalf("expected /metrics status 200, got %d", metricsRes.Code)
+	}
+	body := metricsRes.Body.String()
+	for _, snippet := range []string{
+		`# TYPE request_count counter`,
+		`# TYPE error_count counter`,
+		`# TYPE request_latency_ms histogram`,
+		`request_count{service="go-gateway",route="/health"} 1`,
+		`request_count{service="go-gateway",route="/api/v1/risk"} 1`,
+		`error_count{service="go-gateway",route="/api/v1/risk"} 1`,
+	} {
+		if !strings.Contains(body, snippet) {
+			t.Fatalf("expected metrics output to contain %q, got:\n%s", snippet, body)
+		}
+	}
+}
+
 func TestGatewayProxiesDownstreamServices(t *testing.T) {
 	discovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/scan" {

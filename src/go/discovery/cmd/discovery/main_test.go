@@ -100,3 +100,41 @@ func TestHealthLiveReadyAndRequestID(t *testing.T) {
 		t.Fatalf("expected generated request id header to be present")
 	}
 }
+
+func TestMetricsEndpointExportsRouteCounters(t *testing.T) {
+	mux := newMux(discovery.NewAssetStore())
+
+	okReq := httptest.NewRequest(http.MethodGet, "/health", nil)
+	okRes := httptest.NewRecorder()
+	mux.ServeHTTP(okRes, okReq)
+	if okRes.Code != http.StatusOK {
+		t.Fatalf("expected /health status 200, got %d", okRes.Code)
+	}
+
+	errReq := httptest.NewRequest(http.MethodPut, "/scan", nil)
+	errRes := httptest.NewRecorder()
+	mux.ServeHTTP(errRes, errReq)
+	if errRes.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected /scan status 405, got %d", errRes.Code)
+	}
+
+	metricsReq := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	metricsRes := httptest.NewRecorder()
+	mux.ServeHTTP(metricsRes, metricsReq)
+	if metricsRes.Code != http.StatusOK {
+		t.Fatalf("expected /metrics status 200, got %d", metricsRes.Code)
+	}
+	body := metricsRes.Body.String()
+	for _, snippet := range []string{
+		`# TYPE request_count counter`,
+		`# TYPE error_count counter`,
+		`# TYPE request_latency_ms histogram`,
+		`request_count{service="go-discovery",route="/health"} 1`,
+		`request_count{service="go-discovery",route="/scan"} 1`,
+		`error_count{service="go-discovery",route="/scan"} 1`,
+	} {
+		if !strings.Contains(body, snippet) {
+			t.Fatalf("expected metrics output to contain %q, got:\n%s", snippet, body)
+		}
+	}
+}

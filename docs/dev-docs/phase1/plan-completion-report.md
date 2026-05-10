@@ -34,7 +34,7 @@ The following are now evidenced in this branch snapshot:
 - Observability baseline enhancements in core services:
   request-id middleware/headers, structured request logs, and `/live` + `/ready` endpoints in Go gateway/discovery, Python analysis, Rust risk service, and qasm examples service.
 - RED metrics progress status:
-  foundational inputs are present (request IDs + structured logs + probe endpoints), but explicit RED metrics export/instrumentation and dashboards remain pending.
+  explicit metrics export/instrumentation is now present via `/metrics` in core services; dashboards and alerting remain pending.
 - CI security-readiness lane for vulnerability gating and SBOM artifact output:
   `.github/workflows/ci.yml` (`security-readiness`, Trivy fail-on `HIGH,CRITICAL`, SPDX SBOM upload).
 
@@ -50,7 +50,13 @@ Current health/observability baseline evidence:
 - `src/qasm/examples/service/qasm_service.py` (`X-Request-Id`, structured logs, `/live`, `/ready`)
 
 Current RED metrics evidence status:
-- No `/metrics` endpoint or equivalent RED counter/histogram export paths are evidenced yet in core service code under `src/go/*`, `src/python/service.py`, `src/rust/risk-service/src/main.rs`, or `src/qasm/examples/service/qasm_service.py`.
+- `/metrics` RED exports are present in:
+  `src/go/gateway/server.go`,
+  `src/go/discovery/cmd/discovery/main.go`,
+  `src/python/service.py`,
+  `src/rust/risk-service/src/main.rs`,
+  `src/qasm/examples/service/qasm_service.py`.
+- Remaining gaps: production dashboards (p50/p95/p99, throughput, error-rate), error-budget alerting, and SLO governance evidence.
 
 ## Immediate Priority Gaps (Before GA)
 1. Expand security gates from baseline to full coverage (all images/services), and add signed provenance for SBOM artifacts.

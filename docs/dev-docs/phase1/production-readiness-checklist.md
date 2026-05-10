@@ -21,7 +21,8 @@ Status legend (updated 2026-05-10): `[done]` = evidenced in repo, `[pending]` = 
 Observability/RED reconciliation (2026-05-10):
 - Implemented baseline observability for API services: request-ID generation/echo plus structured request logs in `src/go/gateway/server.go`, `src/go/discovery/cmd/discovery/main.go`, `src/python/service.py`, `src/rust/risk-service/src/main.rs`, and `src/qasm/examples/service/qasm_service.py`.
 - Implemented probe semantics for those services: `/health`, `/live`, and `/ready` (service files above).
-- RED metrics status: `pending` for explicit metrics export/instrumentation (`/metrics` or equivalent counters/histograms are not yet evidenced in this repo snapshot).
+- Implemented RED metrics export baseline (`/metrics`) with request/error/latency counters in Go gateway/discovery, Python analysis, Rust risk service, and QASM service.
+- Remaining RED gap is dashboarding and alerting integration (see SLO and Performance section).
 
 ## SLO and Performance
 - [ ] `[pending]` Finalize SLOs for: gateway API, HNDL scoring, risk/proof generation.

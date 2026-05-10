@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import threading
 import time
 import uuid
 from http import HTTPStatus
@@ -14,6 +15,43 @@ from pathlib import Path
 
 EXAMPLES_DIR = Path(__file__).resolve().parent.parent
 REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9._:-]{6,128}$")
+
+
+class Metrics:
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self.request_count = 0
+        self.error_count = 0
+        self.latency_ms_sum = 0
+        self.latency_ms_max = 0
+
+    def record(self, *, status: int, latency_ms: int) -> None:
+        with self._lock:
+            self.request_count += 1
+            if status >= 400:
+                self.error_count += 1
+            self.latency_ms_sum += latency_ms
+            if latency_ms > self.latency_ms_max:
+                self.latency_ms_max = latency_ms
+
+    def render(self) -> str:
+        with self._lock:
+            count = self.request_count
+            err = self.error_count
+            lat_sum = self.latency_ms_sum
+            lat_max = self.latency_ms_max
+        lat_avg = (lat_sum / count) if count else 0.0
+        return (
+            f"request_count {count}\n"
+            f"error_count {err}\n"
+            f"latency_ms_count {count}\n"
+            f"latency_ms_sum {lat_sum}\n"
+            f"latency_ms_avg {lat_avg:.3f}\n"
+            f"latency_ms_max {lat_max}\n"
+        )
+
+
+METRICS = Metrics()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -35,6 +73,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _log_request(self, *, error: str | None = None) -> None:
         duration_ms = int((time.time() - self._start_ts) * 1000)
+        METRICS.record(status=self._status_code, latency_ms=duration_ms)
         event = {
             "ts_ms": int(time.time() * 1000),
             "service": "qasm-examples",
@@ -53,6 +92,18 @@ class Handler(BaseHTTPRequestHandler):
         self._status_code = int(HTTPStatus.INTERNAL_SERVER_ERROR)
         self._rid = self._request_id()
         try:
+            if self.path == "/metrics":
+                body = METRICS.render().encode("utf-8")
+                self.send_response(HTTPStatus.OK)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("X-Request-Id", self._rid)
+                self.end_headers()
+                self.wfile.write(body)
+                self._status_code = int(HTTPStatus.OK)
+                self._log_request()
+                return
+
             if self.path in ("/health", "/live", "/ready"):
                 self._json(HTTPStatus.OK, {"status": "ok", "service": "qasm-examples"})
                 self._log_request()
