@@ -6,10 +6,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -109,6 +111,101 @@ func (s *exceptionStore) list() []governanceException {
 	return out
 }
 
+type routeMetrics struct {
+	requestCount uint64
+	errorCount   uint64
+	latencySumMs uint64
+	latencyCount uint64
+	buckets      []uint64
+}
+
+type metricsStore struct {
+	mu      sync.RWMutex
+	routes  map[string]*routeMetrics
+	bounds  []int64
+	service string
+}
+
+func newMetricsStore(service string) *metricsStore {
+	return &metricsStore{
+		routes:  make(map[string]*routeMetrics),
+		bounds:  []int64{10, 50, 100, 250, 500, 1000},
+		service: service,
+	}
+}
+
+func (m *metricsStore) record(route string, status int, latencyMs int64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	rm, ok := m.routes[route]
+	if !ok {
+		rm = &routeMetrics{buckets: make([]uint64, len(m.bounds)+1)}
+		m.routes[route] = rm
+	}
+	rm.requestCount++
+	if status >= 400 {
+		rm.errorCount++
+	}
+	rm.latencySumMs += uint64(latencyMs)
+	rm.latencyCount++
+	idx := len(m.bounds)
+	for i, bound := range m.bounds {
+		if latencyMs <= bound {
+			idx = i
+			break
+		}
+	}
+	rm.buckets[idx]++
+}
+
+func (m *metricsStore) handler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		m.writePrometheus(w)
+	}
+}
+
+func (m *metricsStore) writePrometheus(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	fmt.Fprintln(w, "# HELP request_count Total HTTP requests by route.")
+	fmt.Fprintln(w, "# TYPE request_count counter")
+	fmt.Fprintln(w, "# HELP error_count Total HTTP error responses (status >= 400) by route.")
+	fmt.Fprintln(w, "# TYPE error_count counter")
+	fmt.Fprintln(w, "# HELP request_latency_ms Request latency in milliseconds by route.")
+	fmt.Fprintln(w, "# TYPE request_latency_ms histogram")
+	fmt.Fprintln(w, "# HELP request_latency_summary_ms Request latency summary in milliseconds by route.")
+	fmt.Fprintln(w, "# TYPE request_latency_summary_ms summary")
+
+	routes := make([]string, 0, len(m.routes))
+	for route := range m.routes {
+		routes = append(routes, route)
+	}
+	sort.Strings(routes)
+
+	for _, route := range routes {
+		rm := m.routes[route]
+		fmt.Fprintf(w, "request_count{service=%q,route=%q} %d\n", m.service, route, rm.requestCount)
+		fmt.Fprintf(w, "error_count{service=%q,route=%q} %d\n", m.service, route, rm.errorCount)
+		cumulative := uint64(0)
+		for i, bound := range m.bounds {
+			cumulative += rm.buckets[i]
+			fmt.Fprintf(w, "request_latency_ms_bucket{service=%q,route=%q,le=%q} %d\n", m.service, route, strconv.FormatInt(bound, 10), cumulative)
+		}
+		cumulative += rm.buckets[len(m.bounds)]
+		fmt.Fprintf(w, "request_latency_ms_bucket{service=%q,route=%q,le=\"+Inf\"} %d\n", m.service, route, cumulative)
+		fmt.Fprintf(w, "request_latency_ms_sum{service=%q,route=%q} %d\n", m.service, route, rm.latencySumMs)
+		fmt.Fprintf(w, "request_latency_ms_count{service=%q,route=%q} %d\n", m.service, route, rm.latencyCount)
+		fmt.Fprintf(w, "request_latency_summary_ms_sum{service=%q,route=%q} %d\n", m.service, route, rm.latencySumMs)
+		fmt.Fprintf(w, "request_latency_summary_ms_count{service=%q,route=%q} %d\n", m.service, route, rm.latencyCount)
+	}
+}
+
 // NewMux creates the gateway HTTP mux and proxies requests to downstream services.
 func NewMux() *http.ServeMux {
 	cfg := serviceConfig{
@@ -120,25 +217,27 @@ func NewMux() *http.ServeMux {
 	client := &http.Client{Timeout: 5 * time.Second}
 	audit := newAuditStore()
 	exceptions := newExceptionStore()
+	metrics := newMetricsStore("go-gateway")
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/health", withServiceMiddleware(healthHandler))
-	mux.HandleFunc("/live", withServiceMiddleware(healthHandler))
-	mux.HandleFunc("/ready", withServiceMiddleware(healthHandler))
-	mux.HandleFunc("/api/v1/discovery", withServiceMiddleware(withAudit("/api/v1/discovery", audit, discoveryHandler(client, cfg))))
-	mux.HandleFunc("/api/v1/assets", withServiceMiddleware(withAudit("/api/v1/assets", audit, assetsHandler(client, cfg))))
-	mux.HandleFunc("/api/v1/risk", withServiceMiddleware(withAudit("/api/v1/risk", audit, riskHandler(client, cfg))))
-	mux.HandleFunc("/api/v1/risk/backlog", withServiceMiddleware(withAudit("/api/v1/risk/backlog", audit, backlogHandler(client, cfg))))
-	mux.HandleFunc("/api/v1/proof", withServiceMiddleware(withAudit("/api/v1/proof", audit, proofHandler(client, cfg))))
-	mux.HandleFunc("/api/v1/qasm", withServiceMiddleware(withAudit("/api/v1/qasm", audit, qasmHandler(client, cfg))))
-	mux.HandleFunc("/api/v1/governance/exceptions", withServiceMiddleware(withAudit("/api/v1/governance/exceptions", audit, governanceExceptionsHandler(exceptions))))
-	mux.HandleFunc("/api/v1/governance/verifier-drift", withServiceMiddleware(withAudit("/api/v1/governance/verifier-drift", audit, verifierDriftHandler())))
-	mux.HandleFunc("/api/v1/audit/events", withServiceMiddleware(auditEventsHandler(audit)))
+	mux.HandleFunc("/health", withServiceMiddleware(healthHandler, metrics))
+	mux.HandleFunc("/live", withServiceMiddleware(healthHandler, metrics))
+	mux.HandleFunc("/ready", withServiceMiddleware(healthHandler, metrics))
+	mux.HandleFunc("/api/v1/discovery", withServiceMiddleware(withAudit("/api/v1/discovery", audit, discoveryHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/assets", withServiceMiddleware(withAudit("/api/v1/assets", audit, assetsHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/risk", withServiceMiddleware(withAudit("/api/v1/risk", audit, riskHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/risk/backlog", withServiceMiddleware(withAudit("/api/v1/risk/backlog", audit, backlogHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/proof", withServiceMiddleware(withAudit("/api/v1/proof", audit, proofHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/qasm", withServiceMiddleware(withAudit("/api/v1/qasm", audit, qasmHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/governance/exceptions", withServiceMiddleware(withAudit("/api/v1/governance/exceptions", audit, governanceExceptionsHandler(exceptions)), metrics))
+	mux.HandleFunc("/api/v1/governance/verifier-drift", withServiceMiddleware(withAudit("/api/v1/governance/verifier-drift", audit, verifierDriftHandler()), metrics))
+	mux.HandleFunc("/api/v1/audit/events", withServiceMiddleware(auditEventsHandler(audit), metrics))
+	mux.HandleFunc("/metrics", withRequestContext(metrics.handler()))
 	return mux
 }
 
-func withServiceMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return withRequestContext(withRequestLogging(next))
+func withServiceMiddleware(next http.HandlerFunc, metrics *metricsStore) http.HandlerFunc {
+	return withRequestContext(withRequestLogging(next, metrics))
 }
 
 func withRequestContext(next http.HandlerFunc) http.HandlerFunc {
@@ -153,18 +252,20 @@ func withRequestContext(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func withRequestLogging(next http.HandlerFunc) http.HandlerFunc {
+func withRequestLogging(next http.HandlerFunc, metrics *metricsStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		started := time.Now()
 		rec := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
 		next(rec, r)
+		latencyMs := time.Since(started).Milliseconds()
+		metrics.record(r.URL.Path, rec.statusCode, latencyMs)
 		log.Printf(
 			`{"service":"go-gateway","request_id":"%s","method":"%s","path":"%s","status":%d,"duration_ms":%d}`,
 			requestIDFromContext(r.Context()),
 			r.Method,
 			r.URL.Path,
 			rec.statusCode,
-			time.Since(started).Milliseconds(),
+			latencyMs,
 		)
 	}
 }
