@@ -41,8 +41,8 @@ services:
   go-services:
     image: ${REGISTRY}/go-services:${TAG:-latest}
     build:
-      context: .
-      dockerfile: docker-images/go-services/Dockerfile
+      context: docker-images/go-services
+      dockerfile: Dockerfile
     expose:
       - "8080"
       - "8081"
@@ -63,8 +63,8 @@ services:
   python-services:
     image: ${REGISTRY}/python-services:${TAG:-latest}
     build:
-      context: .
-      dockerfile: docker-images/python-services/Dockerfile
+      context: docker-images/python-services
+      dockerfile: Dockerfile
     expose:
       - "8082"
       - "8084"
@@ -81,8 +81,8 @@ services:
   rust-risk:
     image: ${REGISTRY}/rust-risk:${TAG:-latest}
     build:
-      context: .
-      dockerfile: docker-images/rust-risk/Dockerfile
+      context: docker-images/rust-risk
+      dockerfile: Dockerfile
     expose:
       - "8083"
     environment:

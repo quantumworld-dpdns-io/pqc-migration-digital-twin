@@ -39,8 +39,8 @@ services:
   # ── Component 2: Go gateway + discovery (merged) ───────────────────────────
   go-services:
     build:
-      context: .
-      dockerfile: docker-images/go-services/Dockerfile
+      context: docker-images/go-services
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
       - "8081:8081"
@@ -63,8 +63,8 @@ services:
   # ── Component 3: Python analysis + QASM examples (merged) ─────────────────
   python-services:
     build:
-      context: .
-      dockerfile: docker-images/python-services/Dockerfile
+      context: docker-images/python-services
+      dockerfile: Dockerfile
     ports:
       - "8082:8082"
       - "8084:8084"
@@ -82,8 +82,8 @@ services:
   # ── Component 4: Rust risk engine ──────────────────────────────────────────
   rust-risk:
     build:
-      context: .
-      dockerfile: docker-images/rust-risk/Dockerfile
+      context: docker-images/rust-risk
+      dockerfile: Dockerfile
     ports:
       - "8083:8083"
     environment:
