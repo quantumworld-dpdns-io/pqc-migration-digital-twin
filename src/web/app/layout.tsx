@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="w-10 h-10 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center font-bold text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
               <Activity size={20} />
             </div>
-            <div>
+
               <span className="font-bold tracking-tight text-xl block">PQC Twin</span>
               <span className="text-[10px] uppercase tracking-[0.2em] text-emerald-500/60 font-mono">v1.0.4 - Alpha</span>
             </div>
