@@ -1,0 +1,3 @@
+[dr-drill] 2026-05-10 14:49:27 CST run_id=20260510_144927
+[dr-drill] 2026-05-10 14:49:27 CST starting docker stack
+unable to get image 'postgres:15-alpine': permission denied while trying to connect to the Docker daemon socket at unix:///Users/dennis_leedennis_lee/.docker/run/docker.sock: Get "http://%2FUsers%2Fdennis_leedennis_lee%2F.docker%2Frun%2Fdocker.sock/v1.51/images/postgres:15-alpine/json": dial unix /Users/dennis_leedennis_lee/.docker/run/docker.sock: connect: operation not permitted
