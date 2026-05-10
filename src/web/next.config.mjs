@@ -27,12 +27,13 @@ if (serverGateway && serverGateway !== publicGateway) connectParts.push(serverGa
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  // unsafe-inline: Next.js hydration / styled paths; tighten later if you move to nonces
-  "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
+  // unsafe-inline: Next.js hydration / styled paths
+  // blob: required for some Three.js / Web Worker handshakes
+  "script-src 'self' 'unsafe-inline' blob:",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
   `connect-src ${connectParts.join(' ')}`,
-  "font-src 'self'",
+  "font-src 'self' https://fonts.gstatic.com",
   // React Three Fiber / WebGL often spawn workers from blob: URLs
   "worker-src 'self' blob:",
   "frame-src 'none'",
