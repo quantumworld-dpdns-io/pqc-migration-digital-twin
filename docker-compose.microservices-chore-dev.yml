@@ -17,7 +17,7 @@ services:
   nginx:
     image: ${REGISTRY}/nginx:${TAG:-latest}
     build:
-      context: "docker images/nginx"
+      context: docker-images/nginx
       dockerfile: Dockerfile
     expose:
       - "8080"
@@ -42,7 +42,7 @@ services:
     image: ${REGISTRY}/go-services:${TAG:-latest}
     build:
       context: .
-      dockerfile: "docker images/go-services/Dockerfile"
+      dockerfile: docker-images/go-services/Dockerfile
     expose:
       - "8080"
       - "8081"
@@ -64,7 +64,7 @@ services:
     image: ${REGISTRY}/python-services:${TAG:-latest}
     build:
       context: .
-      dockerfile: "docker images/python-services/Dockerfile"
+      dockerfile: docker-images/python-services/Dockerfile
     expose:
       - "8082"
       - "8084"
@@ -82,7 +82,7 @@ services:
     image: ${REGISTRY}/rust-risk:${TAG:-latest}
     build:
       context: .
-      dockerfile: "docker images/rust-risk/Dockerfile"
+      dockerfile: docker-images/rust-risk/Dockerfile
     expose:
       - "8083"
     environment:

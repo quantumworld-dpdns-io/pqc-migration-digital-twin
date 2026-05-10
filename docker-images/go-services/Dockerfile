@@ -14,7 +14,7 @@ FROM alpine:3.20
 RUN adduser -D -H -u 10014 appuser
 COPY --from=build-gateway  /out/gateway   /usr/local/bin/gateway
 COPY --from=build-discovery /out/discovery /usr/local/bin/discovery
-COPY ["docker images/go-services/start.sh", "/start.sh"]
+COPY docker-images/go-services/start.sh /start.sh
 RUN chmod +x /start.sh
 USER 10014
 EXPOSE 8080 8081
