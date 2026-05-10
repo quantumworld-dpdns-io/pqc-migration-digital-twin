@@ -2,10 +2,8 @@ FROM golang:1.22-alpine AS build-gateway
 WORKDIR /src
 COPY database/ ./database/
 COPY gateway/ ./gateway/
-RUN printf 'go 1.22\nuse (\n\t./gateway\n\t./database\n)\n' > go.work
 WORKDIR /src/gateway
-ENV GOFLAGS="-mod=mod"
-RUN go build -o /out/gateway ./cmd/gateway
+RUN GOWORK=off go build -mod=mod -o /out/gateway ./cmd/gateway
 
 FROM golang:1.22-alpine AS build-discovery
 WORKDIR /src
