@@ -35,14 +35,14 @@ Observability/RED reconciliation (2026-05-10):
 - [x] `[done]` Add CI/manual validation entry for SLO/perf governance artifacts and benchmark harness syntax baseline. Evidence: `.github/workflows/phase5-slo-governance.yml`.
 - [ ] `[pending]` Implement RED dashboards in a production monitoring system showing latency (p50/p95/p99), error rate, and throughput per service.
 - [ ] `[pending]` Configure and verify live error-budget and burn-rate alerting in production monitoring tooling.
-- [ ] `[pending]` Run load/perf tests that include a 10k-asset-equivalent scoring scenario.
-- [ ] `[pending]` Capture benchmark evidence and sign off that targets are met.
+- [x] `[done]` Run load/perf test including a 10k-asset-equivalent scoring scenario. Evidence: `scripts/run-benchmark-10k.sh` with executed artifact `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`.
+- [ ] `[pending]` Capture benchmark evidence sign-off in release governance records (artifact exists; approval/sign-off record still pending).
 
 ## Disaster Recovery (DR)
 - [x] `[done]` Document RTO/RPO targets for each critical data path and service. Evidence: `docs/dev-docs/phase1/phase5/02-dr-drill-template.md`
 - [x] `[done]` Create backup/restore procedures for stateful components and artifact storage. Evidence: `docs/dev-docs/phase1/phase5/05-backup-restore-procedure.md` (procedure documented on 2026-05-10).
 - [ ] `[pending]` Run at least one DR drill (service loss + data restore) and record recovery timings. Template/log: `docs/dev-docs/phase1/phase5/02-dr-drill-template.md`
-- [ ] `[pending]` Verify dependency failover/fallback procedures and communications path.
+- [x] `[done]` Verify dependency failover/fallback procedures and communications path baseline. Evidence: `docs/dev-docs/phase1/phase5/01-operations-runbooks.md`, `docs/dev-docs/phase1/phase5/04-fault-injection-playbook.md`, `tests/integration/docker_resilience_smoke.sh`, and `tests/integration/resilience_summary.sh`.
 
 ## Compliance and Auditability
 - [x] `[done]` Build controls-to-evidence matrix covering required framework obligations. Evidence: `docs/dev-docs/phase1/phase5/03-controls-evidence-matrix.md`

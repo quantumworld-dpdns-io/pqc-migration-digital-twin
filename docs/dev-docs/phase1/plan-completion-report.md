@@ -46,6 +46,9 @@ The following are now evidenced in this branch snapshot:
   `.github/workflows/ci.yml` (`security-readiness`, Trivy fail-on `HIGH,CRITICAL`, SPDX SBOM upload).
 - CI hardening/evidence jobs for consolidation images:
   `.github/workflows/ci.yml` (`dockerfile-build-evidence` matrix for 4 images, `checkov-dockerfiles` policy gate, and `integration-docker` dependency wiring).
+- 10k-equivalent benchmark harness execution evidence:
+  `scripts/run-benchmark-10k.sh` with run artifact
+  `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`.
 
 Current health/observability baseline evidence:
 - `src/go/gateway/server.go` (`GET /health`)
@@ -65,7 +68,7 @@ Current RED metrics evidence status:
   `src/python/service.py`,
   `src/rust/risk-service/src/main.rs`,
   `src/qasm/examples/service/qasm_service.py`.
-- Remaining gaps: deployed monitoring dashboards/alerts with run evidence, benchmark execution evidence (10k-equivalent), and release sign-off traces.
+- Remaining gaps: deployed monitoring dashboards/alerts with run evidence and release/governance sign-off traces.
 
 Fault-injection and graceful-shutdown evidence status (2026-05-10):
 - Fault-injection coverage is now present in Go service tests:
