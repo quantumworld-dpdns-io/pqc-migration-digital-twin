@@ -15,6 +15,7 @@ Purpose: standardize release-go/no-go evidence for this repository using links t
 | Area | Required artifact | Link / path | Status |
 |---|---|---|---|
 | CI quality gates | Green CI run covering `scripts-validation`, `lint`, `test`, `contracts`, `security-readiness`, `dockerfile-build-evidence`, `checkov-dockerfiles`, `integration-docker`, `integration-resilience` |  | Pending |
+| SLO governance validation | Green run of `.github/workflows/phase5-slo-governance.yml` (artifact checks + locust syntax baseline) |  | Pending |
 | API smoke | `tests/integration/docker_microservices_smoke.sh` output for release SHA |  | Pending |
 | Resilience smoke | `tests/integration/docker_resilience_smoke.sh` output (fault-injection + recovery) |  | Pending |
 | Security scan | Trivy results from `security-readiness` job |  | Pending |
@@ -22,6 +23,7 @@ Purpose: standardize release-go/no-go evidence for this repository using links t
 | Secret rotation governance | Completed verification checklist from `07-secret-handling-and-rotation-runbook.md` |  | Pending |
 | Contract validation | `tests/contracts/test_repo_contract_smoke.py` CI output |  | Pending |
 | SLO/budget review | Snapshot vs `04-slo-error-budget-spec.md` with budget state (`Healthy/At risk/Critical/Exhausted`) |  | Pending |
+| RED dashboard/alert baseline | Evidence aligned to `11-red-dashboard-alert-baseline.md` (panel export + alert policy export) |  | Pending |
 | Backup/restore readiness | Last successful drill/log per `05-backup-restore-procedure.md` |  | Pending |
 | DR evidence | Completed `02-dr-drill-template.md` entry with RTO/RPO results |  | Pending |
 | Controls mapping | Updated `03-controls-evidence-matrix.md` release evidence index |  | Pending |

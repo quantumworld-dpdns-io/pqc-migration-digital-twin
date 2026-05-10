@@ -23,13 +23,18 @@ Observability/RED reconciliation (2026-05-10):
 - Implemented baseline observability for API services: request-ID generation/echo plus structured request logs in `src/go/gateway/server.go`, `src/go/discovery/cmd/discovery/main.go`, `src/python/service.py`, `src/rust/risk-service/src/main.rs`, and `src/qasm/examples/service/qasm_service.py`.
 - Implemented probe semantics for those services: `/health`, `/live`, and `/ready` (service files above).
 - Implemented RED metrics export baseline (`/metrics`) with request/error/latency counters in Go gateway/discovery, Python analysis, Rust risk service, and QASM service.
+- Added RED dashboard + alert threshold baseline artifact and validation workflow:
+  `docs/dev-docs/phase1/phase5/11-red-dashboard-alert-baseline.md`,
+  `.github/workflows/phase5-slo-governance.yml`.
 - CI now includes additional verifiable gating/jobs in `.github/workflows/ci.yml`: `security-readiness` (Trivy + SBOM artifact), `dockerfile-build-evidence` (all 4 consolidation Dockerfiles build and publish image-inspect artifacts), and `checkov-dockerfiles` (policy scan gate).
 - Remaining RED gap is dashboarding and alerting integration (see SLO and Performance section).
 
 ## SLO and Performance
 - [x] `[done]` Finalize SLOs for: gateway API, HNDL scoring, risk/proof generation. Evidence: `docs/dev-docs/phase1/phase5/04-slo-error-budget-spec.md` (documented SLO and budget baselines as of 2026-05-10).
-- [ ] `[pending]` Implement RED dashboards showing latency (p50/p95/p99), error rate, and throughput per service.
-- [ ] `[pending]` Define error budgets and alert rules (including burn-rate alerts).
+- [x] `[done]` Define RED dashboard/alert baseline that maps service metrics to thresholds and escalation actions. Evidence: `docs/dev-docs/phase1/phase5/11-red-dashboard-alert-baseline.md`.
+- [x] `[done]` Add CI/manual validation entry for SLO/perf governance artifacts and benchmark harness syntax baseline. Evidence: `.github/workflows/phase5-slo-governance.yml`.
+- [ ] `[pending]` Implement RED dashboards in a production monitoring system showing latency (p50/p95/p99), error rate, and throughput per service.
+- [ ] `[pending]` Configure and verify live error-budget and burn-rate alerting in production monitoring tooling.
 - [ ] `[pending]` Run load/perf tests that include a 10k-asset-equivalent scoring scenario.
 - [ ] `[pending]` Capture benchmark evidence and sign off that targets are met.
 

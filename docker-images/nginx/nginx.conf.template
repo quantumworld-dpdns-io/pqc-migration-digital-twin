@@ -34,6 +34,7 @@ http {
         default                                  "";
         "~^https?://localhost(:\d+)?$"           $http_origin;
         "~^https://[a-z0-9-]+\.choreoapis\.dev$" $http_origin;
+        "~^https://pqc-digital-twin\.dennisleehappy\.org(:\d+)?$" $http_origin;
         "${CORS_ALLOW_ORIGIN}"                   $http_origin;
     }
 

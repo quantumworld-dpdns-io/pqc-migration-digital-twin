@@ -39,6 +39,9 @@ The following are now evidenced in this branch snapshot:
   `docs/dev-docs/phase1/phase5/04-slo-error-budget-spec.md`,
   `docs/dev-docs/phase1/phase5/05-backup-restore-procedure.md`,
   `docs/dev-docs/phase1/phase5/06-release-evidence-pack-template.md`.
+- SLO/performance governance baseline additions (2026-05-10):
+  `docs/dev-docs/phase1/phase5/11-red-dashboard-alert-baseline.md` and
+  `.github/workflows/phase5-slo-governance.yml` (manual/PR artifact validation + locust harness syntax check).
 - CI security-readiness lane for vulnerability gating and SBOM artifact output:
   `.github/workflows/ci.yml` (`security-readiness`, Trivy fail-on `HIGH,CRITICAL`, SPDX SBOM upload).
 - CI hardening/evidence jobs for consolidation images:
@@ -63,6 +66,7 @@ Current RED metrics evidence status:
   `src/rust/risk-service/src/main.rs`,
   `src/qasm/examples/service/qasm_service.py`.
 - Remaining gaps: production dashboards (p50/p95/p99, throughput, error-rate), error-budget alerting, and SLO governance evidence.
+- Remaining gaps: deployed monitoring dashboards/alerts with run evidence, benchmark execution evidence (10k-equivalent), and release sign-off traces.
 
 Fault-injection and graceful-shutdown evidence status (2026-05-10):
 - Fault-injection coverage is now present in Go service tests:
@@ -76,7 +80,7 @@ Fault-injection and graceful-shutdown evidence status (2026-05-10):
 
 ## Immediate Priority Gaps (Before GA)
 1. Expand security gates from baseline to full coverage (all images/services), and add signed provenance for SBOM artifacts.
-2. Define and measure SLOs for gateway, scoring, and proof paths with automated burn-rate alerting.
+2. Deploy monitoring dashboards and burn-rate alerts from the baseline governance spec and attach run evidence.
 3. Execute at least one timed DR recovery drill and archive RTO/RPO evidence (procedure/template exists; execution evidence not yet present).
 4. Produce a populated release evidence pack for an actual release candidate (template exists; filled artifact set not yet present).
 5. Complete release readiness process (incident drills, on-call/go-no-go approvals, and archival sign-off records).

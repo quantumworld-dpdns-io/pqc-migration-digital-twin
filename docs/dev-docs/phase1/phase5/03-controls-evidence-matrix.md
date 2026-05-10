@@ -16,6 +16,8 @@ Purpose: map production-readiness controls to concrete evidence artifacts alread
 | REL-01A | Dependency outage and recovery fault-injection evidence | `tests/integration/docker_resilience_smoke.sh`; `tests/integration/resilience_summary.sh`; `docs/dev-docs/phase1/phase5/04-fault-injection-playbook.md` | CI/local `resilience.log` + `resilience-summary.json` artifact | Baseline present |
 | REL-02 | Graceful frontend fallback indicator when gateway unavailable | `src/web/app/page.tsx`; `src/web/tests/dashboard.smoke.test.mjs` | Test output + screenshot/log of fallback mode | Baseline present |
 | REL-03 | API client error/status propagation | `src/web/lib/api.ts`; `src/web/tests/api-client.error-handling.test.mjs` | Node test output for release SHA | Baseline present |
+| REL-04 | RED dashboard and alert threshold baseline defined | `docs/dev-docs/phase1/phase5/11-red-dashboard-alert-baseline.md`; `docs/dev-docs/phase1/phase5/04-slo-error-budget-spec.md` | Monitoring-system dashboard export + alert policy export for release SHA | Baseline present |
+| REL-05 | SLO/perf governance artifacts are CI/manual validated | `.github/workflows/phase5-slo-governance.yml` | Workflow run URL showing artifact checks + `locustfile.py` syntax validation | Baseline present |
 | OPS-01 | Startup/rollback/outage/degraded procedures documented | `docs/dev-docs/phase1/phase5/01-operations-runbooks.md` | Operator sign-off checklist + execution transcript | Baseline present |
 | SEC-04 | Secret handling and rotation governance documented | `docs/dev-docs/phase1/phase5/07-secret-handling-and-rotation-runbook.md` | Rotation execution log + approver record | Baseline present |
 | DR-01 | DR drill process with measurable RTO/RPO targets | `docs/dev-docs/phase1/phase5/02-dr-drill-template.md` | Completed drill log with timestamps and outcomes | Needs run evidence |
@@ -27,7 +29,7 @@ Purpose: map production-readiness controls to concrete evidence artifacts alread
 ## Known gaps outside this skeleton
 - SBOM generation is now wired in CI for repository baseline; remaining gap is full per-image SBOM coverage plus signed provenance attestation.
 - External/internal pen-test closure evidence is not yet stored in this repo.
-- Production SLO dashboard and burn-rate alert evidence are not yet linked.
+- Production monitoring-system exports/screenshots and executed alert-fire drill evidence are not yet linked.
 
 ## Release evidence index (fill per release)
 - Release ID:

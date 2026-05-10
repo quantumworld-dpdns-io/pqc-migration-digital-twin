@@ -35,6 +35,8 @@ The following are now evidenced in this branch snapshot:
   SLO/error-budget spec (`04-slo-error-budget-spec.md`),
   backup/restore procedure (`05-backup-restore-procedure.md`),
   release evidence pack template (`06-release-evidence-pack-template.md`).
+- SLO/performance governance baseline additions:
+  RED dashboard/alert threshold artifact (`11-red-dashboard-alert-baseline.md`) and CI/manual validation workflow (`.github/workflows/phase5-slo-governance.yml`).
 - CI security-readiness lane with Trivy gates and SBOM artifact generation in `.github/workflows/ci.yml`.
 - CI consolidation-image evidence and policy gates in `.github/workflows/ci.yml`:
   `dockerfile-build-evidence` (4-image build evidence artifacts) and `checkov-dockerfiles` (Dockerfile policy scan), both required by `integration-docker`.
@@ -43,6 +45,7 @@ Impact:
 - improves Phase 2 implementation confidence and automation depth,
 - materially advances Phase 5 reliability/operations controls for observability and probe semantics,
 - establishes RED instrumentation baseline but does not complete RED dashboard/alerting deliverables,
+- establishes RED dashboard/alert policy baseline and governance checks, but does not prove deployed-monitoring execution evidence,
 - improves CI supply-chain/build-policy evidence depth and now includes baseline fault-injection plus restart/degraded-path resilience evidence,
 - does **not** change overall program status that Phase 5 remains incomplete.
 
@@ -57,7 +60,7 @@ Impact:
 - Scenario compare, wave editor, and milestone orchestration UI acceptance.
 5. Phase 5 readiness:
 - Security hardening, SBOM/provenance, DR drills, SLO dashboards, compliance evidence pack, release governance sign-off.
-  Note: documentation baselines for SLO, backup/restore, and release-evidence template are present; execution evidence and approval artifacts remain open.
+  Note: documentation baselines for SLO/RED alerting, backup/restore, and release-evidence template are present; execution evidence and approval artifacts remain open.
 
 ## Execution Order For Remaining Work
 1. Close Phase 1/2 acceptance gaps.
