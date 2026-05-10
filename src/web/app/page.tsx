@@ -40,23 +40,33 @@ const verifierDrift: VerifierDrift[] = [
 
 // ── Server component — fetches live data, falls back to static ───────────────
 
-async function fetchOrFallback<T>(fetcher: () => Promise<T>, fallback: T): Promise<T> {
-  if (!process.env.GATEWAY_URL && !process.env.NEXT_PUBLIC_GATEWAY_URL) return fallback;
+type FetchResult<T> = {
+  data: T;
+  isLive: boolean;
+};
+
+async function fetchOrFallback<T>(fetcher: () => Promise<T>, fallback: T): Promise<FetchResult<T>> {
+  if (!process.env.GATEWAY_URL && !process.env.NEXT_PUBLIC_GATEWAY_URL) {
+    return { data: fallback, isLive: false };
+  }
   try {
-    return await fetcher();
+    return { data: await fetcher(), isLive: true };
   } catch {
-    return fallback;
+    return { data: fallback, isLive: false };
   }
 }
 
 export default async function DashboardPage() {
-  const [assets, risk] = await Promise.all([
+  const [assetsResult, riskResult] = await Promise.all([
     fetchOrFallback(getAssets, []),
     fetchOrFallback(
       () => getRiskScore({ total_assets: 100, quantum_vulnerable_assets: 40 }),
       null,
     ),
   ]);
+  const assets = assetsResult.data;
+  const risk = riskResult.data;
+  const isLiveMode = assetsResult.isLive || riskResult.isLive;
 
   const inventory: InventoryItem[] = assets.length > 0
     ? assets.map(a => ({
@@ -84,6 +94,9 @@ export default async function DashboardPage() {
             Live risk level: <strong>{risk.risk_level}</strong>
           </p>
         )}
+        <p className="risk-badge">
+          Data mode: <strong>{isLiveMode ? 'Live gateway' : 'Fallback dataset'}</strong>
+        </p>
       </header>
 
       <div className="layout-grid">

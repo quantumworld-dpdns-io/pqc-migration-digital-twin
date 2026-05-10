@@ -72,9 +72,9 @@ with correct `Access-Control-Allow-*` headers.
 
 ## Security Checklist
 
-- [ ] TLS 1.2+ only (TLS 1.0/1.1 disabled in nginx ssl_protocols)
-- [ ] Cipher suite excludes NULL, RC4, 3DES, EXPORT
-- [ ] HSTS preload submitted once production domain is known
-- [ ] CSP violations reported via `report-uri` (add in phase 3)
-- [ ] `X-Powered-By` header removed from Next.js (`poweredByHeader: false`)
-- [ ] Cookies set with `Secure`, `HttpOnly`, `SameSite=Strict` (add when auth added)
+- [x] TLS 1.2+ only (TLS 1.0/1.1 disabled in nginx `ssl_protocols`)
+- [x] Cipher suite hardened (allowlist + excludes weak suites such as NULL/RC4; no 3DES/EXPORT configured)
+- [ ] HSTS preload submitted once production domain is known (external/domain-governance dependent)
+- [ ] CSP violations reported via `report-uri`/`report-to` (Phase 3 hardening)
+- [x] `X-Powered-By` header removed from Next.js (`poweredByHeader: false`)
+- [ ] Cookies set with `Secure`, `HttpOnly`, `SameSite=Strict` (pending auth/session cookie introduction)

@@ -7,6 +7,17 @@ on:
     branches: [main]
 
 jobs:
+  scripts-validation:
+    name: Scripts Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate local cert generation script
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/validate-local-certs-script.sh
+
   lint:
     name: Lint (${{ matrix.lang }})
     runs-on: ubuntu-latest
@@ -214,7 +225,7 @@ jobs:
   integration-docker:
     name: Integration (Docker Microservices)
     runs-on: ubuntu-latest
-    needs: [lint, test, contracts]
+    needs: [scripts-validation, lint, test, contracts]
     steps:
       - uses: actions/checkout@v4
       - name: Docker microservice smoke test
