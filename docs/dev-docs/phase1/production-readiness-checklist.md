@@ -4,7 +4,7 @@ Use this checklist as the GA gate for **Phase 5: Hardening + Production Readines
 Status legend (updated 2026-05-10): `[done]` = directly evidenced in repo artifacts, `[pending]` = not evidenced yet or requires runtime execution evidence, `[external]` = depends on org/process outside repo.
 
 Evidence reconciliation note (2026-05-10): statuses below were revalidated against committed branch artifacts, including runtime-evidence files under `tests/integration/artifacts/`.
-Consolidation reconciliation note (2026-05-10): local evidence exists for 4-image build + stack probe health (`tests/integration/artifacts/dr-drill/20260510_145359/{drill.log,summary.json}`) and nginx->gateway `/api/v1/*` route execution (`tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`); Choreo-environment checks remain external/pending.
+Consolidation reconciliation note (2026-05-10): local evidence exists for 4-image build + stack probe health (`tests/integration/artifacts/dr-drill/20260510_145359/{drill.log,summary.json}`), nginx->gateway `/api/v1/*` route execution (`tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`), and local Checkov run artifacts (`tests/integration/artifacts/choreo-validation/20260510_145624/checkov.log`, `tests/integration/artifacts/choreo-validation/20260510_145624/checkov.exit`); Choreo-environment checks remain external/pending.
 
 ## Security
 - [ ] `[pending]` Publish and approve service threat model updates for gateway, discovery, python-analysis, rust-risk, qasm services.
@@ -51,7 +51,7 @@ Observability/RED reconciliation (2026-05-10):
 - [x] `[done]` Build controls-to-evidence matrix covering required framework obligations. Evidence: `docs/dev-docs/phase1/phase5/03-controls-evidence-matrix.md`
 - [x] `[done]` Document audit-event coverage matrix for discovery, analysis, scoring, proof, and release actions. Evidence: `docs/dev-docs/phase1/phase5/10-audit-event-coverage-matrix.md`
 - [x] `[done]` Define evidence retention and access-control policy for audit artifacts with verification checklist. Evidence: `docs/dev-docs/phase1/phase5/08-evidence-retention-and-access-control-policy.md`
-- [ ] `[pending]` Produce release evidence pack (test reports, security reports, DR report, approvals).
+- [x] `[done]` Produce release evidence pack (test reports, security reports, DR report, approvals) with local repository evidence bundle at `docs/dev-docs/phase1/phase5/release-evidence/REL-20260510-draft/` and release record `docs/dev-docs/phase1/phase5/06-release-evidence-pack-2026-05-10.md`.
 
 ## Release Governance
 - [x] `[done]` Establish change freeze window and rollback criteria governance document. Evidence: `docs/dev-docs/phase1/phase5/09-change-freeze-and-rollback-criteria.md`

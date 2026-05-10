@@ -26,13 +26,13 @@ export function AppSidebar() {
     <aside className="app-sidebar flex w-[min(18rem,88vw)] shrink-0 flex-col border-r border-white/[0.06] bg-[rgba(6,8,12,0.85)] px-5 py-8 backdrop-blur-xl md:w-72 md:px-7">
       <div className="mb-10 flex items-start gap-3.5">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-500/25 bg-gradient-to-br from-emerald-500/15 to-cyan-500/5 text-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.12)]">
-          <Activity size={22} strokeWidth={2} />
+          <Activity size={22} strokeWidth={2} aria-hidden />
         </div>
-        <div className="flex min-w-0 flex-col gap-0.5 pt-0.5">
-          <span className="truncate text-lg font-semibold tracking-tight text-zinc-100">
+        <div className="flex min-w-0 flex-col gap-1 pt-0.5">
+          <span className="block truncate text-lg font-semibold tracking-tight text-zinc-50">
             PQC Twin
           </span>
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-emerald-500/55">
+          <span className="block font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-emerald-400/80">
             v1.0.4 · Alpha
           </span>
         </div>
@@ -46,11 +46,12 @@ export function AppSidebar() {
             <Link
               key={href}
               href={href}
+              data-active={active}
               className={[
                 'group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors duration-200',
                 active
-                  ? 'bg-emerald-500/[0.09] text-emerald-100'
-                  : 'text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-200',
+                  ? 'bg-emerald-500/10 text-emerald-50'
+                  : 'text-zinc-300 hover:bg-white/[0.06] hover:text-white',
               ].join(' ')}
             >
               {active ? (
@@ -64,11 +65,12 @@ export function AppSidebar() {
                 strokeWidth={active ? 2.25 : 2}
                 className={
                   active
-                    ? 'text-emerald-400'
-                    : 'text-zinc-600 transition-colors group-hover:text-emerald-500/90'
+                    ? 'shrink-0 text-emerald-400'
+                    : 'shrink-0 text-zinc-400 transition-colors group-hover:text-emerald-400'
                 }
+                aria-hidden
               />
-              <span>{label}</span>
+              <span className="min-w-0 leading-snug">{label}</span>
             </Link>
           );
         })}

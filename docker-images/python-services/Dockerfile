@@ -11,4 +11,6 @@ RUN chmod +x /start.sh
 ENV PYTHONUNBUFFERED=1
 USER 10014
 EXPOSE 8082 8084
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8082/health', timeout=3)" || exit 1
 ENTRYPOINT ["/start.sh"]

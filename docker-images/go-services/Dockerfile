@@ -19,4 +19,6 @@ COPY start.sh /start.sh
 RUN chmod +x /start.sh
 USER 10014
 EXPOSE 8080 8081
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8080/health || exit 1
 ENTRYPOINT ["/start.sh"]

@@ -16,4 +16,6 @@ RUN apt-get update \
 COPY --from=build /workspace/target/release/risk-service /usr/local/bin/risk-service
 USER 10014
 EXPOSE 8083
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:8083/health || exit 1
 ENTRYPOINT ["/usr/local/bin/risk-service"]

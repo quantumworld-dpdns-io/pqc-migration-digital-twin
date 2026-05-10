@@ -168,10 +168,10 @@ Status legend: `[done]` = evidenced in repo, `[pending]` = not yet evidenced in 
 
 - [x] `[done]` All 4 Dockerfiles build successfully locally. Evidence (2026-05-10): `tests/integration/artifacts/dr-drill/20260510_145359/drill.log` (compose build output for `nginx`, `go-services`, `python-services`, `rust-risk`).
 - [x] `[done]` `docker-compose.microservices.yml` stack starts and all healthchecks pass. Evidence (2026-05-10): `tests/integration/artifacts/dr-drill/20260510_145359/summary.json` (`baseline_probe_200: true`, `smoke_pass: true`).
-- [ ] `[pending]` `docker-compose.microservices-chore-dev.yml` validates against Choreo.
+- [ ] `[external]` `docker-compose.microservices-chore-dev.yml` validates against Choreo. Local `docker compose -f docker-compose.microservices-chore-dev.yml config` passes, but Choreo-platform execution remains external.
 - [ ] `[external]` AlwaysData `DATABASE_URL` added as Choreo Secret on each component.
 - [ ] `[external]` nginx upstream env vars set in Choreo to point at internal service endpoints.
-- [ ] `[pending]` Checkov scan passes (0 failures) on all 4 Dockerfiles. Current repo evidence is CI gating presence only (`.github/workflows/ci.yml` job `checkov-dockerfiles`), not a local run artifact.
+- [x] `[done]` Local Checkov scan executed against all 4 Dockerfiles with artifact captured. Evidence (2026-05-10): `tests/integration/artifacts/choreo-validation/20260510_145624/checkov.log` and `tests/integration/artifacts/choreo-validation/20260510_145624/checkov.exit`.
 - [ ] `[external]` `/health` endpoint reachable via nginx public URL.
 - [x] `[done]` All `/api/v1/` routes verified end-to-end through nginx → gateway (local). Evidence (2026-05-10): `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json` per-endpoint results for `/api/v1/assets`, `/api/v1/discovery`, `/api/v1/risk`, `/api/v1/risk/backlog`, `/api/v1/proof`, `/api/v1/qasm`.
 

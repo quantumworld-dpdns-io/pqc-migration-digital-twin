@@ -26,7 +26,7 @@ Purpose: populated release evidence record using currently available repository 
 | RED dashboard/alert baseline | Evidence aligned to `11-red-dashboard-alert-baseline.md` (panel export + alert policy export) | Baseline doc: `docs/dev-docs/phase1/phase5/11-red-dashboard-alert-baseline.md` | Pending (owner: SRE, needs monitoring exports) |
 | Backup/restore readiness | Last successful drill/log per `05-backup-restore-procedure.md` | Procedure: `docs/dev-docs/phase1/phase5/05-backup-restore-procedure.md` | Pending (owner: Platform, needs drill output/logs) |
 | DR evidence | Completed `02-dr-drill-template.md` entry with RTO/RPO results | Template: `docs/dev-docs/phase1/phase5/02-dr-drill-template.md` | Pending (owner: SRE, needs completed drill record) |
-| Controls mapping | Updated `03-controls-evidence-matrix.md` release evidence index | `docs/dev-docs/phase1/phase5/03-controls-evidence-matrix.md` | Pending (owner: Compliance, needs release-row entries) |
+| Controls mapping | Updated `03-controls-evidence-matrix.md` release evidence index | `docs/dev-docs/phase1/phase5/03-controls-evidence-matrix.md` | Done (release-row entries populated on 2026-05-10) |
 | Evidence retention/access review | Completed checklist from `08-evidence-retention-and-access-control-policy.md` | `docs/dev-docs/phase1/phase5/08-evidence-retention-and-access-control-policy.md` | Pending (owner: Compliance, needs signed checklist) |
 | Freeze/governance decision | Decision log from `09-change-freeze-and-rollback-criteria.md` | `docs/dev-docs/phase1/phase5/09-change-freeze-and-rollback-criteria.md` | Pending (owner: CAB, needs dated decision log) |
 | Audit-event coverage closure | Release links appended to `10-audit-event-coverage-matrix.md` partial rows | `docs/dev-docs/phase1/phase5/10-audit-event-coverage-matrix.md` | Pending (owner: Compliance, needs release evidence links) |
@@ -35,6 +35,10 @@ Purpose: populated release evidence record using currently available repository 
 
 | Artifact | Path | Notes |
 |---|---|---|
+| DR drill summary | `tests/integration/artifacts/dr-drill/20260510_145359/summary.json` | Present; records service-loss drill outcome |
+| DR drill log | `tests/integration/artifacts/dr-drill/20260510_145359/drill.log` | Present |
+| Checkov scan log | `tests/integration/artifacts/choreo-validation/20260510_145624/checkov.log` | Present; 0 failures |
+| Checkov exit code | `tests/integration/artifacts/choreo-validation/20260510_145624/checkov.exit` | Present; exit `0` |
 | 10k benchmark summary (latest) | `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json` | Present; includes run-level summary output |
 | 10k benchmark raw log | `tests/integration/artifacts/benchmark-10k/20260510_144427/locust.log` | Present |
 | 10k benchmark stats | `tests/integration/artifacts/benchmark-10k/20260510_144427/locust_stats.csv` | Present |
@@ -61,5 +65,5 @@ Purpose: populated release evidence record using currently available repository 
 - Incident/issues opened (if any): `PENDING (owner: Incident Commander)`
 
 ## Archive location
-- Evidence bundle folder: `docs/dev-docs/phase1/phase5/release-evidence/REL-20260510-draft/` (pending creation)
+- Evidence bundle folder: `docs/dev-docs/phase1/phase5/release-evidence/REL-20260510-draft/` (populated with `README.md`, `index.md`, and indexed artifact links on 2026-05-10)
 - Permanent record link: `PENDING (owner: Compliance)`

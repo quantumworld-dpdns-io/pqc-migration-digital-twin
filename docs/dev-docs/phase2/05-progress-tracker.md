@@ -24,4 +24,4 @@ Reconciliation note (2026-05-10): observability/health and RED metrics changes a
 - HSTS preload submission is pending production domain finalization and ownership checks (external dependency).
 - CSP violation reporting (`report-uri`/`report-to`) is intentionally deferred to Phase 3.
 - Cookie hardening flags are pending auth/session cookie introduction (not part of current Phase 2 implementation scope).
-- Fault-injection and graceful-shutdown verification remain Phase 5 pending items until dedicated tests/jobs are added and evidenced in branch.
+- Fault-injection and graceful-shutdown verification are now evidenced in branch via `tests/integration/docker_resilience_smoke.sh`, CI job `integration-resilience` in `.github/workflows/ci.yml`, and Go tests in `src/go/gateway/gateway_test.go` and `src/go/discovery/cmd/discovery/main_test.go`.

@@ -40,6 +40,9 @@ The following are now evidenced in this branch snapshot:
 - CI security-readiness lane with Trivy gates and SBOM artifact generation in `.github/workflows/ci.yml`.
 - CI consolidation-image evidence and policy gates in `.github/workflows/ci.yml`:
   `dockerfile-build-evidence` (4-image build evidence artifacts) and `checkov-dockerfiles` (Dockerfile policy scan), both required by `integration-docker`.
+- Local Checkov artifact evidence captured for the same 4 Dockerfiles:
+  `tests/integration/artifacts/choreo-validation/20260510_145624/checkov.log` and
+  `tests/integration/artifacts/choreo-validation/20260510_145624/checkov.exit`.
 - Runtime performance evidence for 10k-equivalent scenario:
   `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json` produced by `scripts/run-benchmark-10k.sh`.
 - Local consolidation execution evidence (2026-05-10):
@@ -67,7 +70,7 @@ Impact:
 4. UX depth:
 - Scenario compare, wave editor, and milestone orchestration UI acceptance.
 5. Phase 5 readiness:
-- Security hardening, SBOM/provenance, DR drills, SLO dashboards, compliance evidence pack, release governance sign-off.
+- Security hardening, SBOM/provenance, DR drills, SLO dashboards, compliance evidence pack approvals/sign-off, release governance sign-off.
   Note (reconciled 2026-05-10): documentation baselines for SLO/RED alerting, backup/restore, release evidence template, and baseline 10k-equivalent runtime benchmark evidence are present; execution approval artifacts and external sign-offs remain open.
 
 ## Execution Order For Remaining Work

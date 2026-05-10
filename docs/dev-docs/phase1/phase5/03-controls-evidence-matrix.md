@@ -32,10 +32,10 @@ Purpose: map production-readiness controls to concrete evidence artifacts alread
 - Production monitoring-system exports/screenshots and executed alert-fire drill evidence are not yet linked.
 
 ## Release evidence index (fill per release)
-- Release ID:
-- Commit SHA:
-- CI run URL:
-- Smoke report path:
-- DR drill log path:
-- Security report path:
-- Go/no-go approval record path:
+- Release ID: `REL-20260510-draft`
+- Commit SHA: `PENDING (owner: Release Manager)`
+- CI run URL: `PENDING (owner: DevOps)`
+- Smoke report path: `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`
+- DR drill log path: `tests/integration/artifacts/dr-drill/20260510_145359/drill.log`
+- Security report path: `tests/integration/artifacts/choreo-validation/20260510_145624/checkov.log`
+- Go/no-go approval record path: `PENDING (owner: CAB)`
