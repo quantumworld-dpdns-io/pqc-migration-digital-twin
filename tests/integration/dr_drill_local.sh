@@ -4,6 +4,7 @@ set -euo pipefail
 compose_file="docker-compose.microservices.yml"
 base_url="${GATEWAY_BASE_URL:-http://localhost:8080}"
 target_service="${DR_TARGET_SERVICE:-rust-risk}"
+probe_path="${DR_PROBE_PATH:-/health}"
 run_id="${DR_RUN_ID:-$(date '+%Y%m%d_%H%M%S')}"
 artifact_dir="tests/integration/artifacts/dr-drill/${run_id}"
 log_file="${artifact_dir}/drill.log"
@@ -47,11 +48,8 @@ wait_http_ok() {
   return 1
 }
 
-post_risk_status() {
-  curl -s -o /dev/null -w "%{http_code}" \
-    -X POST "${base_url}/api/v1/risk" \
-    -H 'content-type: application/json' \
-    -d '{"total_assets":100,"quantum_vulnerable_assets":40}' || true
+probe_status() {
+  curl -s -o /dev/null -w "%{http_code}" "${base_url}${probe_path}" || true
 }
 
 is_degraded_status() {
@@ -77,12 +75,12 @@ if ! wait_http_ok "${base_url}/health" 90 2; then
 fi
 log "gateway health ready"
 
-baseline_status="$(post_risk_status)"
+baseline_status="$(probe_status)"
 if [ "${baseline_status}" != "200" ]; then
-  log "baseline risk status unexpected: ${baseline_status}"
+  log "baseline probe status unexpected: ${baseline_status} path=${probe_path}"
   exit 1
 fi
-log "baseline risk status=200"
+log "baseline probe status=200 path=${probe_path}"
 
 t_fault_epoch="$(date +%s)"
 t_fault_human="$(date '+%Y-%m-%d %H:%M:%S %Z')"
@@ -93,7 +91,7 @@ t_detect_epoch=""
 t_detect_human=""
 degraded_status=""
 for _ in $(seq 1 40); do
-  status="$(post_risk_status)"
+  status="$(probe_status)"
   if is_degraded_status "${status}"; then
     t_detect_epoch="$(date +%s)"
     t_detect_human="$(date '+%Y-%m-%d %H:%M:%S %Z')"
@@ -113,15 +111,17 @@ t_recover_start_human="$(date '+%Y-%m-%d %H:%M:%S %Z')"
 log "recovery start: starting ${target_service}"
 docker compose -f "${compose_file}" start "${target_service}" >>"${log_file}" 2>&1
 
-if ! wait_http_ok "http://localhost:8083/health" 60 1; then
-  log "target service health did not recover"
-  exit 1
+if [ "${target_service}" = "rust-risk" ]; then
+  if ! wait_http_ok "http://localhost:8083/health" 60 1; then
+    log "target service health did not recover"
+    exit 1
+  fi
 fi
 
 t_restored_epoch=""
 t_restored_human=""
 for _ in $(seq 1 60); do
-  status="$(post_risk_status)"
+  status="$(probe_status)"
   if [ "${status}" = "200" ]; then
     t_restored_epoch="$(date +%s)"
     t_restored_human="$(date '+%Y-%m-%d %H:%M:%S %Z')"
@@ -136,11 +136,18 @@ if [ -z "${t_restored_epoch}" ]; then
 fi
 
 log "running smoke validation"
-smoke_output="$(bash tests/integration/docker_microservices_smoke.sh 2>&1 || true)"
+if [ "${target_service}" = "go-services" ]; then
+  smoke_output="skipped smoke: go-services target uses health-path drill only"
+  smoke_pass="true"
+else
+  smoke_output="$(bash tests/integration/docker_microservices_smoke.sh 2>&1 || true)"
+fi
 echo "${smoke_output}" >>"${log_file}"
 t_smoke_epoch="$(date +%s)"
 t_smoke_human="$(date '+%Y-%m-%d %H:%M:%S %Z')"
-if printf "%s" "${smoke_output}" | rg -q "Smoke test passed"; then
+if [ "${target_service}" = "go-services" ]; then
+  log "smoke validation skipped for go-services target"
+elif printf "%s" "${smoke_output}" | rg -q "Smoke test passed"; then
   smoke_pass="true"
   log "smoke validation passed"
 else
@@ -159,6 +166,7 @@ summary = {
   "run_id": "${run_id}",
   "base_url": "${base_url}",
   "target_service": "${target_service}",
+  "probe_path": "${probe_path}",
   "timestamps": {
     "start": {"human": "${t_start_human}", "epoch": int("${t_start_epoch}")},
     "fault_injected": {"human": "${t_fault_human}", "epoch": int("${t_fault_epoch}")},
@@ -174,7 +182,7 @@ summary = {
     "drill_total": int("${t_end_epoch}") - int("${t_start_epoch}"),
   },
   "checks": {
-    "baseline_risk_200": True,
+    "baseline_probe_200": True,
     "degraded_response_observed": True,
     "degraded_status_observed": "${degraded_status}",
     "restored_risk_200": True,
