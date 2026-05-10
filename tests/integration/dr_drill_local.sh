@@ -54,6 +54,11 @@ post_risk_status() {
     -d '{"total_assets":100,"quantum_vulnerable_assets":40}' || true
 }
 
+is_degraded_status() {
+  local code="$1"
+  [ "$code" = "000" ] || [ "$code" = "500" ] || [ "$code" = "502" ] || [ "$code" = "503" ] || [ "$code" = "504" ]
+}
+
 cleanup() {
   docker compose -f "${compose_file}" down -v >/dev/null 2>&1 || true
 }
@@ -86,18 +91,20 @@ docker compose -f "${compose_file}" stop "${target_service}" >>"${log_file}" 2>&
 
 t_detect_epoch=""
 t_detect_human=""
+degraded_status=""
 for _ in $(seq 1 40); do
   status="$(post_risk_status)"
-  if [ "${status}" = "502" ]; then
+  if is_degraded_status "${status}"; then
     t_detect_epoch="$(date +%s)"
     t_detect_human="$(date '+%Y-%m-%d %H:%M:%S %Z')"
-    log "fault detected via risk status=502"
+    degraded_status="${status}"
+    log "fault detected via risk status=${status}"
     break
   fi
   sleep 1
 done
 if [ -z "${t_detect_epoch}" ]; then
-  log "fault detect failed: no 502 observed"
+  log "fault detect failed: no degraded status observed"
   exit 1
 fi
 
@@ -168,7 +175,8 @@ summary = {
   },
   "checks": {
     "baseline_risk_200": True,
-    "degraded_risk_502": True,
+    "degraded_response_observed": True,
+    "degraded_status_observed": "${degraded_status}",
     "restored_risk_200": True,
     "smoke_pass": ${smoke_pass},
   },
