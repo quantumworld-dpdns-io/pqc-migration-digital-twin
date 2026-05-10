@@ -54,9 +54,9 @@ Merge to exactly **4 Choreo components** by combining closely-related services:
 
 ## 3. File Layout
 
-### New Dockerfiles (`docker images/`)
+### New Dockerfiles (`docker-images/`)
 ```
-docker images/
+docker-images/
 ├── nginx/
 │   ├── Dockerfile          ← nginx:alpine, non-root UID 10014, port 8080
 │   └── nginx.conf          ← proxies all traffic to go-services:8080
@@ -129,10 +129,10 @@ postgres://dennislee928:${DB_PASSWORD}@postgresql-dennislee928.alwaysdata.net:54
 
 1. **Build & push images** to your container registry (e.g., GitHub Container Registry or Docker Hub):
    ```sh
-   docker build -t ghcr.io/<org>/nginx:latest         "docker images/nginx/"
-   docker build -f "docker images/go-services/Dockerfile"     -t ghcr.io/<org>/go-services:latest .
-   docker build -f "docker images/python-services/Dockerfile" -t ghcr.io/<org>/python-services:latest .
-   docker build -f "docker images/rust-risk/Dockerfile"       -t ghcr.io/<org>/rust-risk:latest .
+   docker build -t ghcr.io/<org>/nginx:latest         "docker-images/nginx/"
+   docker build -f "docker-images/go-services/Dockerfile"     -t ghcr.io/<org>/go-services:latest .
+   docker build -f "docker-images/python-services/Dockerfile" -t ghcr.io/<org>/python-services:latest .
+   docker build -f "docker-images/rust-risk/Dockerfile"       -t ghcr.io/<org>/rust-risk:latest .
    ```
 
 2. **Create 4 Choreo components**, one per image:
