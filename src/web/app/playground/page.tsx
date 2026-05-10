@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Panel } from '../../components/Panel';
 import { PageHeader } from '../../components/PageHeader';
 import { getQasm, generateProof, QasmResponse, ProofResponse } from '../../lib/api';
-import { DigitalTwinScene } from '../../components/three/DigitalTwinScene';
+import DigitalTwinScene from '../../components/three/DigitalTwinScene';
 
 export default function PlaygroundPage() {
   const [qasmName, setQasmName] = useState('bell_pair');
