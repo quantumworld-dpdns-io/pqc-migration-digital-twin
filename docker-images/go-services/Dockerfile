@@ -1,7 +1,15 @@
 FROM golang:1.22-alpine AS build-gateway
 WORKDIR /src
+<<<<<<< Updated upstream
 COPY gateway/go.mod ./go.mod
 COPY gateway/ .
+=======
+# database module must be alongside gateway for the replace directive
+COPY src/go/database/ ./database/
+COPY src/go/gateway/go.mod ./go.mod
+COPY src/go/gateway/ .
+ENV GOFLAGS="-mod=mod"
+>>>>>>> Stashed changes
 RUN go build -o /out/gateway ./cmd/gateway
 
 FROM golang:1.22-alpine AS build-discovery
