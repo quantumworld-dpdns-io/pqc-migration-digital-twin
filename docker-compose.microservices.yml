@@ -19,7 +19,7 @@ services:
   # ── Component 1: Nginx reverse proxy / entry point ─────────────────────────
   nginx:
     build:
-      context: "docker images/nginx"
+      context: docker-images/nginx
       dockerfile: Dockerfile
     ports:
       - "80:8080"
@@ -40,7 +40,7 @@ services:
   go-services:
     build:
       context: .
-      dockerfile: "docker images/go-services/Dockerfile"
+      dockerfile: docker-images/go-services/Dockerfile
     ports:
       - "8080:8080"
       - "8081:8081"
@@ -64,7 +64,7 @@ services:
   python-services:
     build:
       context: .
-      dockerfile: "docker images/python-services/Dockerfile"
+      dockerfile: docker-images/python-services/Dockerfile
     ports:
       - "8082:8082"
       - "8084:8084"
@@ -83,7 +83,7 @@ services:
   rust-risk:
     build:
       context: .
-      dockerfile: "docker images/rust-risk/Dockerfile"
+      dockerfile: docker-images/rust-risk/Dockerfile
     ports:
       - "8083:8083"
     environment:

@@ -3,7 +3,7 @@ RUN groupadd -r appuser && useradd -r -g appuser -u 10014 appuser
 WORKDIR /app
 COPY src/python/ /app/
 COPY src/qasm/examples/ /app/src/qasm/examples/
-COPY ["docker images/python-services/start.sh", "/start.sh"]
+COPY docker-images/python-services/start.sh /start.sh
 RUN chown -R appuser:appuser /app \
     && chmod +x /start.sh
 ENV PYTHONUNBUFFERED=1
