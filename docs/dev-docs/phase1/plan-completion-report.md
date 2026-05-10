@@ -14,7 +14,7 @@ The repository has a solid **MVP foundation through Phases 0-4** (service scaffo
 | Phase 2: HNDL Exposure + Risk Scoring | Partial | `src/python/hndl_analysis/*`; `src/python/service.py` (`/hndl/score`); `src/rust/risk-engine/src/lib.rs`; `src/rust/risk-service/src/main.rs`; tests under `src/python/tests` and `src/go/gateway/gateway_test.go`; benchmark harness + run artifact: `scripts/run-benchmark-10k.sh`, `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json` | 10k-equivalent benchmark sign-off/governance closure is still pending; no export flow for ranked backlog; policy tuning appears code-driven, not externally managed. |
 | Phase 3: ZK Migration Proofs + Governance | Partial | `src/rust/zk-proof/src/lib.rs`; `src/rust/risk-service/src/main.rs` (proof hash in response); `src/web/components/ProofPanel.tsx`; verifier path scaffold + audit path scaffold present | Scaffold exists, but full independent verifier workflow, proof artifact registry/lifecycle store, and governance dashboard/exception tracking are not implemented. |
 | Phase 4: QASM Workflows + Advanced Planning UX | Partial | `src/python/qasm_workflows/manifest.py`; `src/python/qasm_workflows/runner.py`; `src/qasm/examples/*`; `src/web/app/page.tsx`; `src/web/components/*` | No full orchestration canvas/wave editor/milestone board acceptance evidence; scenario compare and what-if planning are not validated by E2E UX tests. |
-| Phase 5: Hardening + Production Readiness | Not complete | `docker-compose.microservices.yml`; `tests/integration/docker_microservices_smoke.sh`; `tests/integration/docker_resilience_smoke.sh`; CI hardening/integration jobs in `.github/workflows/ci.yml` | Missing formal SLO dashboards + error budgets, DR drill execution evidence, security hardening closure (authN/authZ, pen-test), compliance evidence pack, and release/on-call sign-off. |
+| Phase 5: Hardening + Production Readiness | Not complete | `docker-compose.microservices.yml`; `tests/integration/docker_microservices_smoke.sh`; `tests/integration/docker_resilience_smoke.sh`; DR drill evidence `docs/dev-docs/phase1/phase5/12-dr-drill-evidence-2026-05-10.md`; CI hardening/integration jobs in `.github/workflows/ci.yml` | Missing formal SLO dashboards + error budgets in deployed monitoring, security hardening closure (authN/authZ, pen-test), finalized compliance evidence pack, and release/on-call sign-off. |
 
 ## Cross-Cutting Evidence of Progress
 - Gateway route surface and contract alignment are enforced: `docs/api/gateway-openapi.json`, `tests/contracts/test_repo_contract_smoke.py`, `src/go/gateway/server.go`.
@@ -46,6 +46,11 @@ The following are now evidenced in this branch snapshot:
   `.github/workflows/ci.yml` (`security-readiness`, Trivy fail-on `HIGH,CRITICAL`, SPDX SBOM upload).
 - CI hardening/evidence jobs for consolidation images:
   `.github/workflows/ci.yml` (`dockerfile-build-evidence` matrix for 4 images, `checkov-dockerfiles` policy gate, and `integration-docker` dependency wiring).
+- Local consolidation runtime evidence is now directly present (2026-05-10):
+  4-image compose build + stack probe health in
+  `tests/integration/artifacts/dr-drill/20260510_145359/{drill.log,summary.json}`,
+  and local nginx->gateway `/api/v1/*` route execution evidence in
+  `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`.
 - 10k-equivalent benchmark harness execution evidence:
   `scripts/run-benchmark-10k.sh` with run artifact
   `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`.
@@ -88,6 +93,7 @@ Fault-injection and graceful-shutdown evidence status (2026-05-10):
 ## Immediate Priority Gaps (Before GA)
 1. Expand security gates from baseline to full coverage (all images/services), and add signed provenance for SBOM artifacts.
 2. Deploy monitoring dashboards and burn-rate alerts from the baseline governance spec and attach run evidence.
-3. Execute at least one timed DR recovery drill and archive RTO/RPO evidence (procedure/template exists; execution evidence not yet present).
-4. Produce a populated release evidence pack for an actual release candidate (template exists; filled artifact set not yet present).
+3. Operationalize deployed monitoring dashboards and burn-rate alerts with captured run evidence.
+4. Finalize a release evidence pack with completed approvals/signatures (current draft is no-go/incomplete).
 5. Complete release readiness process (incident drills, on-call/go-no-go approvals, and archival sign-off records).
+6. Close remaining consolidation external/pending items: Choreo-environment secret/upstream wiring, public Choreo health URL checks, Choreo compose-dev validation, and a local Checkov pass artifact.

@@ -98,46 +98,62 @@ export default async function DashboardPage() {
     : fallbackRisks;
 
   return (
-    <main className="dashboard">
-      <header className="hero">
-        <p className="kicker">PQC Migration Digital Twin</p>
-        <h1>Operational Dashboard</h1>
-        {risk && (
-          <p className="risk-badge">
-            Live risk score: <strong>{risk.score}</strong> (Ratio: {risk.exposure_ratio})
-          </p>
-        )}
-        <p className="risk-badge">
-          Data mode: <strong>{isLiveMode ? 'Live gateway' : 'Fallback dataset'}</strong>
-        </p>
+    <main className="dashboard space-y-12">
+      <header className="hero flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <p className="kicker">Operational Digital Twin</p>
+          <h1>Enterprise Dashboard</h1>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {risk && (
+            <div className="risk-badge">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Risk: <strong>{risk.score}</strong></span>
+            </div>
+          )}
+          <div className="risk-badge">
+            <span className={`w-2 h-2 rounded-full ${isLiveMode ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+            <span>Mode: <strong>{isLiveMode ? 'Live Gateway' : 'Fallback Dataset'}</strong></span>
+          </div>
+        </div>
       </header>
 
-      <section className="mb-8">
-        <Panel title="Real-time Network Twin" subtitle="Live 3D spatial representation of discovered assets">
-          <DigitalTwinScene assets={assets} />
+      <section className="col-span-full">
+        <Panel title="Real-time Network Twin" subtitle="Live 3D spatial representation of discovered assets and security posture">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-emerald-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+            <DigitalTwinScene assets={assets} />
+          </div>
         </Panel>
       </section>
 
       <div className="layout-grid">
-        <Panel title="Inventory" subtitle={assets.length > 0 ? `${assets.length} assets discovered` : 'Cryptographic asset baseline'}>
-          <InventoryTable items={inventory} />
-        </Panel>
+        <div className="col-span-full xl:col-span-8">
+          <Panel title="Cryptographic Inventory" subtitle={`${assets.length} items identified in the current scan scope`}>
+            <InventoryTable items={inventory} />
+          </Panel>
+        </div>
 
-        <Panel title="HNDL Heatmap" subtitle="Signal intensity snapshot">
-          <HndlHeatmap cells={fallbackHeatmap} />
-        </Panel>
+        <div className="col-span-full xl:col-span-4 space-y-6">
+          <Panel title="Risk Analysis" subtitle="HNDL signal intensity and exposure matrix">
+            <div className="space-y-8">
+              <HndlHeatmap cells={fallbackHeatmap} />
+              <div className="pt-6 border-t border-white/5">
+                <RiskMatrix items={risks} />
+              </div>
+            </div>
+          </Panel>
+          
+          <Panel title="Compliance Overview" subtitle="Verifier drift and policy exceptions">
+            <GovernancePanel exceptions={governanceExceptions} drift={verifierDrift} />
+          </Panel>
+        </div>
 
-        <Panel title="Risk Matrix" subtitle="Likelihood x Impact">
-          <RiskMatrix items={risks} />
-        </Panel>
-
-        <Panel title="Proof Panel" subtitle="Evidence and verification lanes">
-          <ProofPanel />
-        </Panel>
-
-        <Panel title="Governance" subtitle="Exception register and verifier drift">
-          <GovernancePanel exceptions={governanceExceptions} drift={verifierDrift} />
-        </Panel>
+        <div className="col-span-full">
+          <Panel title="Evidence & Verification" subtitle="Cryptographic proofs and audit-ready verification lanes">
+            <ProofPanel />
+          </Panel>
+        </div>
       </div>
     </main>
   );

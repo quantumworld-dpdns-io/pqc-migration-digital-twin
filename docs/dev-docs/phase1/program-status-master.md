@@ -42,6 +42,10 @@ The following are now evidenced in this branch snapshot:
   `dockerfile-build-evidence` (4-image build evidence artifacts) and `checkov-dockerfiles` (Dockerfile policy scan), both required by `integration-docker`.
 - Runtime performance evidence for 10k-equivalent scenario:
   `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json` produced by `scripts/run-benchmark-10k.sh`.
+- Local consolidation execution evidence (2026-05-10):
+  `tests/integration/artifacts/dr-drill/20260510_145359/drill.log` (compose build for all 4 services) and
+  `tests/integration/artifacts/dr-drill/20260510_145359/summary.json` (`baseline_probe_200`, `smoke_pass`), plus local `/api/v1/*` E2E-path evidence in
+  `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`.
 
 Impact:
 - improves Phase 2 implementation confidence and automation depth,
@@ -49,6 +53,7 @@ Impact:
 - establishes RED instrumentation baseline but does not complete RED dashboard/alerting deliverables,
 - establishes RED dashboard/alert policy baseline and governance checks, but does not prove deployed-monitoring execution evidence,
 - improves CI supply-chain/build-policy evidence depth and now includes baseline fault-injection plus restart/degraded-path resilience evidence,
+- closes local consolidation evidence for 4-image build, stack health, and nginx->gateway API-path E2E verification,
 - closes baseline runtime evidence for 10k-equivalent benchmark execution (governance sign-off still pending),
 - does **not** change overall program status that Phase 5 remains incomplete.
 

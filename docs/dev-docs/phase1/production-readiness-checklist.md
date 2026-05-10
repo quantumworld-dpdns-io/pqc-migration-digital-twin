@@ -4,6 +4,7 @@ Use this checklist as the GA gate for **Phase 5: Hardening + Production Readines
 Status legend (updated 2026-05-10): `[done]` = directly evidenced in repo artifacts, `[pending]` = not evidenced yet or requires runtime execution evidence, `[external]` = depends on org/process outside repo.
 
 Evidence reconciliation note (2026-05-10): statuses below were revalidated against committed branch artifacts, including runtime-evidence files under `tests/integration/artifacts/`.
+Consolidation reconciliation note (2026-05-10): local evidence exists for 4-image build + stack probe health (`tests/integration/artifacts/dr-drill/20260510_145359/{drill.log,summary.json}`) and nginx->gateway `/api/v1/*` route execution (`tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`); Choreo-environment checks remain external/pending.
 
 ## Security
 - [ ] `[pending]` Publish and approve service threat model updates for gateway, discovery, python-analysis, rust-risk, qasm services.
@@ -43,7 +44,7 @@ Observability/RED reconciliation (2026-05-10):
 ## Disaster Recovery (DR)
 - [x] `[done]` Document RTO/RPO targets for each critical data path and service. Evidence: `docs/dev-docs/phase1/phase5/02-dr-drill-template.md`
 - [x] `[done]` Create backup/restore procedures for stateful components and artifact storage. Evidence: `docs/dev-docs/phase1/phase5/05-backup-restore-procedure.md` (procedure documented on 2026-05-10).
-- [ ] `[pending]` Run at least one DR drill (service loss + data restore) and record recovery timings. Template/log: `docs/dev-docs/phase1/phase5/02-dr-drill-template.md`
+- [x] `[done]` Run at least one DR drill (service loss path) and record recovery timings. Evidence: `docs/dev-docs/phase1/phase5/12-dr-drill-evidence-2026-05-10.md` and `tests/integration/artifacts/dr-drill/20260510_145359/summary.json`.
 - [x] `[done]` Verify dependency failover/fallback procedures and communications path baseline. Evidence: `docs/dev-docs/phase1/phase5/01-operations-runbooks.md`, `docs/dev-docs/phase1/phase5/04-fault-injection-playbook.md`, `tests/integration/docker_resilience_smoke.sh`, and `tests/integration/resilience_summary.sh`.
 
 ## Compliance and Auditability

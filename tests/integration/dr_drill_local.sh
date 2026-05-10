@@ -155,6 +155,12 @@ else
   log "smoke validation failed"
 fi
 
+if [ "${smoke_pass}" = "true" ]; then
+  smoke_pass_py="True"
+else
+  smoke_pass_py="False"
+fi
+
 t_end_epoch="$(date +%s)"
 t_end_human="$(date '+%Y-%m-%d %H:%M:%S %Z')"
 
@@ -186,7 +192,7 @@ summary = {
     "degraded_response_observed": True,
     "degraded_status_observed": "${degraded_status}",
     "restored_risk_200": True,
-    "smoke_pass": ${smoke_pass},
+    "smoke_pass": ${smoke_pass_py},
   },
 }
 Path("${summary_json}").write_text(json.dumps(summary, indent=2), encoding="utf-8")

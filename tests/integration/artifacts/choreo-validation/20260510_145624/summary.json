@@ -1,0 +1,24 @@
+{
+  "run_id": "20260510_145624",
+  "build": {
+    "nginx": "PASS",
+    "go-services": "PASS",
+    "python-services": "PASS",
+    "rust-risk": "PASS"
+  },
+  "compose": {
+    "compose_up": "PASS",
+    "compose_down": "PASS",
+    "health_status": "200",
+    "/api/v1/risk": "200",
+    "/api/v1/backlog": "404",
+    "/api/v1/proof": "200",
+    "/api/v1/qasm": "200"
+  },
+  "checkov": {
+    "status": "RAN",
+    "passed_checks": 224,
+    "failed_checks": 3,
+    "skipped_checks": 0
+  }
+}

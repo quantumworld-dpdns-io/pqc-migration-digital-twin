@@ -166,14 +166,14 @@ All 4 Dockerfiles include a non-root user with UID **10014** and an explicit `US
 
 Status legend: `[done]` = evidenced in repo, `[pending]` = not yet evidenced in repo, `[external]` = requires Choreo/ops execution.
 
-- [ ] `[pending]` All 4 Dockerfiles build successfully locally.
-- [ ] `[pending]` `docker-compose.microservices.yml` stack starts and all healthchecks pass.
+- [x] `[done]` All 4 Dockerfiles build successfully locally. Evidence (2026-05-10): `tests/integration/artifacts/dr-drill/20260510_145359/drill.log` (compose build output for `nginx`, `go-services`, `python-services`, `rust-risk`).
+- [x] `[done]` `docker-compose.microservices.yml` stack starts and all healthchecks pass. Evidence (2026-05-10): `tests/integration/artifacts/dr-drill/20260510_145359/summary.json` (`baseline_probe_200: true`, `smoke_pass: true`).
 - [ ] `[pending]` `docker-compose.microservices-chore-dev.yml` validates against Choreo.
 - [ ] `[external]` AlwaysData `DATABASE_URL` added as Choreo Secret on each component.
 - [ ] `[external]` nginx upstream env vars set in Choreo to point at internal service endpoints.
-- [ ] `[pending]` Checkov scan passes (0 failures) on all 4 Dockerfiles.
+- [ ] `[pending]` Checkov scan passes (0 failures) on all 4 Dockerfiles. Current repo evidence is CI gating presence only (`.github/workflows/ci.yml` job `checkov-dockerfiles`), not a local run artifact.
 - [ ] `[external]` `/health` endpoint reachable via nginx public URL.
-- [ ] `[pending]` All `/api/v1/` routes verified end-to-end through nginx → gateway.
+- [x] `[done]` All `/api/v1/` routes verified end-to-end through nginx → gateway (local). Evidence (2026-05-10): `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json` per-endpoint results for `/api/v1/assets`, `/api/v1/discovery`, `/api/v1/risk`, `/api/v1/risk/backlog`, `/api/v1/proof`, `/api/v1/qasm`.
 
 ## 10. Verified Repo Evidence Snapshot (2026-05-10)
 
@@ -181,3 +181,6 @@ Status legend: `[done]` = evidenced in repo, `[pending]` = not yet evidenced in 
 - `[done]` local certificate automation and validator script exist:
   `scripts/generate-local-certs.sh` and `scripts/validate-local-certs-script.sh`.
 - `[done]` CI has script validation job (`.github/workflows/ci.yml`) and `make lint` invokes the script validator.
+- `[done]` local stack/runtime evidence exists for build + probe health + API-path execution:
+  `tests/integration/artifacts/dr-drill/20260510_145359/{drill.log,summary.json}` and
+  `tests/integration/artifacts/benchmark-10k/20260510_144427/summary.json`.
