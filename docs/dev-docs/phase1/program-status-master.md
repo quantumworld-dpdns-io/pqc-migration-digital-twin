@@ -18,6 +18,7 @@ This file is the controller-level consolidation of:
 - Gateway service-to-service integration across discovery/risk/proof/qasm paths.
 - Versioned OpenAPI contract and contract checks in CI.
 - CI lanes for lint/test/contracts plus Docker integration smoke testing.
+- Baseline resilience automation: fault-injection/recovery integration script and CI lane (`tests/integration/docker_resilience_smoke.sh`, `integration-resilience`).
 - Workstream and milestone scoreboards with current delivery evidence.
 - Tool-selection suitability map with implementation tracking overlay and sprint onboarding sequence.
 
@@ -29,13 +30,20 @@ The following are now evidenced in this branch snapshot:
 - script automation gate for local cert generation in `scripts/validate-local-certs-script.sh`, invoked by `Makefile` and CI workflow.
 - frontend dashboard mode indicator (live/fallback) and API-client error contract tests in `src/web/*`.
 - observability/health hardening in core services (`src/go/gateway`, `src/go/discovery`, `src/python/service.py`, `src/rust/risk-service`, `src/qasm/examples/service`) with request IDs, structured logs, and `/live` + `/ready` probes.
-- RED metrics export baseline is now implemented in core services (`/metrics` with request/error/latency counters), while dashboards/alerting remain pending.
+- RED metrics export baseline is now implemented in core services (`/metrics` with request/error/latency counters), while dashboards/alerting and error-budget governance remain pending.
+- governance/compliance documentation additions in `docs/dev-docs/phase1/phase5/*` (2026-05-10):
+  SLO/error-budget spec (`04-slo-error-budget-spec.md`),
+  backup/restore procedure (`05-backup-restore-procedure.md`),
+  release evidence pack template (`06-release-evidence-pack-template.md`).
 - CI security-readiness lane with Trivy gates and SBOM artifact generation in `.github/workflows/ci.yml`.
+- CI consolidation-image evidence and policy gates in `.github/workflows/ci.yml`:
+  `dockerfile-build-evidence` (4-image build evidence artifacts) and `checkov-dockerfiles` (Dockerfile policy scan), both required by `integration-docker`.
 
 Impact:
 - improves Phase 2 implementation confidence and automation depth,
 - materially advances Phase 5 reliability/operations controls for observability and probe semantics,
 - establishes RED instrumentation baseline but does not complete RED dashboard/alerting deliverables,
+- improves CI supply-chain/build-policy evidence depth and now includes baseline fault-injection plus restart/degraded-path resilience evidence,
 - does **not** change overall program status that Phase 5 remains incomplete.
 
 ## What Remains To Finish The Full Plan
@@ -49,6 +57,7 @@ Impact:
 - Scenario compare, wave editor, and milestone orchestration UI acceptance.
 5. Phase 5 readiness:
 - Security hardening, SBOM/provenance, DR drills, SLO dashboards, compliance evidence pack, release governance sign-off.
+  Note: documentation baselines for SLO, backup/restore, and release-evidence template are present; execution evidence and approval artifacts remain open.
 
 ## Execution Order For Remaining Work
 1. Close Phase 1/2 acceptance gaps.

@@ -3,7 +3,7 @@
 Last updated: 2026-05-10
 Scope: Deliverables listed in `00-overview.md`
 
-Reconciliation note (2026-05-10): observability/health changes are now merged and verifiable in this branch snapshot, and they are tracked under Phase 5 readiness. Phase 2 deliverable completion remains unchanged.
+Reconciliation note (2026-05-10): observability/health and RED metrics changes are now merged and verifiable in this branch snapshot, and they are tracked under Phase 5 readiness. Phase 2 deliverable completion remains unchanged.
 
 ## Status Summary
 
@@ -24,3 +24,4 @@ Reconciliation note (2026-05-10): observability/health changes are now merged an
 - HSTS preload submission is pending production domain finalization and ownership checks (external dependency).
 - CSP violation reporting (`report-uri`/`report-to`) is intentionally deferred to Phase 3.
 - Cookie hardening flags are pending auth/session cookie introduction (not part of current Phase 2 implementation scope).
+- Fault-injection and graceful-shutdown verification remain Phase 5 pending items until dedicated tests/jobs are added and evidenced in branch.

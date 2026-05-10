@@ -351,3 +351,15 @@ jobs:
       - name: Docker microservice smoke test
         run: |
           bash tests/integration/docker_microservices_smoke.sh
+
+  integration-resilience:
+    name: Integration (Restart + Degraded Downstream)
+    runs-on: ubuntu-latest
+    needs: [scripts-validation, lint, test, contracts, security-readiness, dockerfile-build-evidence, checkov-dockerfiles]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restart and degraded-path smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tests/integration/docker_resilience_smoke.sh

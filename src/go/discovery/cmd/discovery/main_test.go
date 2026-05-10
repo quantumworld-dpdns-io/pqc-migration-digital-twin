@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/example/pqc-migration-digital-twin/src/go/discovery"
 )
@@ -75,6 +80,24 @@ func TestScanRejectsInvalidPort(t *testing.T) {
 	}
 }
 
+func TestScanRejectsMalformedPayloadBurst(t *testing.T) {
+	store := discovery.NewAssetStore()
+	mux := newMux(store)
+
+	for i := 0; i < 40; i++ {
+		req := httptest.NewRequest(http.MethodPost, "/scan", strings.NewReader(`{"address":"bad",`))
+		req.Header.Set("Content-Type", "application/json")
+		res := httptest.NewRecorder()
+		mux.ServeHTTP(res, req)
+		if res.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 for malformed payload at iteration %d, got %d", i, res.Code)
+		}
+	}
+	if got := store.Count(); got != 0 {
+		t.Fatalf("expected no persisted assets for malformed burst, got %d", got)
+	}
+}
+
 func TestHealthLiveReadyAndRequestID(t *testing.T) {
 	mux := newMux(discovery.NewAssetStore())
 
@@ -137,4 +160,54 @@ func TestMetricsEndpointExportsRouteCounters(t *testing.T) {
 			t.Fatalf("expected metrics output to contain %q, got:\n%s", snippet, body)
 		}
 	}
+}
+
+func TestDiscoveryGracefulShutdownAllowsInFlightRequest(t *testing.T) {
+	store := discovery.NewAssetStore()
+	srv := &http.Server{Handler: newMux(store)}
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen failed: %v", err)
+	}
+	defer ln.Close()
+
+	var serveWG sync.WaitGroup
+	serveWG.Add(1)
+	go func() {
+		defer serveWG.Done()
+		_ = srv.Serve(ln)
+	}()
+
+	var reqWG sync.WaitGroup
+	reqWG.Add(1)
+	result := make(chan error, 1)
+	go func() {
+		defer reqWG.Done()
+		req, _ := http.NewRequest(http.MethodPost, "http://"+ln.Addr().String()+"/scan", strings.NewReader(`{"address":"gateway.local","port":443}`))
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := (&http.Client{Timeout: 2 * time.Second}).Do(req)
+		if err != nil {
+			result <- err
+			return
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			result <- fmt.Errorf("unexpected status %d", resp.StatusCode)
+			return
+		}
+		result <- nil
+	}()
+
+	time.Sleep(20 * time.Millisecond)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		t.Fatalf("shutdown failed: %v", err)
+	}
+
+	reqWG.Wait()
+	if err := <-result; err != nil {
+		t.Fatalf("in-flight request failed during shutdown: %v", err)
+	}
+	serveWG.Wait()
 }

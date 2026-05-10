@@ -14,7 +14,7 @@ The repository has a solid **MVP foundation through Phases 0-4** (service scaffo
 | Phase 2: HNDL Exposure + Risk Scoring | Partial | `src/python/hndl_analysis/*`; `src/python/service.py` (`/hndl/score`); `src/rust/risk-engine/src/lib.rs`; `src/rust/risk-service/src/main.rs`; tests under `src/python/tests` and `src/go/gateway/gateway_test.go` | No demonstrated 10k-asset SLO benchmark; no export flow for ranked backlog; policy tuning appears code-driven, not externally managed. |
 | Phase 3: ZK Migration Proofs + Governance | Partial | `src/rust/zk-proof/src/lib.rs`; `src/rust/risk-service/src/main.rs` (proof hash in response); `src/web/components/ProofPanel.tsx`; verifier path scaffold + audit path scaffold present | Scaffold exists, but full independent verifier workflow, proof artifact registry/lifecycle store, and governance dashboard/exception tracking are not implemented. |
 | Phase 4: QASM Workflows + Advanced Planning UX | Partial | `src/python/qasm_workflows/manifest.py`; `src/python/qasm_workflows/runner.py`; `src/qasm/examples/*`; `src/web/app/page.tsx`; `src/web/components/*` | No full orchestration canvas/wave editor/milestone board acceptance evidence; scenario compare and what-if planning are not validated by E2E UX tests. |
-| Phase 5: Hardening + Production Readiness | Not complete | `docker-compose.microservices.yml`; `tests/integration/docker_microservices_smoke.sh`; CI integration job in `.github/workflows/ci.yml` | Missing formal SLO dashboard + error budgets, fault injection, DR drills, security hardening/pen-test closure, compliance evidence pack, on-call drill/runbook sign-off. |
+| Phase 5: Hardening + Production Readiness | Not complete | `docker-compose.microservices.yml`; `tests/integration/docker_microservices_smoke.sh`; `tests/integration/docker_resilience_smoke.sh`; CI hardening/integration jobs in `.github/workflows/ci.yml` | Missing formal SLO dashboards + error budgets, DR drill execution evidence, security hardening closure (authN/authZ, pen-test), compliance evidence pack, and release/on-call sign-off. |
 
 ## Cross-Cutting Evidence of Progress
 - Gateway route surface and contract alignment are enforced: `docs/api/gateway-openapi.json`, `tests/contracts/test_repo_contract_smoke.py`, `src/go/gateway/server.go`.
@@ -35,8 +35,14 @@ The following are now evidenced in this branch snapshot:
   request-id middleware/headers, structured request logs, and `/live` + `/ready` endpoints in Go gateway/discovery, Python analysis, Rust risk service, and qasm examples service.
 - RED metrics progress status:
   explicit metrics export/instrumentation is now present via `/metrics` in core services; dashboards and alerting remain pending.
+- Governance/compliance documentation additions (2026-05-10):
+  `docs/dev-docs/phase1/phase5/04-slo-error-budget-spec.md`,
+  `docs/dev-docs/phase1/phase5/05-backup-restore-procedure.md`,
+  `docs/dev-docs/phase1/phase5/06-release-evidence-pack-template.md`.
 - CI security-readiness lane for vulnerability gating and SBOM artifact output:
   `.github/workflows/ci.yml` (`security-readiness`, Trivy fail-on `HIGH,CRITICAL`, SPDX SBOM upload).
+- CI hardening/evidence jobs for consolidation images:
+  `.github/workflows/ci.yml` (`dockerfile-build-evidence` matrix for 4 images, `checkov-dockerfiles` policy gate, and `integration-docker` dependency wiring).
 
 Current health/observability baseline evidence:
 - `src/go/gateway/server.go` (`GET /health`)
@@ -58,9 +64,19 @@ Current RED metrics evidence status:
   `src/qasm/examples/service/qasm_service.py`.
 - Remaining gaps: production dashboards (p50/p95/p99, throughput, error-rate), error-budget alerting, and SLO governance evidence.
 
+Fault-injection and graceful-shutdown evidence status (2026-05-10):
+- Fault-injection coverage is now present in Go service tests:
+  `src/go/gateway/gateway_test.go` (downstream timeout + malformed downstream payload) and
+  `src/go/discovery/cmd/discovery/main_test.go` (malformed payload burst handling).
+- Graceful-shutdown behavior is now validated for Go gateway/discovery via in-flight request completion tests:
+  `TestGatewayGracefulShutdownAllowsInFlightRequest` and
+  `TestDiscoveryGracefulShutdownAllowsInFlightRequest`.
+- Integration resilience workflow now exists:
+  `tests/integration/docker_resilience_smoke.sh` with CI job `integration-resilience` in `.github/workflows/ci.yml` (degraded downstream + restart recovery path).
+
 ## Immediate Priority Gaps (Before GA)
 1. Expand security gates from baseline to full coverage (all images/services), and add signed provenance for SBOM artifacts.
 2. Define and measure SLOs for gateway, scoring, and proof paths with automated burn-rate alerting.
-3. Build DR runbooks and execute at least one timed recovery drill with RTO/RPO evidence.
-4. Produce compliance evidence pack (controls matrix, audit evidence, exception approvals).
-5. Complete release readiness process (runbooks, incident drills, go/no-go checklist).
+3. Execute at least one timed DR recovery drill and archive RTO/RPO evidence (procedure/template exists; execution evidence not yet present).
+4. Produce a populated release evidence pack for an actual release candidate (template exists; filled artifact set not yet present).
+5. Complete release readiness process (incident drills, on-call/go-no-go approvals, and archival sign-off records).
