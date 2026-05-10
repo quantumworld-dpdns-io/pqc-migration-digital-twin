@@ -52,31 +52,92 @@ export type Asset = {
   discovered_at: string;
 };
 
-export type DiscoveryRequest = { address: string; port: number };
-export type DiscoveryResponse = { assets: Asset[] };
+export type DiscoveryRequest = { address?: string; port?: number };
+export type DiscoveryResponse = { 
+  target: Record<string, unknown>; 
+  findings: Asset[];
+};
 
-export type RiskRequest = { total_assets: number; quantum_vulnerable_assets: number };
-export type RiskResponse = { risk_score: number; risk_level: string };
+export type RiskRequest = { 
+  total_assets?: number; 
+  quantum_vulnerable_assets?: number;
+  policy?: string;
+};
+export type RiskResponse = { 
+  policy: string;
+  exposure_ratio: number;
+  score: number;
+  risk_score: number; // Added for backward compatibility if used
+  risk_level: string; // Added for backward compatibility if used
+};
 
-export type BacklogRow = { asset_id: string; total_assets: number; quantum_vulnerable_assets: number };
+export type BacklogRow = Record<string, unknown>;
 export type BacklogRequest = { policy: string; asset_rows: BacklogRow[] };
-export type BacklogResponse = { items: { asset_id: string; priority: number }[] };
+export type BacklogResponse = { 
+  policy: string;
+  backlog: Record<string, unknown>[];
+};
 
 export type ProofRequest = {
-  credit_score: number;
-  debt_to_income_bps: number;
-  late_payments: number;
-  existing_loans: number;
+  statement?: string;
+  credit_score?: number;
+  debt_to_income_bps?: number;
+  late_payments?: number;
+  existing_loans?: number;
 };
-export type ProofResponse = { proof: string; verified: boolean };
+export type ProofResponse = { 
+  statement: string;
+  score_value: number;
+  score_band: string;
+  proof_hash: string;
+};
 
-export type QasmRequest = Record<string, unknown>;
-export type QasmResponse = { circuit: string };
+export type QasmRequest = { name?: string };
+export type QasmResponse = Record<string, unknown>;
+
+export type AssetListResponse = {
+  count: number;
+  assets: Asset[];
+};
+
+export type GovernanceException = {
+  exception_id: string;
+  asset_id: string;
+  reason: string;
+  owner: string;
+  expires_at?: string;
+  status: 'open';
+  created_at: string;
+};
+
+export type GovernanceExceptionCreateRequest = {
+  asset_id: string;
+  reason: string;
+  owner: string;
+  expires_at?: string;
+};
+
+export type VerifierDriftResponse = {
+  current_verifier_version: string;
+  latest_verifier_version: string;
+  drift: boolean;
+};
+
+export type AuditEvent = {
+  timestamp: string;
+  route: string;
+  method: string;
+  outcome: 'success' | 'error';
+};
+
+export type AuditEventsResponse = {
+  events: AuditEvent[];
+};
 
 // ── API functions ─────────────────────────────────────────────────────────────
 
 export const getAssets = (signal?: AbortSignal) =>
-  request<Asset[]>('GET', '/api/v1/assets', undefined, signal);
+  request<AssetListResponse>('GET', '/api/v1/assets', undefined, signal);
 
 export const runDiscovery = (req: DiscoveryRequest, signal?: AbortSignal) =>
   request<DiscoveryResponse>('POST', '/api/v1/discovery', req, signal);
@@ -92,3 +153,15 @@ export const generateProof = (req: ProofRequest, signal?: AbortSignal) =>
 
 export const getQasm = (req: QasmRequest = {}, signal?: AbortSignal) =>
   request<QasmResponse>('POST', '/api/v1/qasm', req, signal);
+
+export const getGovernanceExceptions = (signal?: AbortSignal) =>
+  request<{ exceptions: GovernanceException[] }>('GET', '/api/v1/governance/exceptions', undefined, signal);
+
+export const createGovernanceException = (req: GovernanceExceptionCreateRequest, signal?: AbortSignal) =>
+  request<GovernanceException>('POST', '/api/v1/governance/exceptions', req, signal);
+
+export const getVerifierDrift = (signal?: AbortSignal) =>
+  request<VerifierDriftResponse>('GET', '/api/v1/governance/verifier-drift', undefined, signal);
+
+export const getAuditEvents = (limit?: number, signal?: AbortSignal) =>
+  request<AuditEventsResponse>('GET', `/api/v1/audit/events${limit ? `?limit=${limit}` : ''}`, undefined, signal);
