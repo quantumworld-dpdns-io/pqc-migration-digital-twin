@@ -206,8 +206,8 @@ func (m *metricsStore) writePrometheus(w http.ResponseWriter) {
 	}
 }
 
-// NewMux creates the gateway HTTP mux and proxies requests to downstream services.
-func NewMux() *http.ServeMux {
+// NewMux creates the gateway HTTP handler with CORS support and proxies requests to downstream services.
+func NewMux() http.Handler {
 	cfg := serviceConfig{
 		discoveryURL: envOrDefault("DISCOVERY_BASE_URL", "http://go-discovery:8081"),
 		pythonURL:    envOrDefault("PYTHON_BASE_URL", "http://python-analysis:8082"),
@@ -233,7 +233,7 @@ func NewMux() *http.ServeMux {
 	mux.HandleFunc("/api/v1/governance/verifier-drift", withServiceMiddleware(withAudit("/api/v1/governance/verifier-drift", audit, verifierDriftHandler()), metrics))
 	mux.HandleFunc("/api/v1/audit/events", withServiceMiddleware(auditEventsHandler(audit), metrics))
 	mux.HandleFunc("/metrics", withRequestContext(metrics.handler()))
-	return mux
+	return corsMiddleware(mux)
 }
 
 func withServiceMiddleware(next http.HandlerFunc, metrics *metricsStore) http.HandlerFunc {
@@ -631,6 +631,47 @@ func envOrDefault(name, d string) string {
 		return d
 	}
 	return v
+}
+
+var allowedOrigins = parseOrigins(envOrDefault("CORS_ALLOWED_ORIGINS",
+	"http://localhost:3000,https://pqc-digital-twin.dennisleehappy.org"))
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+		if origin != "" && isAllowedOrigin(origin) {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+		}
+		if r.Method == http.MethodOptions {
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func isAllowedOrigin(origin string) bool {
+	for _, o := range allowedOrigins {
+		if o == origin {
+			return true
+		}
+	}
+	return false
+}
+
+func parseOrigins(raw string) []string {
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 func writeJSON(w http.ResponseWriter, code int, payload any) {
