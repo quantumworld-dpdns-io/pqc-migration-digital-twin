@@ -1,0 +1,1 @@
+{"findings":[{"Protocol":"tls","Severity":"info","Summary":"stub tls scan completed","Target":"localhost"},{"Protocol":"ssh","Severity":"low","Summary":"stub ssh scan completed","Target":"localhost"},{"Protocol":"vpn","Severity":"medium","Summary":"stub vpn scan completed","Target":"localhost"}],"persisted_new":3,"persisted_total":3,"target":{"Address":"localhost","Port":443}}

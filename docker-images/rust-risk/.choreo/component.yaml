@@ -1,0 +1,11 @@
+schemaVersion: "1.2"
+
+endpoints:
+  - name: risk-engine
+    displayName: Rust Risk Engine (ZK-Proof)
+    service:
+      basePath: /
+      port: 8083
+    type: REST
+    networkVisibilities:
+      - Project

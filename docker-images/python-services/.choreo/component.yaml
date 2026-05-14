@@ -1,0 +1,20 @@
+schemaVersion: "1.2"
+
+endpoints:
+  - name: analysis
+    displayName: Python Analysis (HNDL Scorer)
+    service:
+      basePath: /
+      port: 8082
+    type: REST
+    networkVisibilities:
+      - Project
+
+  - name: qasm
+    displayName: QASM Examples Service
+    service:
+      basePath: /
+      port: 8084
+    type: REST
+    networkVisibilities:
+      - Project

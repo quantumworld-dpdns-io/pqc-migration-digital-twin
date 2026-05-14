@@ -1,0 +1,37 @@
+name: Phase5 SLO Governance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'docs/dev-docs/phase1/**'
+      - '.github/workflows/phase5-slo-governance.yml'
+      - 'tests/locust/locustfile.py'
+
+jobs:
+  validate-slo-governance-artifacts:
+    name: Validate SLO/Alert Governance Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate required Phase 5 docs exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f docs/dev-docs/phase1/phase5/04-slo-error-budget-spec.md
+          test -f docs/dev-docs/phase1/phase5/11-red-dashboard-alert-baseline.md
+          test -f docs/dev-docs/phase1/phase5/06-release-evidence-pack-template.md
+          test -f docs/dev-docs/phase1/phase5/03-controls-evidence-matrix.md
+      - name: Validate SLO and alert baseline content markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          rg -n "Availability \(success ratio\)|Latency p95|Error budgets" docs/dev-docs/phase1/phase5/04-slo-error-budget-spec.md
+          rg -n "RED-1|ALT-RED-01|error rate|latency|SLO rollup" docs/dev-docs/phase1/phase5/11-red-dashboard-alert-baseline.md
+          rg -n "SLO/budget review|CI quality gates|Resilience smoke" docs/dev-docs/phase1/phase5/06-release-evidence-pack-template.md
+      - name: Validate locust benchmark harness syntax baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tests/locust/locustfile.py
+          echo "[phase5-slo-governance] Locust harness syntax validation passed"

@@ -8,6 +8,7 @@ This directory contains repository quality gates and cross-service validation as
 - `tests/behave/`: BDD scenarios for API behavior (including negative API cases).
 - `tests/robot/`: Robot Framework API checks (including negative API cases).
 - `tests/locust/`: Locust headless API load/smoke checks (including negative API cases).
+- `tests/perf/`: deterministic benchmark profiles for reproducible load runs.
 - `tests/contracts/`: legacy contract checks retained for reference (not executed by default test targets).
 
 ## Negative API coverage added
@@ -31,4 +32,17 @@ Example:
 
 ```bash
 GATEWAY_BASE_URL=http://localhost:8080 make test
+```
+
+## 10k asset-equivalent benchmark
+
+- Runner: `scripts/run-benchmark-10k.sh`
+- Profile defaults: `tests/perf/benchmark_10k.env`
+- Locust scenario: `tests/locust/benchmark_10k_locustfile.py`
+- Machine-readable summary artifact: `tests/integration/artifacts/benchmark-10k/<RUN_ID>/summary.json`
+
+Example:
+
+```bash
+bash scripts/run-benchmark-10k.sh
 ```

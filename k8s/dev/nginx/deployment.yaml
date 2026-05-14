@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: pqc-digital-twin
+  labels:
+    app.kubernetes.io/name: nginx
+    app.kubernetes.io/part-of: pqc-migration-digital-twin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nginx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nginx
+        app.kubernetes.io/part-of: pqc-migration-digital-twin
+    spec:
+      securityContext:
+        runAsUser: 10014
+        runAsGroup: 10014
+        fsGroup: 10014
+      containers:
+        - name: nginx
+          image: ghcr.io/quantumworld-dpdns-io/pqc-migration-digital-twin/nginx:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: nginx-config
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+      restartPolicy: Always

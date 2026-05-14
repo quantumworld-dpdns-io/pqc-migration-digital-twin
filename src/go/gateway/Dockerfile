@@ -1,8 +1,9 @@
 FROM golang:1.22-alpine AS build
 WORKDIR /src
-COPY src/go/gateway/go.mod ./go.mod
-COPY src/go/gateway/ .
-RUN go build -o /out/gateway ./cmd/gateway
+COPY src/go/database/ ./database/
+COPY src/go/gateway/ ./gateway/
+WORKDIR /src/gateway
+RUN GOWORK=off go build -mod=mod -o /out/gateway ./cmd/gateway
 
 FROM alpine:3.20
 RUN adduser -D -H -u 10001 appuser

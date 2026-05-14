@@ -2,10 +2,16 @@ package gateway
 
 import (
 	"bytes"
+	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,6 +25,10 @@ type serviceConfig struct {
 	rustURL      string
 	qasmURL      string
 }
+
+type contextKey string
+
+const requestIDContextKey contextKey = "request_id"
 
 type auditEvent struct {
 	Timestamp string `json:"timestamp"`
@@ -101,6 +111,101 @@ func (s *exceptionStore) list() []governanceException {
 	return out
 }
 
+type routeMetrics struct {
+	requestCount uint64
+	errorCount   uint64
+	latencySumMs uint64
+	latencyCount uint64
+	buckets      []uint64
+}
+
+type metricsStore struct {
+	mu      sync.RWMutex
+	routes  map[string]*routeMetrics
+	bounds  []int64
+	service string
+}
+
+func newMetricsStore(service string) *metricsStore {
+	return &metricsStore{
+		routes:  make(map[string]*routeMetrics),
+		bounds:  []int64{10, 50, 100, 250, 500, 1000},
+		service: service,
+	}
+}
+
+func (m *metricsStore) record(route string, status int, latencyMs int64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	rm, ok := m.routes[route]
+	if !ok {
+		rm = &routeMetrics{buckets: make([]uint64, len(m.bounds)+1)}
+		m.routes[route] = rm
+	}
+	rm.requestCount++
+	if status >= 400 {
+		rm.errorCount++
+	}
+	rm.latencySumMs += uint64(latencyMs)
+	rm.latencyCount++
+	idx := len(m.bounds)
+	for i, bound := range m.bounds {
+		if latencyMs <= bound {
+			idx = i
+			break
+		}
+	}
+	rm.buckets[idx]++
+}
+
+func (m *metricsStore) handler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		m.writePrometheus(w)
+	}
+}
+
+func (m *metricsStore) writePrometheus(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	fmt.Fprintln(w, "# HELP request_count Total HTTP requests by route.")
+	fmt.Fprintln(w, "# TYPE request_count counter")
+	fmt.Fprintln(w, "# HELP error_count Total HTTP error responses (status >= 400) by route.")
+	fmt.Fprintln(w, "# TYPE error_count counter")
+	fmt.Fprintln(w, "# HELP request_latency_ms Request latency in milliseconds by route.")
+	fmt.Fprintln(w, "# TYPE request_latency_ms histogram")
+	fmt.Fprintln(w, "# HELP request_latency_summary_ms Request latency summary in milliseconds by route.")
+	fmt.Fprintln(w, "# TYPE request_latency_summary_ms summary")
+
+	routes := make([]string, 0, len(m.routes))
+	for route := range m.routes {
+		routes = append(routes, route)
+	}
+	sort.Strings(routes)
+
+	for _, route := range routes {
+		rm := m.routes[route]
+		fmt.Fprintf(w, "request_count{service=%q,route=%q} %d\n", m.service, route, rm.requestCount)
+		fmt.Fprintf(w, "error_count{service=%q,route=%q} %d\n", m.service, route, rm.errorCount)
+		cumulative := uint64(0)
+		for i, bound := range m.bounds {
+			cumulative += rm.buckets[i]
+			fmt.Fprintf(w, "request_latency_ms_bucket{service=%q,route=%q,le=%q} %d\n", m.service, route, strconv.FormatInt(bound, 10), cumulative)
+		}
+		cumulative += rm.buckets[len(m.bounds)]
+		fmt.Fprintf(w, "request_latency_ms_bucket{service=%q,route=%q,le=\"+Inf\"} %d\n", m.service, route, cumulative)
+		fmt.Fprintf(w, "request_latency_ms_sum{service=%q,route=%q} %d\n", m.service, route, rm.latencySumMs)
+		fmt.Fprintf(w, "request_latency_ms_count{service=%q,route=%q} %d\n", m.service, route, rm.latencyCount)
+		fmt.Fprintf(w, "request_latency_summary_ms_sum{service=%q,route=%q} %d\n", m.service, route, rm.latencySumMs)
+		fmt.Fprintf(w, "request_latency_summary_ms_count{service=%q,route=%q} %d\n", m.service, route, rm.latencyCount)
+	}
+}
+
 // NewMux creates the gateway HTTP mux and proxies requests to downstream services.
 func NewMux() *http.ServeMux {
 	cfg := serviceConfig{
@@ -112,19 +217,70 @@ func NewMux() *http.ServeMux {
 	client := &http.Client{Timeout: 5 * time.Second}
 	audit := newAuditStore()
 	exceptions := newExceptionStore()
+	metrics := newMetricsStore("go-gateway")
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/health", healthHandler)
-	mux.HandleFunc("/api/v1/discovery", withAudit("/api/v1/discovery", audit, discoveryHandler(client, cfg)))
-	mux.HandleFunc("/api/v1/assets", withAudit("/api/v1/assets", audit, assetsHandler(client, cfg)))
-	mux.HandleFunc("/api/v1/risk", withAudit("/api/v1/risk", audit, riskHandler(client, cfg)))
-	mux.HandleFunc("/api/v1/risk/backlog", withAudit("/api/v1/risk/backlog", audit, backlogHandler(client, cfg)))
-	mux.HandleFunc("/api/v1/proof", withAudit("/api/v1/proof", audit, proofHandler(client, cfg)))
-	mux.HandleFunc("/api/v1/qasm", withAudit("/api/v1/qasm", audit, qasmHandler(client, cfg)))
-	mux.HandleFunc("/api/v1/governance/exceptions", withAudit("/api/v1/governance/exceptions", audit, governanceExceptionsHandler(exceptions)))
-	mux.HandleFunc("/api/v1/governance/verifier-drift", withAudit("/api/v1/governance/verifier-drift", audit, verifierDriftHandler()))
-	mux.HandleFunc("/api/v1/audit/events", auditEventsHandler(audit))
+	mux.HandleFunc("/health", withServiceMiddleware(healthHandler, metrics))
+	mux.HandleFunc("/live", withServiceMiddleware(healthHandler, metrics))
+	mux.HandleFunc("/ready", withServiceMiddleware(healthHandler, metrics))
+	mux.HandleFunc("/api/v1/discovery", withServiceMiddleware(withAudit("/api/v1/discovery", audit, discoveryHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/assets", withServiceMiddleware(withAudit("/api/v1/assets", audit, assetsHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/risk", withServiceMiddleware(withAudit("/api/v1/risk", audit, riskHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/risk/backlog", withServiceMiddleware(withAudit("/api/v1/risk/backlog", audit, backlogHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/proof", withServiceMiddleware(withAudit("/api/v1/proof", audit, proofHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/qasm", withServiceMiddleware(withAudit("/api/v1/qasm", audit, qasmHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/governance/exceptions", withServiceMiddleware(withAudit("/api/v1/governance/exceptions", audit, governanceExceptionsHandler(exceptions)), metrics))
+	mux.HandleFunc("/api/v1/governance/verifier-drift", withServiceMiddleware(withAudit("/api/v1/governance/verifier-drift", audit, verifierDriftHandler()), metrics))
+	mux.HandleFunc("/api/v1/audit/events", withServiceMiddleware(auditEventsHandler(audit), metrics))
+	mux.HandleFunc("/metrics", withRequestContext(metrics.handler()))
 	return mux
+}
+
+func withServiceMiddleware(next http.HandlerFunc, metrics *metricsStore) http.HandlerFunc {
+	return withRequestContext(withRequestLogging(next, metrics))
+}
+
+func withRequestContext(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		requestID := strings.TrimSpace(r.Header.Get("X-Request-Id"))
+		if requestID == "" {
+			requestID = newRequestID()
+		}
+		w.Header().Set("X-Request-Id", requestID)
+		ctx := context.WithValue(r.Context(), requestIDContextKey, requestID)
+		next(w, r.WithContext(ctx))
+	}
+}
+
+func withRequestLogging(next http.HandlerFunc, metrics *metricsStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		started := time.Now()
+		rec := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
+		next(rec, r)
+		latencyMs := time.Since(started).Milliseconds()
+		metrics.record(r.URL.Path, rec.statusCode, latencyMs)
+		log.Printf(
+			`{"service":"go-gateway","request_id":"%s","method":"%s","path":"%s","status":%d,"duration_ms":%d}`,
+			requestIDFromContext(r.Context()),
+			r.Method,
+			r.URL.Path,
+			rec.statusCode,
+			latencyMs,
+		)
+	}
+}
+
+func requestIDFromContext(ctx context.Context) string {
+	requestID, _ := ctx.Value(requestIDContextKey).(string)
+	return requestID
+}
+
+func newRequestID() string {
+	var b [16]byte
+	if _, err := rand.Read(b[:]); err == nil {
+		return hex.EncodeToString(b[:])
+	}
+	return strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 }
 
 func withAudit(route string, store *auditStore, next http.HandlerFunc) http.HandlerFunc {
@@ -192,7 +348,7 @@ func discoveryHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 		address := asString(body["address"], "localhost")
 		port := asInt(body["port"], 443)
 		out := map[string]any{"address": address, "port": port}
-		payload, code, err := doPOSTJSON(client, cfg.discoveryURL+"/scan", out)
+		payload, code, err := doPOSTJSON(client, cfg.discoveryURL+"/scan", out, requestIDFromContext(r.Context()))
 		if err != nil {
 			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "discovery"})
 			return
@@ -208,7 +364,7 @@ func assetsHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 			return
 		}
 
-		payload, code, err := doGETJSON(client, cfg.discoveryURL+"/assets")
+		payload, code, err := doGETJSON(client, cfg.discoveryURL+"/assets", requestIDFromContext(r.Context()))
 		if err != nil {
 			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "assets"})
 			return
@@ -230,7 +386,7 @@ func riskHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 			"quantum_vulnerable_assets": asFloat64(in["quantum_vulnerable_assets"], 40),
 			"policy":                    asString(in["policy"], "balanced"),
 		}
-		payload, code, err := doPOSTJSON(client, cfg.pythonURL+"/hndl/score", out)
+		payload, code, err := doPOSTJSON(client, cfg.pythonURL+"/hndl/score", out, requestIDFromContext(r.Context()))
 		if err != nil {
 			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "risk"})
 			return
@@ -259,7 +415,7 @@ func backlogHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 			}
 		}
 
-		payload, code, err := doPOSTJSON(client, cfg.pythonURL+"/hndl/backlog", out)
+		payload, code, err := doPOSTJSON(client, cfg.pythonURL+"/hndl/backlog", out, requestIDFromContext(r.Context()))
 		if err != nil {
 			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "risk-backlog"})
 			return
@@ -283,7 +439,7 @@ func proofHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 			"late_payments":      asInt(in["late_payments"], 1),
 			"existing_loans":     asInt(in["existing_loans"], 2),
 		}
-		payload, code, err := doPOSTJSON(client, cfg.rustURL+"/score", out)
+		payload, code, err := doPOSTJSON(client, cfg.rustURL+"/score", out, requestIDFromContext(r.Context()))
 		if err != nil {
 			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "proof"})
 			return
@@ -301,7 +457,7 @@ func qasmHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 
 		in := readJSONBody(r)
 		if name := asString(in["name"], ""); name != "" {
-			payload, code, err := doGETJSON(client, cfg.qasmURL+"/examples/"+name)
+			payload, code, err := doGETJSON(client, cfg.qasmURL+"/examples/"+name, requestIDFromContext(r.Context()))
 			if err != nil {
 				writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "qasm"})
 				return
@@ -310,7 +466,7 @@ func qasmHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 			return
 		}
 
-		payload, code, err := doGETJSON(client, cfg.qasmURL+"/examples")
+		payload, code, err := doGETJSON(client, cfg.qasmURL+"/examples", requestIDFromContext(r.Context()))
 		if err != nil {
 			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "qasm"})
 			return
@@ -357,8 +513,15 @@ func verifierDriftHandler() http.HandlerFunc {
 	}
 }
 
-func doGETJSON(client *http.Client, url string) (map[string]any, int, error) {
-	resp, err := client.Get(url)
+func doGETJSON(client *http.Client, url, requestID string) (map[string]any, int, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, 0, err
+	}
+	if requestID != "" {
+		req.Header.Set("X-Request-Id", requestID)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -377,13 +540,20 @@ func doGETJSON(client *http.Client, url string) (map[string]any, int, error) {
 	return decoded, resp.StatusCode, nil
 }
 
-func doPOSTJSON(client *http.Client, url string, payload map[string]any) (map[string]any, int, error) {
+func doPOSTJSON(client *http.Client, url string, payload map[string]any, requestID string) (map[string]any, int, error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return nil, 0, err
 	}
-
-	resp, err := client.Post(url, "application/json", bytes.NewReader(body))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return nil, 0, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if requestID != "" {
+		req.Header.Set("X-Request-Id", requestID)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
