@@ -1,0 +1,23 @@
+schemaVersion: "1.2"
+
+endpoints:
+  - name: gateway
+    displayName: Go Gateway (API Router)
+    service:
+      basePath: /
+      port: 8080
+    type: REST
+    networkVisibilities:
+      - Project
+
+  - name: discovery
+    displayName: Go Discovery (Asset Scanner)
+    service:
+      basePath: /
+      port: 8081
+    type: REST
+    networkVisibilities:
+      - Project
+
+# Inter-service URLs are injected via Choreo Secrets:
+# PYTHON_BASE_URL, QASM_BASE_URL, RUST_BASE_URL, DISCOVERY_BASE_URL

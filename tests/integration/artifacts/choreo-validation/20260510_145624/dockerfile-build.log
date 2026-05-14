@@ -1,0 +1,12 @@
+=== BUILD nginx (docker-images/nginx/Dockerfile) ===
+PASS nginx
+
+=== BUILD go-services (docker-images/go-services/Dockerfile) ===
+PASS go-services
+
+=== BUILD python-services (docker-images/python-services/Dockerfile) ===
+PASS python-services
+
+=== BUILD rust-risk (docker-images/rust-risk/Dockerfile) ===
+PASS rust-risk
+

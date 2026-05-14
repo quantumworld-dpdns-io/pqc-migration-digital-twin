@@ -7,6 +7,17 @@ on:
     branches: [main]
 
 jobs:
+  scripts-validation:
+    name: Scripts Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate local cert generation script
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/validate-local-certs-script.sh
+
   lint:
     name: Lint (${{ matrix.lang }})
     runs-on: ubuntu-latest
@@ -211,12 +222,144 @@ jobs:
             echo "[contracts] src/python/tests missing; skipping"
           fi
 
+  security-readiness:
+    name: Security Readiness (Phase 5 Gates)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Rationale: enforce an actionable dependency vulnerability gate at PR time.
+      # We scan the repository filesystem (lockfiles/manifests) and fail on High/Critical findings.
+      - name: Dependency vulnerability gate (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          vuln-type: 'library'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '1'
+
+      # Rationale: add a concrete container-image gate using a real service image.
+      # Nginx edge image is fast to build and representative of deployable artifacts.
+      - name: Build nginx service image for container scanning
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build -t pqc-nginx-security-scan:ci docker-images/nginx
+
+      - name: Container vulnerability gate (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'image'
+          image-ref: 'pqc-nginx-security-scan:ci'
+          vuln-type: 'os,library'
+          severity: 'HIGH,CRITICAL'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '1'
+
+      # Rationale: produce a lightweight, portable SBOM artifact for compliance evidence.
+      # SPDX JSON from repository dependencies is sufficient for Phase 5 readiness baseline.
+      - name: Generate repository SBOM (SPDX JSON)
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: sbom-repo.spdx.json
+
+      - name: Upload SBOM artifact for evidence pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase5-sbom-spdx-json
+          path: sbom-repo.spdx.json
+          if-no-files-found: error
+
+  dockerfile-build-evidence:
+    name: Dockerfile Build Evidence (Consolidation Images)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: nginx
+            context: docker-images/nginx
+            dockerfile: docker-images/nginx/Dockerfile
+            tag: pqc-ci-nginx:evidence
+          - image: go-services
+            context: .
+            dockerfile: docker-images/go-services/Dockerfile
+            tag: pqc-ci-go-services:evidence
+          - image: python-services
+            context: .
+            dockerfile: docker-images/python-services/Dockerfile
+            tag: pqc-ci-python-services:evidence
+          - image: rust-risk
+            context: .
+            dockerfile: docker-images/rust-risk/Dockerfile
+            tag: pqc-ci-rust-risk:evidence
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build ${{ matrix.image }} image
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build \
+            -f "${{ matrix.dockerfile }}" \
+            -t "${{ matrix.tag }}" \
+            "${{ matrix.context }}"
+      - name: Save build metadata artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-artifacts
+          docker image inspect "${{ matrix.tag }}" > "ci-artifacts/${{ matrix.image }}-image-inspect.json"
+      - name: Upload build evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-build-evidence-${{ matrix.image }}
+          path: ci-artifacts/${{ matrix.image }}-image-inspect.json
+          if-no-files-found: error
+
+  checkov-dockerfiles:
+    name: Checkov Dockerfile Scan (Consolidation Images)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run Checkov on consolidation Dockerfiles (fail on findings)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install checkov
+          checkov --framework dockerfile --quiet --file docker-images/nginx/Dockerfile
+          checkov --framework dockerfile --quiet --file docker-images/go-services/Dockerfile
+          checkov --framework dockerfile --quiet --file docker-images/python-services/Dockerfile
+          checkov --framework dockerfile --quiet --file docker-images/rust-risk/Dockerfile
+
   integration-docker:
     name: Integration (Docker Microservices)
     runs-on: ubuntu-latest
-    needs: [lint, test, contracts]
+    needs: [scripts-validation, lint, test, contracts, security-readiness, dockerfile-build-evidence, checkov-dockerfiles]
     steps:
       - uses: actions/checkout@v4
       - name: Docker microservice smoke test
         run: |
           bash tests/integration/docker_microservices_smoke.sh
+
+  integration-resilience:
+    name: Integration (Restart + Degraded Downstream)
+    runs-on: ubuntu-latest
+    needs: [scripts-validation, lint, test, contracts, security-readiness, dockerfile-build-evidence, checkov-dockerfiles]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restart and degraded-path smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tests/integration/docker_resilience_smoke.sh

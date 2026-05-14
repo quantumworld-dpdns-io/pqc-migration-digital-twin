@@ -1,0 +1,95 @@
+# Choreo deployment simulation
+#
+# Differences from docker-compose.microservices.yml:
+#   - No local postgres — DATABASE_URL points to AlwaysData
+#   - Uses pre-built images via REGISTRY / TAG env vars
+#   - No host port bindings (Choreo manages networking)
+#   - DATABASE_URL must be set as a Choreo Secret; use .env locally:
+#       DATABASE_URL=postgres://dennislee928:<password>@postgresql-dennislee928.alwaysdata.net:5432/dennislee928_postgres?sslmode=require
+#
+# Required env vars (.env or Choreo Secrets):
+#   DATABASE_URL    — AlwaysData connection string (see above)
+#   REGISTRY        — container registry prefix, e.g. ghcr.io/your-org
+#   TAG             — image tag (default: latest)
+
+services:
+  # ── Component 1: Nginx reverse proxy ───────────────────────────────────────
+  nginx:
+    image: ${REGISTRY}/nginx:${TAG:-latest}
+    build:
+      context: docker-images/nginx
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
+    environment:
+      GO_SERVICES_HOST: ${GO_SERVICES_HOST:-go-services}
+    depends_on:
+      go-services:
+        condition: service_healthy
+      python-services:
+        condition: service_healthy
+      rust-risk:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: on-failure
+
+  # ── Component 2: Go gateway + discovery ────────────────────────────────────
+  go-services:
+    image: ${REGISTRY}/go-services:${TAG:-latest}
+    build:
+      context: docker-images/go-services
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
+      - "8081"
+    environment:
+      DISCOVERY_BASE_URL: http://localhost:8081
+      PYTHON_BASE_URL: http://${PYTHON_SERVICES_HOST:-python-services}:8082
+      RUST_BASE_URL: http://${RUST_RISK_HOST:-rust-risk}:8083
+      QASM_BASE_URL: http://${PYTHON_SERVICES_HOST:-python-services}:8084
+      DATABASE_URL: ${DATABASE_URL}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: on-failure
+
+  # ── Component 3: Python analysis + QASM examples ───────────────────────────
+  python-services:
+    image: ${REGISTRY}/python-services:${TAG:-latest}
+    build:
+      context: docker-images/python-services
+      dockerfile: Dockerfile
+    expose:
+      - "8082"
+      - "8084"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8082/health', timeout=2)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: on-failure
+
+  # ── Component 4: Rust risk engine ──────────────────────────────────────────
+  rust-risk:
+    image: ${REGISTRY}/rust-risk:${TAG:-latest}
+    build:
+      context: docker-images/rust-risk
+      dockerfile: Dockerfile
+    expose:
+      - "8083"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: on-failure

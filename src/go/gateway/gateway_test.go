@@ -2,11 +2,16 @@ package gateway
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestHealthEndpoint(t *testing.T) {
@@ -29,6 +34,190 @@ func TestHealthEndpointMethodNotAllowed(t *testing.T) {
 	if rr.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("expected status %d, got %d", http.StatusMethodNotAllowed, rr.Code)
 	}
+}
+
+func TestLiveAndReadyEndpoints(t *testing.T) {
+	mux := NewMux()
+	for _, path := range []string{"/live", "/ready"} {
+		t.Run(path, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, path, nil)
+			rr := httptest.NewRecorder()
+			mux.ServeHTTP(rr, req)
+			if rr.Code != http.StatusOK {
+				t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+			}
+		})
+	}
+}
+
+func TestRequestIDHeaderGenerationAndPropagation(t *testing.T) {
+	var seenRequestID string
+	discovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seenRequestID = r.Header.Get("X-Request-Id")
+		writeJSON(w, http.StatusOK, map[string]any{"count": 1})
+	}))
+	defer discovery.Close()
+	t.Setenv("DISCOVERY_BASE_URL", discovery.URL)
+	mux := NewMux()
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/assets", nil)
+	req.Header.Set("X-Request-Id", "req-123")
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+	if got := rr.Header().Get("X-Request-Id"); got != "req-123" {
+		t.Fatalf("expected response request id req-123, got %q", got)
+	}
+	if seenRequestID != "req-123" {
+		t.Fatalf("expected downstream request id req-123, got %q", seenRequestID)
+	}
+
+	req2 := httptest.NewRequest(http.MethodGet, "/health", nil)
+	rr2 := httptest.NewRecorder()
+	mux.ServeHTTP(rr2, req2)
+	if strings.TrimSpace(rr2.Header().Get("X-Request-Id")) == "" {
+		t.Fatalf("expected generated request id header to be present")
+	}
+}
+
+func TestMetricsEndpointExportsRouteCounters(t *testing.T) {
+	mux := NewMux()
+
+	reqOK := httptest.NewRequest(http.MethodGet, "/health", nil)
+	resOK := httptest.NewRecorder()
+	mux.ServeHTTP(resOK, reqOK)
+	if resOK.Code != http.StatusOK {
+		t.Fatalf("expected /health status 200, got %d", resOK.Code)
+	}
+
+	reqErr := httptest.NewRequest(http.MethodGet, "/api/v1/risk", nil)
+	resErr := httptest.NewRecorder()
+	mux.ServeHTTP(resErr, reqErr)
+	if resErr.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected /api/v1/risk status 405, got %d", resErr.Code)
+	}
+
+	metricsReq := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	metricsRes := httptest.NewRecorder()
+	mux.ServeHTTP(metricsRes, metricsReq)
+	if metricsRes.Code != http.StatusOK {
+		t.Fatalf("expected /metrics status 200, got %d", metricsRes.Code)
+	}
+	body := metricsRes.Body.String()
+	for _, snippet := range []string{
+		`# TYPE request_count counter`,
+		`# TYPE error_count counter`,
+		`# TYPE request_latency_ms histogram`,
+		`request_count{service="go-gateway",route="/health"} 1`,
+		`request_count{service="go-gateway",route="/api/v1/risk"} 1`,
+		`error_count{service="go-gateway",route="/api/v1/risk"} 1`,
+	} {
+		if !strings.Contains(body, snippet) {
+			t.Fatalf("expected metrics output to contain %q, got:\n%s", snippet, body)
+		}
+	}
+}
+
+func TestGatewayDownstreamTimeoutReturnsBadGateway(t *testing.T) {
+	slowPython := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(200 * time.Millisecond)
+		writeJSON(w, http.StatusOK, map[string]any{"service": "python-analysis", "status": "ok"})
+	}))
+	defer slowPython.Close()
+
+	client := &http.Client{Timeout: 50 * time.Millisecond}
+	handler := riskHandler(client, serviceConfig{pythonURL: slowPython.URL})
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/risk", withServiceMiddleware(handler, newMetricsStore("go-gateway")))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/risk", bytes.NewReader([]byte(`{"total_assets":10}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadGateway {
+		t.Fatalf("expected status %d, got %d", http.StatusBadGateway, rr.Code)
+	}
+}
+
+func TestGatewayMalformedDownstreamPayloadReturnsBadGateway(t *testing.T) {
+	invalidJSON := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"service":"python-analysis"`))
+	}))
+	defer invalidJSON.Close()
+
+	client := &http.Client{Timeout: 2 * time.Second}
+	handler := riskHandler(client, serviceConfig{pythonURL: invalidJSON.URL})
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/v1/risk", withServiceMiddleware(handler, newMetricsStore("go-gateway")))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/risk", bytes.NewReader([]byte(`{"total_assets":10}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusBadGateway {
+		t.Fatalf("expected status %d, got %d", http.StatusBadGateway, rr.Code)
+	}
+}
+
+func TestGatewayGracefulShutdownAllowsInFlightRequest(t *testing.T) {
+	downstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(120 * time.Millisecond)
+		writeJSON(w, http.StatusOK, map[string]any{"count": 1, "assets": []map[string]any{{"asset_id": "a"}}})
+	}))
+	defer downstream.Close()
+
+	t.Setenv("DISCOVERY_BASE_URL", downstream.URL)
+	srv := &http.Server{Handler: NewMux()}
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen failed: %v", err)
+	}
+	defer ln.Close()
+
+	var serveWG sync.WaitGroup
+	serveWG.Add(1)
+	go func() {
+		defer serveWG.Done()
+		_ = srv.Serve(ln)
+	}()
+
+	var reqWG sync.WaitGroup
+	reqWG.Add(1)
+	result := make(chan error, 1)
+	go func() {
+		defer reqWG.Done()
+		req, _ := http.NewRequest(http.MethodGet, "http://"+ln.Addr().String()+"/api/v1/assets", nil)
+		resp, err := (&http.Client{Timeout: 2 * time.Second}).Do(req)
+		if err != nil {
+			result <- err
+			return
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			result <- fmt.Errorf("unexpected status %d", resp.StatusCode)
+			return
+		}
+		result <- nil
+	}()
+
+	time.Sleep(30 * time.Millisecond)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		t.Fatalf("shutdown failed: %v", err)
+	}
+
+	reqWG.Wait()
+	if err := <-result; err != nil {
+		t.Fatalf("in-flight request failed during shutdown: %v", err)
+	}
+	serveWG.Wait()
 }
 
 func TestGatewayProxiesDownstreamServices(t *testing.T) {

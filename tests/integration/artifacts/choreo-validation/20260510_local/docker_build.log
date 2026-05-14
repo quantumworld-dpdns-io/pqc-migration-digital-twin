@@ -1,0 +1,275 @@
+#1 [internal] load local bake definitions
+#1 reading from stdin 2.54kB done
+#1 DONE 0.0s
+
+#2 [nginx internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.03kB 0.0s done
+#2 DONE 0.0s
+
+#3 [python-services internal] load build definition from Dockerfile
+#3 transferring dockerfile: 451B 0.0s done
+#3 DONE 0.0s
+
+#4 [go-services internal] load build definition from Dockerfile
+#4 transferring dockerfile: 668B 0.0s done
+#4 DONE 0.0s
+
+#5 [rust-risk internal] load build definition from Dockerfile
+#5 transferring dockerfile: 673B 0.0s done
+#5 DONE 0.0s
+
+#6 [rust-risk internal] load metadata for docker.io/library/rust:1.78-slim
+#6 ...
+
+#7 [rust-risk internal] load metadata for docker.io/library/debian:bookworm-slim
+#7 DONE 1.5s
+
+#8 [go-services internal] load metadata for docker.io/library/alpine:3.20
+#8 ...
+
+#6 [rust-risk internal] load metadata for docker.io/library/rust:1.78-slim
+#6 DONE 1.8s
+
+#9 [nginx internal] load metadata for docker.io/library/nginx:1.27-alpine3.21
+#9 DONE 1.8s
+
+#10 [go-services internal] load metadata for docker.io/library/golang:1.22-alpine
+#10 DONE 1.8s
+
+#8 [go-services internal] load metadata for docker.io/library/alpine:3.20
+#8 DONE 1.8s
+
+#11 [rust-risk internal] load .dockerignore
+#11 transferring context: 2B 0.0s done
+#11 DONE 0.1s
+
+#12 [nginx internal] load .dockerignore
+#12 transferring context: 2B 0.1s done
+#12 DONE 0.1s
+
+#13 [go-services internal] load .dockerignore
+#13 transferring context: 2B 0.1s done
+#13 DONE 0.1s
+
+#14 [python-services internal] load metadata for docker.io/library/python:3.12-slim
+#14 ...
+
+#15 [rust-risk stage-1 1/3] FROM docker.io/library/debian:bookworm-slim@sha256:67b30a61dc87758f0caf819646104f29ecbda97d920aaf5edc834128ac8493d3
+#15 resolve docker.io/library/debian:bookworm-slim@sha256:67b30a61dc87758f0caf819646104f29ecbda97d920aaf5edc834128ac8493d3 0.0s done
+#15 DONE 0.1s
+
+#16 [go-services build-discovery 1/5] FROM docker.io/library/golang:1.22-alpine@sha256:1699c10032ca2582ec89a24a1312d986a3f094aed3d5c1147b19880afe40e052
+#16 resolve docker.io/library/golang:1.22-alpine@sha256:1699c10032ca2582ec89a24a1312d986a3f094aed3d5c1147b19880afe40e052 0.1s done
+#16 DONE 0.1s
+
+#17 [go-services stage-2 1/6] FROM docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+#17 resolve docker.io/library/alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc 0.1s done
+#17 DONE 0.1s
+
+#18 [nginx 1/8] FROM docker.io/library/nginx:1.27-alpine3.21@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+#18 resolve docker.io/library/nginx:1.27-alpine3.21@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10 0.0s done
+#18 DONE 0.1s
+
+#19 [rust-risk build 1/9] FROM docker.io/library/rust:1.78-slim@sha256:0fea967628dc796a2b9d1d57ddb3af3b3f0a35b6c8c0e23690dbe0ceb71a2dc9
+#19 resolve docker.io/library/rust:1.78-slim@sha256:0fea967628dc796a2b9d1d57ddb3af3b3f0a35b6c8c0e23690dbe0ceb71a2dc9 0.0s done
+#19 DONE 0.1s
+
+#20 [nginx internal] load build context
+#20 transferring context: 182B done
+#20 DONE 0.0s
+
+#21 [rust-risk internal] load build context
+#21 transferring context: 1.12kB done
+#21 DONE 0.0s
+
+#22 [go-services internal] load build context
+#22 transferring context: 1.09kB 0.0s done
+#22 DONE 0.0s
+
+#23 [nginx 4/8] COPY locations.conf      /etc/nginx/locations.conf
+#23 CACHED
+
+#24 [nginx 6/8] COPY server-choreo.conf  /etc/nginx/server-choreo.conf
+#24 CACHED
+
+#25 [nginx 5/8] COPY server-local.conf   /etc/nginx/server-local.conf
+#25 CACHED
+
+#26 [nginx 7/8] COPY entrypoint.sh       /entrypoint.sh
+#26 CACHED
+
+#27 [nginx 3/8] COPY nginx.conf.template /etc/nginx/nginx.conf.template
+#27 CACHED
+
+#28 [nginx 2/8] RUN apk upgrade --no-cache libcrypto3 libssl3 libxml2 && apk add --no-cache gettext && addgroup -S appgroup && adduser -S -G appgroup -u 10014 appuser && mkdir -p /var/cache/nginx/client_temp /var/cache/nginx/proxy_temp /var/cache/nginx/fastcgi_temp /var/cache/nginx/uwsgi_temp /var/cache/nginx/scgi_temp /etc/nginx/certs /etc/nginx/conf.d && chown -R appuser:appgroup /var/cache/nginx /var/log/nginx /etc/nginx/conf.d /etc/nginx/certs && touch /var/run/nginx.pid && chown appuser:appgroup /var/run/nginx.pid
+#28 CACHED
+
+#29 [rust-risk build 7/9] COPY risk-service ./risk-service
+#29 CACHED
+
+#30 [rust-risk build 2/9] WORKDIR /workspace
+#30 CACHED
+
+#31 [rust-risk stage-1 2/3] RUN apt-get update     && apt-get install -y --no-install-recommends curl ca-certificates     && rm -rf /var/lib/apt/lists/*     && useradd -u 10014 -M -r appuser
+#31 CACHED
+
+#32 [rust-risk build 5/9] COPY risk-engine ./risk-engine
+#32 CACHED
+
+#33 [rust-risk build 9/9] RUN cargo build --release -p risk-service
+#33 CACHED
+
+#34 [rust-risk build 6/9] COPY zk-proof ./zk-proof
+#34 CACHED
+
+#35 [rust-risk build 3/9] COPY Cargo.toml Cargo.lock ./
+#35 CACHED
+
+#36 [rust-risk build 4/9] COPY shared-contracts ./shared-contracts
+#36 CACHED
+
+#37 [rust-risk build 8/9] COPY proof-verifier ./proof-verifier
+#37 CACHED
+
+#38 [rust-risk stage-1 3/3] COPY --from=build /workspace/target/release/risk-service /usr/local/bin/risk-service
+#38 CACHED
+
+#39 [nginx 8/8] RUN chmod +x /entrypoint.sh
+#39 CACHED
+
+#40 [go-services stage-2 5/6] COPY start.sh /start.sh
+#40 CACHED
+
+#41 [go-services build-discovery 5/5] RUN go build -o /out/discovery ./cmd/discovery
+#41 CACHED
+
+#42 [go-services build-gateway 4/6] COPY gateway/ ./gateway/
+#42 CACHED
+
+#43 [go-services build-gateway 5/6] WORKDIR /src/gateway
+#43 CACHED
+
+#44 [go-services stage-2 4/6] COPY --from=build-discovery /out/discovery /usr/local/bin/discovery
+#44 CACHED
+
+#45 [go-services build-discovery 4/5] COPY discovery/ .
+#45 CACHED
+
+#46 [go-services build-discovery 2/5] WORKDIR /src
+#46 CACHED
+
+#47 [go-services stage-2 3/6] COPY --from=build-gateway  /out/gateway   /usr/local/bin/gateway
+#47 CACHED
+
+#48 [go-services build-gateway 6/6] RUN GOWORK=off go build -mod=mod -o /out/gateway ./cmd/gateway
+#48 CACHED
+
+#49 [go-services build-gateway 3/6] COPY database/ ./database/
+#49 CACHED
+
+#50 [go-services build-discovery 3/5] COPY discovery/go.mod ./go.mod
+#50 CACHED
+
+#51 [go-services stage-2 2/6] RUN adduser -D -H -u 10014 appuser
+#51 CACHED
+
+#52 [go-services stage-2 6/6] RUN chmod +x /start.sh
+#52 CACHED
+
+#53 [rust-risk] exporting to image
+#53 exporting layers done
+#53 exporting manifest sha256:707b6f64175990126b99ead2245a48fdebb6438ca3d658c85a90e6848603f6c3 done
+#53 exporting config sha256:774253fa0c0f7098d811c3d0661733ccc0adae56ed4a8813ef0ac00e8a277cd0 done
+#53 exporting attestation manifest sha256:69ebb604387ae01268e726b35799c52cc1efb9c456e0cb905c5588cf179f1e45 0.0s done
+#53 exporting manifest list sha256:c0c2fbb1093e12f66d58df5881c527ff8a4b2f3ebb531b64e592fc9b3ff7165b 0.0s done
+#53 naming to docker.io/library/pqc-migration-digital-twin-rust-risk:latest done
+#53 unpacking to docker.io/library/pqc-migration-digital-twin-rust-risk:latest done
+#53 DONE 0.1s
+
+#54 [go-services] exporting to image
+#54 exporting layers done
+#54 exporting manifest sha256:d324815d25e3da85f48008649db1c12099e3495662bc7644be4181e7f44973f1 done
+#54 exporting config sha256:d7c8ab5ca71d4940ede339ad40328356ebbf03adda0f5e4a1ae39a64a43dbf9d done
+#54 exporting attestation manifest sha256:868f42aa16e1eb5e167f9ceb71c50ba7fb498f32743ec1ef449c5cdd81fcd95a 0.0s done
+#54 exporting manifest list sha256:184bb7d1d48883be6e634d7d6f009fa908b1d83151093c9a55de0c87d069f03d 0.0s done
+#54 naming to docker.io/library/pqc-migration-digital-twin-go-services:latest done
+#54 unpacking to docker.io/library/pqc-migration-digital-twin-go-services:latest done
+#54 DONE 0.1s
+
+#55 [nginx] exporting to image
+#55 exporting layers done
+#55 exporting manifest sha256:fd2e2b1dbd6f6a49fa9188bad1c6312de5ee22a02868cf752afee3856d9bfe9f done
+#55 exporting config sha256:6835b91e9c750599b7ae46242ef008e3d7fa31ddc259a82bfc36185dbf224fef done
+#55 exporting attestation manifest sha256:f9ca4e7b7b20f3f4b869cc02d1844806d9a86c16ef7c77d280a0efab5a73e5f7 0.0s done
+#55 exporting manifest list sha256:1d70eab84fdb22d91b58c00c0c7b330148fee83786cfa827880b6901a9c5b13b 0.0s done
+#55 naming to docker.io/library/pqc-migration-digital-twin-nginx:latest done
+#55 unpacking to docker.io/library/pqc-migration-digital-twin-nginx:latest 0.0s done
+#55 DONE 0.2s
+
+#56 [rust-risk] resolving provenance for metadata file
+#56 DONE 0.1s
+
+#14 [python-services internal] load metadata for docker.io/library/python:3.12-slim
+#14 DONE 2.3s
+
+#57 [python-services internal] load .dockerignore
+#57 transferring context: 2B done
+#57 DONE 0.0s
+
+#58 [python-services  1/10] FROM docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe
+#58 resolve docker.io/library/python:3.12-slim@sha256:ec948fa5f90f4f8907e89f4800cfd2d2e91e391a4bce4a6afa77ba265bc3a2fe 0.0s done
+#58 DONE 0.0s
+
+#59 [go-services] resolving provenance for metadata file
+#59 DONE 0.1s
+
+#60 [nginx] resolving provenance for metadata file
+#60 DONE 0.0s
+
+#61 [python-services internal] load build context
+#61 transferring context: 677B done
+#61 DONE 0.0s
+
+#62 [python-services  5/10] COPY qasm_workflows/ /app/qasm_workflows/
+#62 CACHED
+
+#63 [python-services  7/10] COPY qasm_examples/ /app/qasm_examples/
+#63 CACHED
+
+#64 [python-services  9/10] COPY start.sh /start.sh
+#64 CACHED
+
+#65 [python-services  3/10] WORKDIR /app
+#65 CACHED
+
+#66 [python-services  6/10] COPY service.py /app/service.py
+#66 CACHED
+
+#67 [python-services  2/10] RUN groupadd -r appuser && useradd -r -g appuser -u 10014 appuser
+#67 CACHED
+
+#68 [python-services  4/10] COPY hndl_analysis/ /app/hndl_analysis/
+#68 CACHED
+
+#69 [python-services  8/10] RUN chown -R appuser:appuser /app
+#69 CACHED
+
+#70 [python-services 10/10] RUN chmod +x /start.sh
+#70 CACHED
+
+#71 [python-services] exporting to image
+#71 exporting layers done
+#71 exporting manifest sha256:68a2a0f230f915e19882faf965625d6e06a0117df582142b9bba0eeab8e5168e done
+#71 exporting config sha256:e104715e4100bd869b3713435cc29381781a57f9a85da3b8fe05e21cc387944e done
+#71 exporting attestation manifest sha256:fa9eb579402366cb61f7df4cda5a24ae9301dac3b68449cb4841ed26a44fd2af 0.0s done
+#71 exporting manifest list sha256:d5fd12c08868fbc4d0acd9b11f15b81053947facedaa8bea73b4627d04b9f523 done
+#71 naming to docker.io/library/pqc-migration-digital-twin-python-services:latest done
+#71 unpacking to docker.io/library/pqc-migration-digital-twin-python-services:latest done
+#71 DONE 0.1s
+
+#72 [python-services] resolving provenance for metadata file
+#72 DONE 0.0s
+ pqc-migration-digital-twin-rust-risk  Built
+ pqc-migration-digital-twin-go-services  Built
+ pqc-migration-digital-twin-nginx  Built
+ pqc-migration-digital-twin-python-services  Built

@@ -106,6 +106,12 @@ test:
 
 lint:
 	@set -e; \
+	if [ -f scripts/validate-local-certs-script.sh ]; then \
+		echo "[lint][scripts] scripts/validate-local-certs-script.sh"; \
+		bash scripts/validate-local-certs-script.sh; \
+	else \
+		echo "[lint][scripts] Skipping: scripts/validate-local-certs-script.sh not found."; \
+	fi; \
 	if command -v gofmt >/dev/null 2>&1; then \
 		files="$$(find src/go -type f -name '*.go')"; \
 		if [ -n "$$files" ]; then \

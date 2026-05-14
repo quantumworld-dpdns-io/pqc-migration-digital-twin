@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: go-services
+  namespace: pqc-digital-twin
+  labels:
+    app.kubernetes.io/name: go-services
+    app.kubernetes.io/part-of: pqc-migration-digital-twin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: go-services
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: go-services
+        app.kubernetes.io/part-of: pqc-migration-digital-twin
+    spec:
+      securityContext:
+        runAsUser: 10014
+        runAsGroup: 10014
+      containers:
+        - name: go-services
+          image: ghcr.io/quantumworld-dpdns-io/pqc-migration-digital-twin/go-services:latest
+          ports:
+            - containerPort: 8080
+              name: gateway
+            - containerPort: 8081
+              name: discovery
+          envFrom:
+            - configMapRef:
+                name: go-services-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: pqc-db-secret
+                  key: DATABASE_URL
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+      restartPolicy: Always
