@@ -320,6 +320,103 @@ func TestGovernanceRoutesEmitAuditEvents(t *testing.T) {
 	}
 }
 
+func TestCORSPreflight(t *testing.T) {
+	mux := NewMux()
+	req := httptest.NewRequest(http.MethodOptions, "/health", nil)
+	req.Header.Set("Origin", "https://pqc-digital-twin.dennisleehappy.org")
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, rr.Code)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "https://pqc-digital-twin.dennisleehappy.org" {
+		t.Fatalf("expected Access-Control-Allow-Origin %q, got %q", "https://pqc-digital-twin.dennisleehappy.org", got)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Credentials"); got != "true" {
+		t.Fatalf("expected Access-Control-Allow-Credentials true, got %q", got)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Methods"); got != "GET, POST, OPTIONS" {
+		t.Fatalf("expected Access-Control-Allow-Methods %q, got %q", "GET, POST, OPTIONS", got)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Headers"); got != "Content-Type, Authorization" {
+		t.Fatalf("expected Access-Control-Allow-Headers %q, got %q", "Content-Type, Authorization", got)
+	}
+}
+
+func TestCORSActualRequestSetsHeaders(t *testing.T) {
+	mux := NewMux()
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.Header.Set("Origin", "http://localhost:3000")
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "http://localhost:3000" {
+		t.Fatalf("expected Access-Control-Allow-Origin %q, got %q", "http://localhost:3000", got)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Credentials"); got != "true" {
+		t.Fatalf("expected Access-Control-Allow-Credentials true, got %q", got)
+	}
+}
+
+func TestCORSDisallowedOrigin(t *testing.T) {
+	mux := NewMux()
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.Header.Set("Origin", "https://evil.example.com")
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Fatalf("expected no Access-Control-Allow-Origin for disallowed origin, got %q", got)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Credentials"); got != "" {
+		t.Fatalf("expected no Access-Control-Allow-Credentials for disallowed origin, got %q", got)
+	}
+}
+
+func TestCORSAllowsConfiguredOrigins(t *testing.T) {
+	mux := NewMux()
+	origins := []string{
+		"http://localhost:3000",
+		"https://pqc-digital-twin.dennisleehappy.org",
+	}
+	for _, origin := range origins {
+		t.Run(origin, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/health", nil)
+			req.Header.Set("Origin", origin)
+			rr := httptest.NewRecorder()
+			mux.ServeHTTP(rr, req)
+
+			if rr.Code != http.StatusOK {
+				t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+			}
+			if got := rr.Header().Get("Access-Control-Allow-Origin"); got != origin {
+				t.Fatalf("expected Access-Control-Allow-Origin %q, got %q", origin, got)
+			}
+		})
+	}
+}
+
+func TestCORSWithoutOriginHeader(t *testing.T) {
+	mux := NewMux()
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	rr := httptest.NewRecorder()
+	mux.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+	if got := rr.Header().Get("Access-Control-Allow-Origin"); got != "" {
+		t.Fatalf("expected no CORS headers when no Origin header, got %q", got)
+	}
+}
+
 func TestAuditEventsLimitQuery(t *testing.T) {
 	discovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/assets" {
