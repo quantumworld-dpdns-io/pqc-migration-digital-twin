@@ -11,6 +11,7 @@ endpoints:
     type: REST
     schemaFilePath: openapi-analysis.yaml
     networkVisibilities:
+      - Organization
       - Project
 
   - name: qasm
@@ -21,4 +22,5 @@ endpoints:
     type: REST
     schemaFilePath: openapi-qasm.yaml
     networkVisibilities:
+      - Organization
       - Project

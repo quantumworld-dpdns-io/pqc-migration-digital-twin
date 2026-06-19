@@ -15,6 +15,7 @@ endpoints:
     type: REST
     schemaFilePath: openapi-gateway.yaml
     networkVisibilities:
+      - Organization
       - Project
 
   - name: discovery
