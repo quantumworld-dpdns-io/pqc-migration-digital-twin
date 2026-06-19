@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Panel } from '../../components/Panel';
 import { PageHeader } from '../../components/PageHeader';
-import { getQasm, generateProof, QasmResponse, ProofResponse } from '../../lib/api';
+import { getQasm, generateProof, listQasmExamples, QasmResponse, ProofResponse, QasmExample } from '../../lib/api';
 import DigitalTwinScene from '../../components/three/DigitalTwinScene';
 
 export default function PlaygroundPage() {
-  const [qasmName, setQasmName] = useState('bell_pair');
+  const [qasmName, setQasmName] = useState('bell_pair.qasm');
+  const [qasmExamples, setQasmExamples] = useState<QasmExample[]>([]);
   const [qasmResult, setQasmResult] = useState<QasmResponse | null>(null);
   const [proofInputs, setProofInputs] = useState({
     credit_score: 750,
@@ -17,6 +18,19 @@ export default function PlaygroundPage() {
   });
   const [proofResult, setProofResult] = useState<ProofResponse | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    listQasmExamples(controller.signal)
+      .then(({ examples }) => {
+        setQasmExamples(examples);
+        if (examples.length > 0) setQasmName(examples[0].name);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setQasmExamples([{ name: 'bell_pair.qasm' }]);
+      });
+    return () => controller.abort();
+  }, []);
 
   const handleFetchQasm = async () => {
     setLoading(true);
@@ -49,18 +63,21 @@ export default function PlaygroundPage() {
         title="Quantum playground"
         description="Invoke QASM examples and proof pathways against the gateway — intended for demos and integration smoke tests."
       />
-      <DigitalTwinScene assets={[]} />
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
+      <DigitalTwinScene assets={[]} className="min-h-[980px] lg:min-h-[720px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Panel title="QASM explorer" subtitle="Inspect quantum circuit payloads returned by the service" accent="emerald">
           <div className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
-              <input
-                type="text"
+              <select
                 value={qasmName}
                 onChange={e => setQasmName(e.target.value)}
-                placeholder="Example name (e.g. bell_pair)"
                 className="input-cyber flex-1 font-mono text-sm"
-              />
+                aria-label="QASM example"
+              >
+                {(qasmExamples.length > 0 ? qasmExamples : [{ name: 'bell_pair.qasm' }]).map(example => (
+                  <option key={example.name} value={example.name}>{example.name}</option>
+                ))}
+              </select>
               <button
                 type="button"
                 onClick={handleFetchQasm}
@@ -135,6 +152,7 @@ export default function PlaygroundPage() {
           </div>
         </Panel>
       </div>
+      </DigitalTwinScene>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, type ReactNode } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars, Float, Text, MeshDistortMaterial, ContactShadows, PresentationControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -65,27 +65,34 @@ function Connection({ start, end, color }: { start: [number, number, number], en
   );
 }
 
-export default function DigitalTwinScene({ assets }: { assets: Asset[] }) {
+type DigitalTwinSceneProps = {
+  assets: Asset[];
+  children?: ReactNode;
+  className?: string;
+};
+
+export default function DigitalTwinScene({ assets, children, className = 'h-[500px]' }: DigitalTwinSceneProps) {
   const nodes = useMemo(() => {
     return assets.map((asset, i) => {
       const angle = (i / assets.length) * Math.PI * 2;
       const radius = 6 + Math.random() * 2;
+      const system = assetSystem(asset);
       return {
-        id: asset.id,
+        id: asset.fingerprint ?? `${system}-${asset.protocol ?? 'unknown'}-${i}`,
         position: [
           Math.cos(angle) * radius,
           (Math.random() - 0.5) * 6,
           Math.sin(angle) * radius,
         ] as [number, number, number],
-        color: asset.is_vulnerable ? '#f43f5e' : '#10b981',
-        label: `${asset.address}:${asset.port}`,
-        isVulnerable: asset.is_vulnerable,
+        color: assetVulnerable(asset) ? '#f43f5e' : '#10b981',
+        label: system,
+        isVulnerable: assetVulnerable(asset),
       };
     });
   }, [assets]);
 
   return (
-    <div className="w-full h-[500px] bg-black/40 rounded-2xl overflow-hidden border border-white/5 shadow-2xl relative">
+    <div className={`relative w-full overflow-hidden rounded-2xl border border-white/5 bg-black/40 shadow-2xl ${className}`}>
       <div className="absolute top-4 left-4 z-10 flex flex-col gap-1">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
@@ -117,6 +124,11 @@ export default function DigitalTwinScene({ assets }: { assets: Asset[] }) {
         <Stars radius={100} depth={50} count={7000} factor={4} saturation={0} fade speed={1} />
         <OrbitControls enablePan={false} maxDistance={22} minDistance={8} makeDefault />
       </Canvas>
+      {children ? (
+        <div className="pointer-events-none absolute inset-0 z-20 overflow-y-auto px-4 pb-5 pt-16 sm:px-6 lg:px-8">
+          <div className="pointer-events-auto mx-auto max-w-6xl">{children}</div>
+        </div>
+      ) : null}
     </div>
   );
 }
