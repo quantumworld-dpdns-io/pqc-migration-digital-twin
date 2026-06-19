@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Panel } from '../../components/Panel';
 import { PageHeader } from '../../components/PageHeader';
 import { InventoryTable } from '../../components/InventoryTable';
-import { getAssets, getRiskBacklog, Asset } from '../../lib/api';
+import { getAssets, getRiskBacklog, Asset, assetSystem, assetAlgorithm, assetStatus, assetVulnerable } from '../../lib/api';
 import { InventoryItem } from '../../lib/types';
 import { Download } from 'lucide-react';
 
@@ -24,9 +24,9 @@ export default function InventoryPage() {
     setBacklogLoading(true);
     try {
       const assetRows = assets.map(a => ({
-        asset_id: a.id,
-        is_vulnerable: a.is_vulnerable,
-        cipher: a.cipher_suite,
+        asset_id: a.fingerprint,
+        is_vulnerable: assetVulnerable(a),
+        cipher: a.protocol,
       }));
       const resp = await getRiskBacklog({ policy: 'default-pqc-2026', asset_rows: assetRows });
 
