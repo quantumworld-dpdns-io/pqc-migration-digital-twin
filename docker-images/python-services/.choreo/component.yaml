@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=none
 # Choreo Component Directory MUST be: docker-images/python-services
 schemaVersion: "1.2"
 

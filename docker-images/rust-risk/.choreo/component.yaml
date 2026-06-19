@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=none
 # Choreo Component Directory MUST be: docker-images/rust-risk
 schemaVersion: "1.2"
 

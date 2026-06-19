@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=none
 # Choreo Component Directory MUST be: docker-images/nginx
 #
 # Manual env (DevOps → Configs & Secrets) OR Architecture Diagram connection:
