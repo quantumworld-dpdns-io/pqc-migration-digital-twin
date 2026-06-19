@@ -5,6 +5,32 @@ How to build, deploy, connect, and troubleshoot the PQC Migration Digital Twin o
 
 ---
 
+## 0. Recommended: the consolidated single component (`docker-images/app`)
+
+Choreo's connection wizard could not publish/select the project services (the
+"Select a Resource" card never rendered even after adding OpenAPI schemas and
+Organization visibility), which made same-project service-to-service connections
+unusable. To make the whole API function **without any connections**, use the
+consolidated component at `docker-images/app`: the Go gateway (public, :8080) runs
+the Go discovery, Python analysis/qasm and Rust risk services in the same container
+and reaches them over `localhost`.
+
+**Create it in Choreo (one component, no connections, no nginx):**
+1. Console → project → **+ Create** → **Service** → connect this repo, branch `main`.
+2. Build preset: **Dockerfile**.
+3. **Component directory:** `docker-images/app`
+4. **Docker context / Project path:** `.` (repository root — required, the build pulls
+   all three source trees)
+5. **Dockerfile path:** `docker-images/app/Dockerfile`
+6. **Build → Deploy.** The `api` endpoint is `Public` (:8080) and gets a public URL.
+
+Verified locally (build context = repo root): every `/api/v1/*` route returns 200 with
+real data. Once this is deployed you can retire the separate nginx/go/python/rust
+components. The sections below describe the original multi-component setup and the
+connection issue, kept for reference.
+
+---
+
 ## 1. Architecture
 
 The system runs as **4 Docker components**, each built from a subfolder of
