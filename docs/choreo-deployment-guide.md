@@ -24,10 +24,25 @@ and reaches them over `localhost`.
 5. **Dockerfile path:** `docker-images/app/Dockerfile`
 6. **Build → Deploy.** The `api` endpoint is `Public` (:8080) and gets a public URL.
 
-Verified locally (build context = repo root): every `/api/v1/*` route returns 200 with
-real data. Once this is deployed you can retire the separate nginx/go/python/rust
-components. The sections below describe the original multi-component setup and the
-connection issue, kept for reference.
+Verified locally (build context = repo root) **and live in Choreo**: every `/api/v1/*`
+route returns 200 with real data. Once this is deployed you can retire the separate
+nginx/go/python/rust components. The sections below describe the original multi-component
+setup and the connection issue, kept for reference.
+
+**Deployed component:** `backend` (Development). Public URL:
+`https://baedb35c-04cc-4166-887d-a16b2b56924b-dev.e1-eu-north-azure.choreoapis.dev/pqc-migration-digital-twi/backend/v1.0`
+
+**Calling it:** the create-endpoint flow enabled API-key/OAuth2 security, so requests need a
+key (unlike the old open nginx URL). Get a short-lived test key and pass it as the
+`Api-Key` header:
+```bash
+choreo create test-key --project=pqc-migration-digital-twin-project \
+  --component=backend --deployment-track=main --env=Development
+# then: curl -H "Api-Key: <token>" "$URL/api/v1/risk" -X POST -d '{"total_assets":100,"quantum_vulnerable_assets":40}'
+```
+To make it open like the old nginx URL, disable endpoint security in the component's
+Settings. Verified live (with key): `/health`, `/api/v1/{assets,discovery,risk,proof,qasm}`
+all return 200 with real data.
 
 ---
 
