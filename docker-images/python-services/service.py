@@ -92,7 +92,9 @@ class Handler(BaseHTTPRequestHandler):
             if name:
                 if Path(name).name != name or Path(name).suffix.lower() != ".qasm":
                     raise ValueError("name must be a safe .qasm filename")
-                examples_dir = Path(os.environ.get("QASM_EXAMPLES_DIR", "qasm_examples"))
+                configured_dir = os.environ.get("QASM_EXAMPLES_DIR", "").strip()
+                candidates = (Path(configured_dir),) if configured_dir else (Path("qasm_examples"), Path("src/qasm/examples"))
+                examples_dir = next((candidate for candidate in candidates if candidate.is_dir()), candidates[0])
                 qasm_path = examples_dir / name
             else:
                 qasm_path = Path(str(payload.get("qasm_path", "qasm_examples/bell_pair.qasm")))

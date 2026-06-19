@@ -177,7 +177,11 @@ class Handler(BaseHTTPRequestHandler):
                 if configured_dir:
                     examples_dir = Path(configured_dir)
                 else:
-                    candidates = (Path("src/qasm/examples"), Path("qasm_examples"))
+                    candidates = (
+                        Path(__file__).resolve().parent.parent / "qasm/examples",
+                        Path("src/qasm/examples"),
+                        Path("qasm_examples"),
+                    )
                     examples_dir = next((candidate for candidate in candidates if candidate.is_dir()), candidates[0])
                 qasm_path = examples_dir / name
             else:
