@@ -9,6 +9,7 @@ endpoints:
       basePath: /
       port: 8082
     type: REST
+    schemaFilePath: openapi-analysis.yaml
     networkVisibilities:
       - Project
 
@@ -18,5 +19,6 @@ endpoints:
       basePath: /
       port: 8084
     type: REST
+    schemaFilePath: openapi-qasm.yaml
     networkVisibilities:
       - Project

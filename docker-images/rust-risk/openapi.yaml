@@ -1,0 +1,18 @@
+openapi: 3.0.3
+info:
+  title: Rust Risk Engine (ZK-Proof)
+  version: "1.0.0"
+  description: Computes migration risk scores and ZK migration proofs.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200": { description: OK }
+  /score:
+    post:
+      summary: Compute risk score
+      responses:
+        "200": { description: OK }

@@ -9,5 +9,6 @@ endpoints:
       basePath: /
       port: 8083
     type: REST
+    schemaFilePath: openapi.yaml
     networkVisibilities:
       - Project

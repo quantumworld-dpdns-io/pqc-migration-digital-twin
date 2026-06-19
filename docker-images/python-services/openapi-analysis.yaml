@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: Python Analysis (HNDL Scorer)
+  version: "1.0.0"
+  description: Harvest-now-decrypt-later scoring and migration backlog analysis.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200": { description: OK }
+  /hndl/score:
+    post:
+      summary: Compute HNDL risk score
+      responses:
+        "200": { description: OK }
+  /hndl/backlog:
+    post:
+      summary: Compute migration backlog
+      responses:
+        "200": { description: OK }

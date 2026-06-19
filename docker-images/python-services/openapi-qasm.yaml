@@ -1,0 +1,28 @@
+openapi: 3.0.3
+info:
+  title: QASM Examples Service
+  version: "1.0.0"
+  description: Serves QASM circuit examples.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200": { description: OK }
+  /examples:
+    get:
+      summary: List QASM examples
+      responses:
+        "200": { description: OK }
+  /examples/{name}:
+    get:
+      summary: Get a QASM example by name
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }

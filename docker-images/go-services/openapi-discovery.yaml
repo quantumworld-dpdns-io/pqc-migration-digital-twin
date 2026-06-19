@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: Go Discovery (Asset Scanner)
+  version: "1.0.0"
+  description: Scans endpoints for cryptographic assets and lists discovered assets.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200": { description: OK }
+  /scan:
+    post:
+      summary: Scan an address for cryptographic assets
+      responses:
+        "200": { description: OK }
+  /assets:
+    get:
+      summary: List discovered assets
+      responses:
+        "200": { description: OK }

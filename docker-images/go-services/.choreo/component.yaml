@@ -13,6 +13,7 @@ endpoints:
       basePath: /
       port: 8080
     type: REST
+    schemaFilePath: openapi-gateway.yaml
     networkVisibilities:
       - Project
 
@@ -22,5 +23,6 @@ endpoints:
       basePath: /
       port: 8081
     type: REST
+    schemaFilePath: openapi-discovery.yaml
     networkVisibilities:
       - Project

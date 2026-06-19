@@ -1,0 +1,43 @@
+openapi: 3.0.3
+info:
+  title: Go Gateway (API Router)
+  version: "1.0.0"
+  description: PQC Digital Twin API gateway. Routes to discovery, analysis, risk and qasm services.
+servers:
+  - url: /
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200": { description: OK }
+  /api/v1/discovery:
+    post:
+      summary: Run a discovery scan
+      responses:
+        "200": { description: OK }
+  /api/v1/assets:
+    get:
+      summary: List discovered assets
+      responses:
+        "200": { description: OK }
+  /api/v1/risk:
+    post:
+      summary: Compute migration risk score
+      responses:
+        "200": { description: OK }
+  /api/v1/risk/backlog:
+    post:
+      summary: Compute risk migration backlog
+      responses:
+        "200": { description: OK }
+  /api/v1/proof:
+    post:
+      summary: Generate ZK migration proof
+      responses:
+        "200": { description: OK }
+  /api/v1/qasm:
+    post:
+      summary: Run a QASM circuit example
+      responses:
+        "200": { description: OK }
