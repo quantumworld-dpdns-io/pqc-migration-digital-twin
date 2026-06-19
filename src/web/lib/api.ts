@@ -40,8 +40,11 @@ async function request<T>(
   };
 
   if (token) {
-    // Choreo / WSO2 typically expects 'Bearer <token>'
-    headers['Authorization'] = `Bearer ${token}`;
+    // The Choreo managed API (consolidated `backend` component) authenticates with
+    // the `Api-Key` header — `Authorization: Bearer` is rejected (401). If the
+    // endpoint's security is disabled in Choreo, leave the token unset and no header
+    // is sent.
+    headers['Api-Key'] = token;
   }
 
   const res = await fetch(url, {
