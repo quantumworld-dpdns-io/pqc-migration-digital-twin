@@ -21,3 +21,9 @@ paths:
       summary: List discovered assets
       responses:
         "200": { description: OK }
+    post:
+      summary: Create or upsert a manually supplied asset
+      responses:
+        "200": { description: Existing asset updated }
+        "201": { description: Asset created }
+        "400": { description: Invalid asset }

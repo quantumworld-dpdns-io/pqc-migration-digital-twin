@@ -23,10 +23,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="flex min-h-screen bg-[#020406] font-sans text-zinc-100 antialiased">
+      <body className="flex min-h-screen flex-col bg-[#020406] pb-20 font-sans text-zinc-100 antialiased md:flex-row md:pb-0">
         <AppSidebar />
-        <div className="app-main flex min-h-screen flex-1 flex-col overflow-hidden">
-          <main className="relative mx-auto w-full max-w-[1400px] flex-1 overflow-y-auto px-6 py-10 md:px-10 md:py-12 lg:px-14">
+        <div className="app-main flex min-h-screen w-full min-w-0 max-w-full flex-1 flex-col overflow-hidden">
+          <main className="relative mx-auto box-border w-full min-w-0 max-w-[1400px] flex-1 overflow-x-hidden overflow-y-auto px-4 py-8 sm:px-6 md:px-10 md:py-12 lg:px-14">
             {children}
           </main>
         </div>

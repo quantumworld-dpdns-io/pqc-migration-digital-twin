@@ -21,6 +21,12 @@ paths:
       summary: List discovered assets
       responses:
         "200": { description: OK }
+    post:
+      summary: Create or upsert a manually supplied asset
+      responses:
+        "200": { description: Existing asset updated }
+        "201": { description: Asset created }
+        "400": { description: Invalid asset }
   /api/v1/risk:
     post:
       summary: Compute migration risk score
@@ -41,3 +47,9 @@ paths:
       summary: Run a QASM circuit example
       responses:
         "200": { description: OK }
+  /api/v1/qasm/run:
+    post:
+      summary: Validate and run a named QASM example manifest
+      responses:
+        "200": { description: Validated }
+        "400": { description: Invalid manifest }

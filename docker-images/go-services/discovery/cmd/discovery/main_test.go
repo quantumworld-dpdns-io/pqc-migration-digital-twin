@@ -74,3 +74,19 @@ func TestScanRejectsInvalidPort(t *testing.T) {
 		t.Fatalf("expected 400 for invalid port, got %d", res.Code)
 	}
 }
+
+func TestAssetsCreateAndDeduplicate(t *testing.T) {
+	store := discovery.NewAssetStore()
+	mux := newMux(store)
+	body := `{"target":" payments.example.com ","protocol":" TLS ","severity":"HIGH","summary":" Legacy RSA certificate "}`
+	first := httptest.NewRecorder()
+	mux.ServeHTTP(first, httptest.NewRequest(http.MethodPost, "/assets", strings.NewReader(body)))
+	if first.Code != http.StatusCreated {
+		t.Fatalf("expected 201, got %d: %s", first.Code, first.Body.String())
+	}
+	second := httptest.NewRecorder()
+	mux.ServeHTTP(second, httptest.NewRequest(http.MethodPost, "/assets", strings.NewReader(body)))
+	if second.Code != http.StatusOK || store.Count() != 1 {
+		t.Fatalf("expected deduplicated upsert, status=%d count=%d", second.Code, store.Count())
+	}
+}

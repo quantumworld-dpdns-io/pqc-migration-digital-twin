@@ -21,3 +21,9 @@ paths:
       summary: Compute migration backlog
       responses:
         "200": { description: OK }
+  /qasm/run:
+    post:
+      summary: Validate and run a named QASM example manifest
+      responses:
+        "200": { description: Validated }
+        "400": { description: Invalid manifest }

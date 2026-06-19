@@ -10,12 +10,12 @@ type PageHeaderProps = {
 export function PageHeader({ kicker, title, description, actions }: PageHeaderProps) {
   return (
     <header className="page-header mb-10 md:mb-12">
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-3xl space-y-3">
+      <div className="flex min-w-0 flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0 max-w-3xl space-y-3">
           <p className="kicker">{kicker}</p>
           <h1 className="page-title">{title}</h1>
           {description ? (
-            <p className="text-sm leading-relaxed text-zinc-500 md:text-[15px]">{description}</p>
+            <p className="break-words text-sm leading-relaxed text-zinc-500 md:text-[15px]">{description}</p>
           ) : null}
         </div>
         {actions ? (

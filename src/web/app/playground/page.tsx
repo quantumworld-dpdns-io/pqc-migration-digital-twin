@@ -106,7 +106,7 @@ export default function PlaygroundPage() {
                 {loading === 'source' ? 'Fetching…' : 'Fetch source'}
               </button>
             </div>
-            <div className="grid grid-cols-[1fr_auto] gap-3"><div><label className="field-label" htmlFor="qasm-shots">Shots</label><input id="qasm-shots" type="number" min={1} max={1000000} value={shots} onChange={event => setShots(Math.max(1, Number(event.target.value) || 1))} className="input-cyber font-mono" /></div><button type="button" onClick={handleRunQasm} disabled={loading !== null} className="btn-primary self-end bg-amber-600 px-5 py-2.5 text-white disabled:opacity-50">{loading === 'run' ? 'Running…' : 'Validate run'}</button></div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]"><div className="min-w-0"><label className="field-label" htmlFor="qasm-shots">Shots</label><input id="qasm-shots" type="number" min={1} max={1000000} value={shots} onChange={event => setShots(Math.max(1, Number(event.target.value) || 1))} className="input-cyber font-mono" /></div><button type="button" onClick={handleRunQasm} disabled={loading !== null} className="btn-primary w-full self-end bg-amber-600 px-5 py-2.5 text-white disabled:opacity-50 sm:w-auto">{loading === 'run' ? 'Running…' : 'Validate run'}</button></div>
             <p className="text-xs leading-relaxed text-zinc-500">Source and execution output materialize as native WebGL text and geometry in the result canvas below.</p>
           </div>
         </Panel>

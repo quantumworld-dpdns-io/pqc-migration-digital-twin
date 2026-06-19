@@ -16,7 +16,7 @@ const accentBar = {
 
 export function Panel({ title, subtitle, children, accent = 'emerald' }: PanelProps) {
   return (
-    <section className="panel overflow-hidden">
+    <section className="panel min-w-0 max-w-full overflow-hidden">
       <div className={`mb-6 h-px w-16 rounded-full bg-gradient-to-r ${accentBar[accent]}`} aria-hidden />
       <header className="panel-head mb-6 space-y-1.5">
         <h2 className="text-[1.05rem] font-semibold tracking-tight text-zinc-50">{title}</h2>
