@@ -1,0 +1,19 @@
+# Consolidated public component: Go gateway + discovery + Python + Rust in one
+# container (localhost wiring). No cross-component connections required.
+#
+# Choreo component setup:
+#   Component directory : docker-images/app
+#   Build preset        : Dockerfile
+#   Docker context      : .                          (repository root)
+#   Dockerfile path     : docker-images/app/Dockerfile
+schemaVersion: "1.2"
+
+endpoints:
+  - name: api
+    displayName: PQC Digital Twin — Public API
+    service:
+      basePath: /
+      port: 8080
+    type: REST
+    networkVisibilities:
+      - Public
