@@ -13,6 +13,7 @@ function gatewayOrigin(url) {
 
 const publicGateway = gatewayOrigin(process.env.NEXT_PUBLIC_GATEWAY_URL ?? '');
 const serverGateway = gatewayOrigin(process.env.GATEWAY_URL ?? '');
+const developmentScriptSource = process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : '';
 
 const connectParts = [
   "'self'",
@@ -31,9 +32,10 @@ if (serverGateway && serverGateway !== publicGateway) connectParts.push(serverGa
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  // unsafe-inline: Next.js hydration / styled paths
+  // unsafe-inline: Next.js hydration / styled paths. Next's development
+  // runtime uses eval for source maps; production intentionally omits it.
   // blob: required for some Three.js / Web Worker handshakes
-  "script-src 'self' 'unsafe-inline' blob:",
+  `script-src 'self' 'unsafe-inline'${developmentScriptSource} blob:`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob:",
   `connect-src ${connectParts.join(' ')}`,
