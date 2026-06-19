@@ -38,9 +38,17 @@ http {
         "${CORS_ALLOW_ORIGIN}"                   $http_origin;
     }
 
-    # ── Upstream ──────────────────────────────────────────────────────────────
-    upstream go_services {
-        server ${GO_SERVICES_HOST};
+    # ── Backend resolution ────────────────────────────────────────────────────
+    # Resolve the Go backend lazily at request time (NOT at startup) so nginx
+    # boots and stays Ready even when go-services is not yet deployed/connected.
+    # An "upstream {}" block or a literal hostname in proxy_pass would force
+    # resolution during "nginx -t" and crash-loop the pod when the backend DNS
+    # name does not exist yet.
+    resolver ${RESOLVER} valid=10s ipv6=off;
+    resolver_timeout 5s;
+
+    map $host $go_backend {
+        default "${GO_SERVICES_HOST}";
     }
 
     # Select the server block for this environment.
