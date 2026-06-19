@@ -29,8 +29,16 @@ route returns 200 with real data. Once this is deployed you can retire the separ
 nginx/go/python/rust components. The sections below describe the original multi-component
 setup and the connection issue, kept for reference.
 
-**Deployed component:** `backend` (Development). Public URL:
-`https://baedb35c-04cc-4166-887d-a16b2b56924b-dev.e1-eu-north-azure.choreoapis.dev/pqc-migration-digital-twi/backend/v1.0`
+**Deployed component:** `backend`, live in **Development and Production** (all
+`/api/v1/*` routes return 200 with real data, verified):
+- Dev:  `https://baedb35c-04cc-4166-887d-a16b2b56924b-dev.e1-eu-north-azure.choreoapis.dev/pqc-migration-digital-twi/backend/v1.0`
+- Prod: `https://baedb35c-04cc-4166-887d-a16b2b56924b-prod.e1-eu-north-azure.choreoapis.dev/pqc-migration-digital-twi/backend/v1.0`
+
+**Frontend (Vercel, `src/web`):** set `NEXT_PUBLIC_GATEWAY_URL` + `GATEWAY_URL` to the
+backend URL (prod for Production, dev for Preview). The prod endpoint is open (no key),
+so `*_GATEWAY_TOKEN` can be empty. The client sends any token as the `Api-Key` header
+(`lib/api.ts`). CSP `connect-src` (`next.config.mjs`) allows `*.choreoapis.dev` + the font
+CDN. Frontend confirmed in "Live link" mode against prod.
 
 **Calling it:** the create-endpoint flow enabled API-key/OAuth2 security, so requests need a
 key (unlike the old open nginx URL). Get a short-lived test key and pass it as the
