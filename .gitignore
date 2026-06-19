@@ -74,3 +74,4 @@ docker-images/nginx/certs/
 /tests/integration/artifacts/benchmark-10k
 /tests/integration/artifacts/dr-drill
 /.cursor
+docs/dev-docs/frontend-api-canvas-rwd-patch-plan.md
