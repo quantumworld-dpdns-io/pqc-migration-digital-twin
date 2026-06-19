@@ -45,5 +45,5 @@ http {
 
     # Select the server block for this environment.
     # Allowed values: local | choreo
-    include /etc/nginx/conf.d/server-${NGINX_ENV}.conf;
+    include /tmp/nginx-runtime/server.conf;
 }
