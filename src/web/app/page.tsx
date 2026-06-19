@@ -5,7 +5,7 @@ import { Panel } from '../components/Panel';
 import { ProofPanel } from '../components/ProofPanel';
 import { RiskMatrix } from '../components/RiskMatrix';
 import { StatCard } from '../components/StatCard';
-import { getAssets, getRiskScore, Asset } from '../lib/api';
+import { getAssets, getRiskScore, Asset, assetSystem, assetAlgorithm, assetStatus, assetVulnerable } from '../lib/api';
 import type { GovernanceException, HeatmapCell, InventoryItem, RiskItem, VerifierDrift } from '../lib/types';
 import { PageHeader } from '../components/PageHeader';
 import { ShieldAlert, Globe, Server, CheckCircle2 } from 'lucide-react';
@@ -24,9 +24,9 @@ const DigitalTwinScene = dynamic(() => import('../components/three/DigitalTwinSc
 // ── Static fallback data ──────────────────
 
 const fallbackAssets: Asset[] = [
-  { id: '1', address: '10.0.0.1', port: 443, is_vulnerable: true, discovered_at: '', protocol: 'TLSv1.2', cipher_suite: 'RSA-AES256-GCM' },
-  { id: '2', address: '10.0.0.5', port: 8443, is_vulnerable: true, discovered_at: '', protocol: 'TLSv1.2', cipher_suite: 'ECDHE-RSA-AES128-SHA' },
-  { id: '3', address: '192.168.1.10', port: 443, is_vulnerable: false, discovered_at: '', protocol: 'TLSv1.3', cipher_suite: 'TLS_AES_256_GCM_SHA384' },
+  { fingerprint: '1', target: '10.0.0.1', protocol: 'tls', severity: 'high', summary: 'legacy RSA cert' },
+  { fingerprint: '2', target: '10.0.0.5', protocol: 'ssh', severity: 'medium', summary: 'rsa host key' },
+  { fingerprint: '3', target: '192.168.1.10', protocol: 'tls', severity: 'low', summary: 'TLS 1.3' },
 ];
 
 const fallbackInventory: InventoryItem[] = [
@@ -91,10 +91,10 @@ export default async function DashboardPage() {
 
   const inventory: InventoryItem[] = assetsResponse.assets.length > 0
     ? assetsResponse.assets.map(a => ({
-        system: `${a.address}:${a.port}`,
-        algorithm: a.cipher_suite ?? a.protocol ?? 'Unknown',
+        system: assetSystem(a),
+        algorithm: assetAlgorithm(a),
         owner: 'Discovered',
-        status: a.is_vulnerable ? 'red' : 'green',
+        status: assetStatus(a),
       }))
     : fallbackInventory;
 
@@ -105,7 +105,7 @@ export default async function DashboardPage() {
       ]
     : fallbackRisks;
 
-  const vulnerableCount = assets.filter(a => a.is_vulnerable).length;
+  const vulnerableCount = assets.filter(assetVulnerable).length;
   const vulnPct =
     assets.length > 0 ? Math.min(100, Math.round((vulnerableCount / assets.length) * 100)) : 0;
 

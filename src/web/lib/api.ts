@@ -63,22 +63,61 @@ async function request<T>(
 
 // ── Request / Response types ──────────────────────────────────────────────────
 
+// Normalized asset shape. The backend returns assets from /api/v1/assets with
+// lowercase keys (target, protocol, severity…) and from /api/v1/discovery with
+// CapitalCase keys (Target, Protocol, Severity…); normalizeAsset() reconciles both.
 export type Asset = {
-  id: string;
-  address: string;
-  port: number;
+  fingerprint?: string;
+  target: string;
   protocol?: string;
-  cipher_suite?: string;
-  tls_version?: string;
-  is_vulnerable: boolean;
-  discovered_at: string;
+  severity?: string; // info | low | medium | high | critical
+  summary?: string;
+  seen_count?: number;
+  first_seen_at?: string;
+  last_seen_at?: string;
 };
 
+type RawAsset = Record<string, unknown>;
+const pick = (o: RawAsset, ...keys: string[]): unknown => {
+  for (const k of keys) if (o[k] !== undefined && o[k] !== null) return o[k];
+  return undefined;
+};
+
+export function normalizeAsset(raw: RawAsset): Asset {
+  return {
+    fingerprint: pick(raw, 'fingerprint', 'Fingerprint') as string | undefined,
+    target: (pick(raw, 'target', 'Target', 'address', 'Address') as string) ?? 'unknown',
+    protocol: pick(raw, 'protocol', 'Protocol') as string | undefined,
+    severity: pick(raw, 'severity', 'Severity') as string | undefined,
+    summary: pick(raw, 'summary', 'Summary') as string | undefined,
+    seen_count: pick(raw, 'seen_count', 'SeenCount') as number | undefined,
+    first_seen_at: pick(raw, 'first_seen_at', 'FirstSeenAt') as string | undefined,
+    last_seen_at: pick(raw, 'last_seen_at', 'LastSeenAt') as string | undefined,
+  };
+}
+
+const VULN_SEVERITIES = new Set(['medium', 'high', 'critical']);
+export const assetVulnerable = (a: Asset): boolean =>
+  VULN_SEVERITIES.has((a.severity ?? '').toLowerCase());
+export const assetSystem = (a: Asset): string => a.target || 'unknown';
+export const assetAlgorithm = (a: Asset): string =>
+  a.protocol ? a.protocol.toUpperCase() : 'Unknown';
+/** 'red' | 'amber' | 'green' for status pills. */
+export function assetStatus(a: Asset): 'red' | 'amber' | 'green' {
+  const s = (a.severity ?? '').toLowerCase();
+  if (s === 'high' || s === 'critical') return 'red';
+  if (s === 'medium') return 'amber';
+  return 'green';
+}
+
 export type DiscoveryRequest = { address?: string; port?: number };
-export type DiscoveryResponse = { 
-  target: Record<string, unknown>; 
+export type DiscoveryResponse = {
+  target: Record<string, unknown>;
   findings: Asset[];
 };
+
+export type QasmExample = { name: string; sha256?: string; bytes?: number };
+export type QasmExamplesResponse = { examples: QasmExample[] };
 
 export type RiskRequest = { 
   total_assets?: number; 
@@ -158,11 +197,25 @@ export type AuditEventsResponse = {
 
 // ── API functions ─────────────────────────────────────────────────────────────
 
-export const getAssets = (signal?: AbortSignal) =>
-  request<AssetListResponse>('GET', '/api/v1/assets', undefined, signal);
+export const getAssets = async (signal?: AbortSignal): Promise<AssetListResponse> => {
+  const raw = await request<{ count?: number; assets?: RawAsset[] }>(
+    'GET', '/api/v1/assets', undefined, signal,
+  );
+  const assets = (raw.assets ?? []).map(normalizeAsset);
+  return { count: raw.count ?? assets.length, assets };
+};
 
-export const runDiscovery = (req: DiscoveryRequest, signal?: AbortSignal) =>
-  request<DiscoveryResponse>('POST', '/api/v1/discovery', req, signal);
+export const runDiscovery = async (
+  req: DiscoveryRequest, signal?: AbortSignal,
+): Promise<DiscoveryResponse> => {
+  const raw = await request<{ target?: Record<string, unknown>; findings?: RawAsset[] }>(
+    'POST', '/api/v1/discovery', req, signal,
+  );
+  return { target: raw.target ?? {}, findings: (raw.findings ?? []).map(normalizeAsset) };
+};
+
+export const listQasmExamples = (signal?: AbortSignal) =>
+  request<QasmExamplesResponse>('POST', '/api/v1/qasm', {}, signal);
 
 export const getRiskScore = (req: RiskRequest, signal?: AbortSignal) =>
   request<RiskResponse>('POST', '/api/v1/risk', req, signal);
