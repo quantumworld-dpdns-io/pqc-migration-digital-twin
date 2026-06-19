@@ -72,6 +72,12 @@ probe() {
 echo "Choreo diagnostic → ${LOG_PATH}"
 echo "Target: ${BASE_URL}"
 echo ""
+echo "Auto build/deploy checklist:"
+echo "  1. Build page → enable 'Auto Build on Commit' (required first)"
+echo "  2. Deploy page → enable 'Auto Deploy on Build'"
+echo "  3. Push commits to the branch Choreo tracks (main / deployment track)"
+echo "  4. Architecture Diagram → + Create connections (yaml resourceRef cannot be guessed)"
+echo ""
 
 probe "/health" GET "" "H6"
 probe "/health/gateway" GET "" "H4"

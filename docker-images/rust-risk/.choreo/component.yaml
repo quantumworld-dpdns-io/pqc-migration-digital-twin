@@ -11,12 +11,3 @@ endpoints:
     type: REST
     networkVisibilities:
       - Project
-
-configurations:
-  env:
-    - name: DATABASE_URL
-      valueFrom:
-        configForm:
-          displayName: Database URL (AlwaysData PostgreSQL)
-          type: secret
-          required: true

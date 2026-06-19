@@ -1,5 +1,9 @@
 # yaml-language-server: $schema=none
 # Choreo Component Directory MUST be: docker-images/go-services
+#
+# Manual env (DevOps → Configs & Secrets) OR Architecture Diagram connections:
+#   PYTHON_BASE_URL, QASM_BASE_URL, RUST_BASE_URL, DATABASE_URL
+#   DISCOVERY_BASE_URL = http://localhost:8081  (same container, optional)
 schemaVersion: "1.2"
 
 endpoints:
@@ -20,36 +24,3 @@ endpoints:
     type: REST
     networkVisibilities:
       - Project
-
-dependencies:
-  connectionReferences:
-    - name: python-analysis-connection
-      resourceRef: service:/pqc-migration-digital-twin/python-services/v1.0/analysis/PROJECT
-    - name: python-qasm-connection
-      resourceRef: service:/pqc-migration-digital-twin/python-services/v1.0/qasm/PROJECT
-    - name: rust-risk-connection
-      resourceRef: service:/pqc-migration-digital-twin/rust-risk/v1.0/risk-engine/PROJECT
-
-configurations:
-  env:
-    - name: PYTHON_BASE_URL
-      valueFrom:
-        connectionRef:
-          name: python-analysis-connection
-          key: ServiceURL
-    - name: QASM_BASE_URL
-      valueFrom:
-        connectionRef:
-          name: python-qasm-connection
-          key: ServiceURL
-    - name: RUST_BASE_URL
-      valueFrom:
-        connectionRef:
-          name: rust-risk-connection
-          key: ServiceURL
-    - name: DATABASE_URL
-      valueFrom:
-        configForm:
-          displayName: Database URL (AlwaysData PostgreSQL)
-          type: secret
-          required: true

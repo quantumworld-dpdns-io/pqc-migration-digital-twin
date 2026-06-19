@@ -1,5 +1,11 @@
 # yaml-language-server: $schema=none
 # Choreo Component Directory MUST be: docker-images/nginx
+#
+# Manual env (DevOps → Configs & Secrets) OR Architecture Diagram connection:
+#   GO_SERVICES_HOST = <go-services project-internal host:port>
+#
+# Architecture lines appear ONLY after Console → Architecture Diagram → + Create
+# (nginx → go-services / gateway). Copy generated resourceRef from UI if codifying.
 schemaVersion: "1.2"
 
 endpoints:
@@ -11,16 +17,3 @@ endpoints:
     type: REST
     networkVisibilities:
       - Public
-
-dependencies:
-  connectionReferences:
-    - name: go-gateway-connection
-      resourceRef: service:/pqc-migration-digital-twin/go-services/v1.0/gateway/PROJECT
-
-configurations:
-  env:
-    - name: GO_SERVICES_HOST
-      valueFrom:
-        connectionRef:
-          name: go-gateway-connection
-          key: ServiceURL
