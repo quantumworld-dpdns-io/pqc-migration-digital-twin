@@ -45,10 +45,10 @@ export default function InventoryPage() {
   };
 
   const inventory: InventoryItem[] = assets.map(a => ({
-    system: `${a.address}:${a.port}`,
-    algorithm: a.cipher_suite ?? a.protocol ?? 'Unknown',
+    system: assetSystem(a),
+    algorithm: assetAlgorithm(a),
     owner: 'Discovered',
-    status: a.is_vulnerable ? 'red' : 'green',
+    status: assetStatus(a),
   }));
 
   return (
