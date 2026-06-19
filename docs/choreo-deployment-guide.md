@@ -85,22 +85,26 @@ expects:
 | **go-services** | rust-risk (8083)          | `RUST_BASE_URL`        | `http://…:8083`   |
 | **go-services** | python-services (qasm 8084) | `QASM_BASE_URL`      | `http://…:8084`   |
 
-**Do it in the Console (the reliable path).** The CLI `choreo create connection` currently
-fails with `no APIs available in the marketplace` because provider endpoints must be
-discoverable in the project marketplace first — the Console handles this automatically.
-Step by step, for each pair above:
+**This must be done in the Console — the CLI cannot do same-project connections.**
+`choreo create connection` only queries the org/public **marketplace** and fails with
+`no APIs available in the marketplace`; same-project component-to-component wiring lives in
+the **Architecture Diagram**, which the CLI does not expose. (Likewise, `choreo describe
+deployment` returns the internal `projectUrl` only for Public components like nginx —
+`http://nginx-527345497:8080/` — and "not found" for Project-visibility ones, so you
+cannot even read the real hashed Service name from the CLI.) Step by step, per pair:
 
-1. Console → open the **consumer** component (e.g. `nginx`).
-2. **Connections** (left nav) → **+ Create**.
-3. Choose the **provider** component and its endpoint (e.g. go-services / gateway).
-4. Visibility: **Project**. Create — Choreo generates `CHOREO_<NAME>_SERVICEURL`.
-5. The dialog shows a snippet with the injected var name. Go to the consumer's
-   **Configs & Secrets** (or the connection's *config mapping*) and **map/rename** that
-   `…_SERVICEURL` to the var the code expects (`GO_SERVICES_HOST`, `PYTHON_BASE_URL`, …).
-6. **Redeploy the consumer** so the new env var is injected.
+1. Console → the **project** → **Architecture Diagram** (or consumer component →
+   **Connections**) → **+ Create / draw the arrow** from consumer to provider.
+2. Choose the **provider** component + endpoint (e.g. go-services / gateway 8080).
+3. Visibility **Project**. Create — Choreo generates `CHOREO_<NAME>_SERVICEURL`.
+4. In the consumer's **Configs & Secrets** (or the connection's config mapping),
+   **rename** that `…_SERVICEURL` to the var the code expects
+   (`GO_SERVICES_HOST`, `PYTHON_BASE_URL`, `RUST_BASE_URL`, `QASM_BASE_URL`).
+5. **Redeploy the consumer** so the new env var is injected.
 
 After wiring nginx→go-services, the nginx log line
-`go-services could not be resolved` disappears and `/api/v1/*` returns 200.
+`go-services could not be resolved` disappears and `/api/v1/*` returns 200. Re-verify with
+`choreo logs application --component=nginx --env=Development` and the §7 smoke tests.
 
 > To **codify** a connection in `.choreo/component.yaml` (so it survives redeploys), create
 > it once in the UI, copy the generated `resourceRef`, and add it under
