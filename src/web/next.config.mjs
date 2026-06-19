@@ -20,6 +20,10 @@ const connectParts = [
   'http://127.0.0.1:8080',
   'https://localhost',
   'https://*.choreoapis.dev',
+  // Fonts fetched via fetch()/Web Worker (e.g. troika 3D text) are checked
+  // against connect-src, not font-src.
+  'https://fonts.gstatic.com',
+  'https://fonts.googleapis.com',
 ];
 
 if (publicGateway) connectParts.push(publicGateway);
