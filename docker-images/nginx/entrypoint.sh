@@ -27,17 +27,23 @@ case "$NGINX_ENV" in
     ;;
 esac
 
-export GO_SERVICES_HOST CORS_ALLOW_ORIGIN NGINX_ENV
+# DNS resolver for lazy (request-time) upstream resolution. Read the cluster
+# nameserver from /etc/resolv.conf; fall back to a sane default. This lets nginx
+# start and stay Ready even when the Go backend DNS name does not exist yet.
+RESOLVER="${RESOLVER:-$(awk '/^nameserver/ {print $2; exit}' /etc/resolv.conf 2>/dev/null)}"
+[ -z "$RESOLVER" ] && RESOLVER="127.0.0.11"
+
+export GO_SERVICES_HOST CORS_ALLOW_ORIGIN NGINX_ENV RESOLVER
 
 # #region agent log
-echo "nginx-entrypoint: GO_SERVICES_HOST=${GO_SERVICES_HOST} NGINX_ENV=${NGINX_ENV} RUNTIME_DIR=${RUNTIME_DIR}" >&2
+echo "nginx-entrypoint: GO_SERVICES_HOST=${GO_SERVICES_HOST} NGINX_ENV=${NGINX_ENV} RESOLVER=${RESOLVER} RUNTIME_DIR=${RUNTIME_DIR}" >&2
 # #endregion
 
 mkdir -p "$RUNTIME_DIR"
 cp /etc/nginx/locations.conf "${RUNTIME_DIR}/locations.conf"
 cp "/etc/nginx/server-${NGINX_ENV}.conf" "${RUNTIME_DIR}/server.conf"
 
-envsubst '$GO_SERVICES_HOST $CORS_ALLOW_ORIGIN $NGINX_ENV' \
+envsubst '$GO_SERVICES_HOST $CORS_ALLOW_ORIGIN $NGINX_ENV $RESOLVER' \
   < /etc/nginx/nginx.conf.template \
   > "$NGINX_CONF"
 
