@@ -116,6 +116,13 @@ With lazy resolution, nginx boots and `/health` (served by nginx itself, no back
 dependency) passes the readiness probe even when backends are absent; proxied routes
 return a graceful `502` until the backend is up.
 
+**Read-only root filesystem:** Choreo runs the container with a read-only root FS, so
+nginx must write only to the writable `/tmp/nginx-runtime`. `nginx.conf.template` sets
+`pid /tmp/nginx-runtime/nginx.pid;`, points all `*_temp_path` under `/tmp/nginx-runtime`,
+and sends `error_log` → `/dev/stderr`, `access_log` → `/dev/stdout`. Do **not** point
+`pid` or temp paths at `/var/run` or `/var/cache` — they fail with
+`open() ... failed (30: Read-only file system)`.
+
 ---
 
 ## 7. Smoke test the live deployment
@@ -170,6 +177,9 @@ GATEWAY_BASE_URL="$BASE" bash tests/integration/docker_microservices_smoke.sh
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
 | nginx `CrashLoopBackOff`, `containers with unready status` | `upstream{}`/literal hostname forces startup DNS resolution; backend not deployed | Use lazy resolution (§6); ensure `nginx.conf.template`/`locations.conf` use `$go_backend` |
+| nginx `open() "/var/run/nginx.pid" failed (30: Read-only file system)` | pid/temp/log paths on read-only root FS | Point pid + `*_temp_path` to `/tmp/nginx-runtime`, logs to stdout/stderr (§6) |
+| `choreo list builds/describe/create build <c>` → `not found` for go/python/rust | component record exists but build track never configured | In console, open the component → configure Build (repo `main`, Dockerfile, context dir `docker-images/<name>`) → Build → Deploy |
+| Diagnosing any runtime crash | console screenshots hide container stderr | `choreo logs application --component=<c> --project=<proj> --env=Development --limit=400` |
 | `/health` 200 but `/api/...` returns 502 | go-services not deployed or `GO_SERVICES_HOST` wrong | Deploy go-services; verify `GO_SERVICES_HOST=go-services:8080` |
 | go-services up but risk/qasm fail | missing `PYTHON_BASE_URL`/`RUST_BASE_URL`/`QASM_BASE_URL` | Add the env vars in §4 and redeploy |
 | Only nginx has a public URL | go/python/rust are `Project` visibility | Expected — reach them through nginx |
