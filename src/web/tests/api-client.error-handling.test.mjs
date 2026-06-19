@@ -23,3 +23,13 @@ test('ApiError class exposes status and stable name for callers', async () => {
   assert.match(apiSource, /public readonly status: number/);
   assert.match(apiSource, /this\.name = 'ApiError'/);
 });
+
+test('typed client exposes asset create and QASM run gateway operations', async () => {
+  const apiSource = await readFile(path.join(rootDir, 'lib/api.ts'), 'utf8');
+  assert.match(apiSource, /export const createAsset/);
+  assert.match(apiSource, /'POST', '\/api\/v1\/assets'/);
+  assert.match(apiSource, /export const runQasm/);
+  assert.match(apiSource, /'POST', '\/api\/v1\/qasm\/run'/);
+  assert.match(apiSource, /export type BacklogRow = \{/);
+  assert.doesNotMatch(apiSource, /risk_score: number/);
+});

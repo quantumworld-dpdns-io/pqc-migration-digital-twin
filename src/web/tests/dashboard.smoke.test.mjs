@@ -7,18 +7,32 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
-test('dashboard page includes governance smoke content', async () => {
+test('dashboard uses live governance data and compact responsive layout', async () => {
   const pageSource = await readFile(path.join(rootDir, 'app/page.tsx'), 'utf8');
 
-  assert.match(pageSource, /<h1>Operational Dashboard<\/h1>/);
-  assert.match(pageSource, /Panel title="Inventory"/);
-  assert.match(pageSource, /Panel title="Governance"/);
-  assert.match(pageSource, /EX-2026-014/);
-  assert.match(pageSource, /proof-verifier/);
+  assert.match(pageSource, /getGovernanceExceptions/);
+  assert.match(pageSource, /getVerifierDrift/);
+  assert.match(pageSource, /variant="compact"/);
+  assert.match(pageSource, /xl:grid-cols-\[minmax\(0,2fr\)_minmax\(20rem,1fr\)\]/);
+  assert.match(pageSource, /Update required/);
 });
 
-test('globals.css has correct panel selectors', async () => {
-  const css = await readFile(path.join(rootDir, 'app/globals.css'), 'utf8');
-  const correctPattern = /\.panel:nth-child\(1\),\s*\.panel:nth-child\(4\),\s*\.panel:nth-child\(5\) \{\s*grid-column: span 12;\s*\}/m;
-  assert.ok(correctPattern.test(css), 'Should contain correctly grouped panel selectors for span 12');
+test('playground results are native canvas objects rather than DOM overlays', async () => {
+  const scene = await readFile(path.join(rootDir, 'components/three/PlaygroundScene.tsx'), 'utf8');
+  const qasm = await readFile(path.join(rootDir, 'components/three/QasmResultDisplay.tsx'), 'utf8');
+  const proof = await readFile(path.join(rootDir, 'components/three/ProofResultDisplay.tsx'), 'utf8');
+  assert.match(scene, /<Canvas/);
+  assert.match(scene, /<QasmResultDisplay/);
+  assert.match(scene, /<ProofResultDisplay/);
+  assert.doesNotMatch(scene, /<Html|dangerouslySetInnerHTML/);
+  assert.match(qasm, /<Text/);
+  assert.match(proof, /score_value/);
+});
+
+test('inventory creates assets and sends valid exposure backlog rows', async () => {
+  const inventory = await readFile(path.join(rootDir, 'app/inventory/page.tsx'), 'utf8');
+  assert.match(inventory, /createAsset\(createInput\)/);
+  assert.match(inventory, /total_assets: 1/);
+  assert.match(inventory, /quantum_vulnerable_assets: assetVulnerable\(a\) \? 1 : 0/);
+  assert.match(inventory, /Download CSV/);
 });
