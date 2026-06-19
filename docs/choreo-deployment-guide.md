@@ -57,29 +57,56 @@ avoids transient 502s.)
 
 ---
 
-## 4. Connections / environment variables
+## 4. Connections (REQUIRED for cross-component traffic)
 
-Internal components talk to each other by their **project-internal service DNS names**.
-Set these in **each component → DevOps → Configs & Secrets → + Create → Environment Variable**:
+> **Critical — read this.** Components do **not** reach each other by their plain name.
+> `http://go-services:8080` / `http://python-services:8082` **do not resolve** — verified
+> from inside the cluster: `lookup go-services on 172.19.0.10:53: no such host`. The
+> in-cluster Service name has a hash suffix (e.g. nginx is `nginx-527345497.<namespace>`),
+> which you must **not** hardcode. The supported way to wire components is a **Connection**:
+> Choreo injects the real internal URL as an environment variable at deploy time.
 
-### go-services
-| Key               | Value                            |
-|-------------------|----------------------------------|
-| `PYTHON_BASE_URL` | `http://python-services:8082`    |
-| `RUST_BASE_URL`   | `http://rust-risk:8083`          |
-| `QASM_BASE_URL`   | `http://python-services:8084`    |
+This is the actual cause of "components not deployed / not reachable": all four build and
+run, but with no connections nginx can't find go-services (`502`, log:
+`go-services could not be resolved (3: Host not found)`), and go-services can't find
+python/rust.
 
-### nginx
-| Key                | Value               | Notes                                            |
-|--------------------|---------------------|--------------------------------------------------|
-| `GO_SERVICES_HOST` | `go-services:8080`  | Optional — this is the entrypoint default. Accepts `host:port` or a full `http(s)://…` URL (the entrypoint strips the scheme/path). |
-| `NGINX_ENV`        | `choreo`            | Optional — defaults to `choreo`. Use `local` only for local TLS dev. |
-| `CORS_ALLOW_ORIGIN`| your frontend origin| Optional extra CORS origin (localhost, `*.choreoapis.dev`, and `pqc-digital-twin.dennisleehappy.org` are already allowed). |
+### Create the connections
 
-> **Alternative to env vars:** use **Console → Architecture Diagram → + Create** to draw
-> a connection (e.g. `nginx → go-services`). Choreo then injects the connection's host
-> as the env var. If you codify it in `component.yaml`, copy the generated `resourceRef`
-> from the UI.
+For each consumer→provider pair, **Console → the consumer component → Connections →
++ Create** (or Architecture Diagram → draw the arrow), pick the provider service/endpoint,
+then **rename the injected `CHOREO_<conn>_SERVICEURL`** to the env var the consumer code
+expects:
+
+| Consumer      | Provider (endpoint)        | Rename injected var to | Consumer expects |
+|---------------|----------------------------|------------------------|------------------|
+| **nginx**     | go-services (gateway 8080)  | `GO_SERVICES_HOST`     | full URL ok — entrypoint strips scheme/path |
+| **go-services** | python-services (8082)    | `PYTHON_BASE_URL`      | `http://…:8082`   |
+| **go-services** | rust-risk (8083)          | `RUST_BASE_URL`        | `http://…:8083`   |
+| **go-services** | python-services (qasm 8084) | `QASM_BASE_URL`      | `http://…:8084`   |
+
+CLI equivalent (one per pair):
+```bash
+choreo create connection --project=<proj> --component=nginx --service=go-services --name=GoServices
+```
+Then map its `SERVICEURL` to `GO_SERVICES_HOST` in nginx → Configs. Redeploy the consumer
+after adding a connection.
+
+> To **codify** a connection in `.choreo/component.yaml` (so it survives redeploys), create
+> it once in the UI, copy the generated `resourceRef`, and add it under
+> `dependencies.connectionReferences` with an `env:` mapping to the target var name.
+
+### Other nginx env vars (optional)
+| Key                | Default   | Notes                                            |
+|--------------------|-----------|--------------------------------------------------|
+| `NGINX_ENV`        | `choreo`  | Use `local` only for local TLS dev.              |
+| `CORS_ALLOW_ORIGIN`| localhost | Extra CORS origin (localhost, `*.choreoapis.dev`, `pqc-digital-twin.dennisleehappy.org` already allowed). |
+
+### go-services database (optional)
+go-services logs `password authentication failed for user "dennislee928" (continuing
+without DB)`. Non-fatal — it runs without persistence. For full functionality set a
+correct `DATABASE_URL` (Postgres) via Configs & Secrets, or via a Choreo **database
+connection**.
 
 ---
 
@@ -180,11 +207,13 @@ GATEWAY_BASE_URL="$BASE" bash tests/integration/docker_microservices_smoke.sh
 | nginx `open() "/var/run/nginx.pid" failed (30: Read-only file system)` | pid/temp/log paths on read-only root FS | Point pid + `*_temp_path` to `/tmp/nginx-runtime`, logs to stdout/stderr (§6) |
 | `choreo list builds/describe/create build <c>` → `not found` for go/python/rust | component record exists but build track never configured | In console, open the component → configure Build (repo `main`, Dockerfile, context dir `docker-images/<name>`) → Build → Deploy |
 | Diagnosing any runtime crash | console screenshots hide container stderr | `choreo logs application --component=<c> --project=<proj> --env=Development --limit=400` |
-| `/health` 200 but `/api/...` returns 502 | go-services not deployed or `GO_SERVICES_HOST` wrong | Deploy go-services; verify `GO_SERVICES_HOST=go-services:8080` |
-| go-services up but risk/qasm fail | missing `PYTHON_BASE_URL`/`RUST_BASE_URL`/`QASM_BASE_URL` | Add the env vars in §4 and redeploy |
-| Only nginx has a public URL | go/python/rust are `Project` visibility | Expected — reach them through nginx |
+| `/health` 200 but `/api/...` 502, nginx log `go-services could not be resolved (Host not found)` | **no Connection** nginx→go-services; plain name doesn't resolve | Create connection + map to `GO_SERVICES_HOST` (§4) |
+| go-services up but risk/qasm fail | no connections go-services→python/rust; `PYTHON_BASE_URL`/`RUST_BASE_URL`/`QASM_BASE_URL` point at non-resolving names | Create connections (§4) and redeploy go-services |
+| go-services `password authentication failed ... (continuing without DB)` | wrong/missing `DATABASE_URL` | Set a correct `DATABASE_URL` or DB connection (§4); non-fatal otherwise |
+| Only nginx has a public URL / `choreo describe` works only for nginx | go/python/rust are `Project` visibility | Expected — reach them through nginx; use `choreo logs` to inspect them |
 | Push didn't redeploy a component | Auto Deploy disabled for it | Enable Auto Deploy (§5) or Build → Deploy manually |
-| `curl` returns empty / `HTTP 000` on a path while TLS connects | nginx pod down / mid-redeploy | Wait for pod Ready; check Deploy → Runtime logs |
+| `curl` returns empty / `HTTP 000` on a path while TLS connects | nginx pod down / mid-redeploy | Wait for pod Ready; check `choreo logs` |
+| prod URL returns `401 Invalid Credentials` | managed prod API needs a key | `choreo create test-key ...` or subscribe; dev URL needs no key |
 
 ---
 
