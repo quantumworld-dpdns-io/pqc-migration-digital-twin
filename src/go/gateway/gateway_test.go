@@ -227,6 +227,10 @@ func TestGatewayProxiesDownstreamServices(t *testing.T) {
 			return
 		}
 		if r.URL.Path == "/assets" {
+			if r.Method == http.MethodPost {
+				writeJSON(w, http.StatusOK, map[string]any{"created": false, "asset": map[string]any{"fingerprint": "fp-1"}})
+				return
+			}
 			writeJSON(w, http.StatusOK, map[string]any{"count": 1, "assets": []map[string]any{{"asset_id": "a"}}})
 			return
 		}
@@ -241,6 +245,10 @@ func TestGatewayProxiesDownstreamServices(t *testing.T) {
 		}
 		if r.URL.Path == "/hndl/backlog" {
 			writeJSON(w, http.StatusOK, map[string]any{"policy": "balanced", "backlog": []map[string]any{{"asset_id": "a", "rank": 1}}})
+			return
+		}
+		if r.URL.Path == "/qasm/run" {
+			writeJSON(w, http.StatusOK, map[string]any{"status": "validated", "manifest_hash": "hash-1"})
 			return
 		}
 		t.Fatalf("unexpected python path: %s", r.URL.Path)
@@ -278,10 +286,12 @@ func TestGatewayProxiesDownstreamServices(t *testing.T) {
 	}{
 		{path: "/api/v1/discovery", method: http.MethodPost, body: map[string]any{"address": "example.com", "port": 443}, expectKey: "service", expectVal: "go-discovery"},
 		{path: "/api/v1/assets", method: http.MethodGet, body: nil, expectKey: "count", expectVal: float64(1)},
+		{path: "/api/v1/assets", method: http.MethodPost, body: map[string]any{"target": "host", "protocol": "tls", "severity": "high", "summary": "legacy"}, expectKey: "created", expectVal: false},
 		{path: "/api/v1/risk", method: http.MethodPost, body: map[string]any{"total_assets": 100, "quantum_vulnerable_assets": 20}, expectKey: "service", expectVal: "python-analysis"},
 		{path: "/api/v1/risk/backlog", method: http.MethodPost, body: map[string]any{"policy": "balanced"}, expectKey: "policy", expectVal: "balanced"},
 		{path: "/api/v1/proof", method: http.MethodPost, body: map[string]any{"credit_score": 700}, expectKey: "service", expectVal: "rust-risk"},
 		{path: "/api/v1/qasm", method: http.MethodPost, body: map[string]any{}, expectKey: "service", expectVal: "qasm-examples"},
+		{path: "/api/v1/qasm/run", method: http.MethodPost, body: map[string]any{"name": "bell_pair.qasm", "shots": 128}, expectKey: "status", expectVal: "validated"},
 		{path: "/api/v1/governance/verifier-drift", method: http.MethodGet, body: nil, expectKey: "drift", expectVal: false},
 	}
 
@@ -353,11 +363,12 @@ func TestServiceEndpointsMethodNotAllowed(t *testing.T) {
 		method string
 	}{
 		{path: "/api/v1/discovery", method: http.MethodGet},
-		{path: "/api/v1/assets", method: http.MethodPost},
+		{path: "/api/v1/assets", method: http.MethodPut},
 		{path: "/api/v1/risk", method: http.MethodGet},
 		{path: "/api/v1/risk/backlog", method: http.MethodGet},
 		{path: "/api/v1/proof", method: http.MethodGet},
 		{path: "/api/v1/qasm", method: http.MethodGet},
+		{path: "/api/v1/qasm/run", method: http.MethodGet},
 		{path: "/api/v1/governance/verifier-drift", method: http.MethodPost},
 	}
 	mux := NewMux()
@@ -370,6 +381,25 @@ func TestServiceEndpointsMethodNotAllowed(t *testing.T) {
 				t.Fatalf("expected status %d, got %d", http.StatusMethodNotAllowed, rr.Code)
 			}
 		})
+	}
+}
+
+func TestQasmRunRejectsUnsafeNamesAndShots(t *testing.T) {
+	mux := NewMux()
+	cases := []string{
+		`{"name":"../bell_pair.qasm","shots":100}`,
+		`{"name":"bell_pair","shots":100}`,
+		`{"name":"bell pair.qasm","shots":100}`,
+		`{"name":"bell_pair.qasm","shots":0}`,
+		`{"name":"bell_pair.qasm","shots":1000001}`,
+	}
+	for _, body := range cases {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/qasm/run", strings.NewReader(body))
+		res := httptest.NewRecorder()
+		mux.ServeHTTP(res, req)
+		if res.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 for %s, got %d: %s", body, res.Code, res.Body.String())
+		}
 	}
 }
 

@@ -3,13 +3,18 @@
 import React, { useEffect, useState } from 'react';
 import { Panel } from '../../components/Panel';
 import { PageHeader } from '../../components/PageHeader';
-import { getQasm, generateProof, listQasmExamples, QasmResponse, ProofResponse, QasmExample } from '../../lib/api';
-import DigitalTwinScene from '../../components/three/DigitalTwinScene';
+import {
+  getQasm, runQasm, generateProof, listQasmExamples, QasmSourceResponse,
+  QasmRunResponse, ProofResponse, QasmExample,
+} from '../../lib/api';
+import PlaygroundScene from '../../components/three/PlaygroundScene';
 
 export default function PlaygroundPage() {
   const [qasmName, setQasmName] = useState('bell_pair.qasm');
   const [qasmExamples, setQasmExamples] = useState<QasmExample[]>([]);
-  const [qasmResult, setQasmResult] = useState<QasmResponse | null>(null);
+  const [qasmResult, setQasmResult] = useState<QasmSourceResponse | null>(null);
+  const [runResult, setRunResult] = useState<QasmRunResponse | null>(null);
+  const [shots, setShots] = useState(1024);
   const [proofInputs, setProofInputs] = useState({
     credit_score: 750,
     debt_to_income_bps: 2000,
@@ -17,7 +22,8 @@ export default function PlaygroundPage() {
     existing_loans: 1,
   });
   const [proofResult, setProofResult] = useState<ProofResponse | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<'source' | 'run' | 'proof' | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -33,26 +39,40 @@ export default function PlaygroundPage() {
   }, []);
 
   const handleFetchQasm = async () => {
-    setLoading(true);
+    setLoading('source');
+    setError('');
     try {
       const resp = await getQasm({ name: qasmName });
       setQasmResult(resp);
-    } catch {
-      alert('Failed to fetch QASM');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to fetch QASM');
     } finally {
-      setLoading(false);
+      setLoading(null);
+    }
+  };
+
+  const handleRunQasm = async () => {
+    setLoading('run');
+    setError('');
+    try {
+      setRunResult(await runQasm({ name: qasmName, workflow_name: 'playground-run', backend: 'simulator', shots }));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to run QASM');
+    } finally {
+      setLoading(null);
     }
   };
 
   const handleGenProof = async () => {
-    setLoading(true);
+    setLoading('proof');
+    setError('');
     try {
       const resp = await generateProof(proofInputs);
       setProofResult(resp);
-    } catch {
-      alert('Failed to generate proof');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Failed to generate proof');
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
@@ -63,7 +83,6 @@ export default function PlaygroundPage() {
         title="Quantum playground"
         description="Invoke QASM examples and proof pathways against the gateway — intended for demos and integration smoke tests."
       />
-      <DigitalTwinScene assets={[]} className="min-h-[980px] lg:min-h-[720px]">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Panel title="QASM explorer" subtitle="Inspect quantum circuit payloads returned by the service" accent="emerald">
           <div className="space-y-4">
@@ -81,21 +100,14 @@ export default function PlaygroundPage() {
               <button
                 type="button"
                 onClick={handleFetchQasm}
-                disabled={loading}
+                disabled={loading !== null}
                 className="btn-primary btn-emerald shrink-0 px-6 py-2.5 sm:w-auto"
               >
-                Fetch
+                {loading === 'source' ? 'Fetching…' : 'Fetch source'}
               </button>
             </div>
-            {qasmResult ? (
-              <pre className="max-h-72 overflow-auto rounded-xl border border-emerald-500/15 bg-black/40 p-4 font-mono text-[11px] leading-relaxed text-emerald-400/95">
-                {JSON.stringify(qasmResult, null, 2)}
-              </pre>
-            ) : (
-              <p className="rounded-xl border border-dashed border-white/[0.07] bg-black/15 px-4 py-8 text-center text-sm text-zinc-600">
-                Run a fetch to render circuit JSON here.
-              </p>
-            )}
+            <div className="grid grid-cols-[1fr_auto] gap-3"><div><label className="field-label" htmlFor="qasm-shots">Shots</label><input id="qasm-shots" type="number" min={1} max={1000000} value={shots} onChange={event => setShots(Math.max(1, Number(event.target.value) || 1))} className="input-cyber font-mono" /></div><button type="button" onClick={handleRunQasm} disabled={loading !== null} className="btn-primary self-end bg-amber-600 px-5 py-2.5 text-white disabled:opacity-50">{loading === 'run' ? 'Running…' : 'Validate run'}</button></div>
+            <p className="text-xs leading-relaxed text-zinc-500">Source and execution output materialize as native WebGL text and geometry in the result canvas below.</p>
           </div>
         </Panel>
 
@@ -122,37 +134,26 @@ export default function PlaygroundPage() {
             <button
               type="button"
               onClick={handleGenProof}
-              disabled={loading}
+              disabled={loading !== null}
               className="btn-primary w-full bg-gradient-to-b from-indigo-500 to-indigo-700 py-3 font-semibold text-white shadow-lg shadow-indigo-950/40"
             >
-              Generate proof
+              {loading === 'proof' ? 'Generating…' : 'Generate proof'}
             </button>
-            {proofResult ? (
-              <div className="space-y-4 rounded-xl border border-indigo-500/20 bg-indigo-950/20 p-5">
-                <div className="flex flex-col gap-1 border-b border-white/[0.06] pb-4 sm:flex-row sm:items-start sm:justify-between">
-                  <span className="text-xs font-medium uppercase tracking-wider text-zinc-500">Statement</span>
-                  <span className="font-mono text-sm text-zinc-100">{proofResult.statement}</span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-xs text-zinc-500">Score band</span>
-                  <span className="rounded-lg bg-indigo-500/20 px-3 py-1 font-mono text-xs font-semibold text-indigo-200">
-                    {proofResult.score_band}
-                  </span>
-                </div>
-                <div>
-                  <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
-                    Proof hash
-                  </p>
-                  <p className="break-all font-mono text-[11px] leading-relaxed text-emerald-400/95">
-                    {proofResult.proof_hash}
-                  </p>
-                </div>
-              </div>
-            ) : null}
+            <p className="text-xs leading-relaxed text-zinc-500">The scene includes statement, numeric score, score band, and proof hash.</p>
           </div>
         </Panel>
       </div>
-      </DigitalTwinScene>
+      {error ? <p role="alert" className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-300">{error}</p> : null}
+      <section aria-labelledby="playground-result-heading" className="space-y-4"><div><p className="kicker">WebGL output</p><h2 id="playground-result-heading" className="text-2xl font-semibold">Result canvas</h2></div><PlaygroundScene qasm={qasmResult} proof={proofResult} run={runResult} /></section>
+      <details className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-sm text-zinc-400">
+        <summary className="cursor-pointer font-medium text-zinc-200">Accessible result transcript</summary>
+        <div className="mt-4 space-y-4" aria-live="polite">
+          {qasmResult ? <section><h3 className="font-semibold text-emerald-400">{qasmResult.name}</h3><pre className="mt-2 whitespace-pre-wrap break-words font-mono text-xs">{qasmResult.source}</pre></section> : null}
+          {proofResult ? <section><h3 className="font-semibold text-indigo-300">Proof</h3><p>{proofResult.statement} · score {proofResult.score_value} · {proofResult.score_band}</p><p className="break-all font-mono text-xs">{proofResult.proof_hash}</p></section> : null}
+          {runResult ? <section><h3 className="font-semibold text-amber-300">QASM run</h3><p>{runResult.workflow_name} · {runResult.status} · {runResult.shots} shots · {runResult.line_count} lines</p><p className="break-all font-mono text-xs">{runResult.manifest_hash}</p></section> : null}
+          {!qasmResult && !proofResult && !runResult ? <p>No results yet.</p> : null}
+        </div>
+      </details>
     </div>
   );
 }

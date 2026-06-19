@@ -80,6 +80,61 @@ func TestScanRejectsInvalidPort(t *testing.T) {
 	}
 }
 
+func TestAssetsCreateAndDeduplicate(t *testing.T) {
+	store := discovery.NewAssetStore()
+	mux := newMux(store)
+	body := `{"target":" payments.example.com ","protocol":" TLS ","severity":"HIGH","summary":" Legacy RSA certificate "}`
+
+	first := httptest.NewRecorder()
+	mux.ServeHTTP(first, httptest.NewRequest(http.MethodPost, "/assets", strings.NewReader(body)))
+	if first.Code != http.StatusCreated {
+		t.Fatalf("expected first create status 201, got %d: %s", first.Code, first.Body.String())
+	}
+	var created struct {
+		Asset   discovery.AssetRecord `json:"asset"`
+		Created bool                  `json:"created"`
+	}
+	if err := json.Unmarshal(first.Body.Bytes(), &created); err != nil {
+		t.Fatalf("decode create response: %v", err)
+	}
+	if !created.Created || created.Asset.Target != "payments.example.com" || created.Asset.Protocol != "tls" || created.Asset.Severity != "high" {
+		t.Fatalf("unexpected normalized asset: %+v", created)
+	}
+
+	second := httptest.NewRecorder()
+	mux.ServeHTTP(second, httptest.NewRequest(http.MethodPost, "/assets", strings.NewReader(body)))
+	if second.Code != http.StatusOK {
+		t.Fatalf("expected duplicate status 200, got %d: %s", second.Code, second.Body.String())
+	}
+	var updated struct {
+		Asset   discovery.AssetRecord `json:"asset"`
+		Created bool                  `json:"created"`
+	}
+	if err := json.Unmarshal(second.Body.Bytes(), &updated); err != nil {
+		t.Fatalf("decode duplicate response: %v", err)
+	}
+	if updated.Created || updated.Asset.Fingerprint != created.Asset.Fingerprint || updated.Asset.SeenCount != 2 || store.Count() != 1 {
+		t.Fatalf("expected one upserted asset with seen_count=2, got %+v count=%d", updated, store.Count())
+	}
+}
+
+func TestAssetsCreateValidation(t *testing.T) {
+	mux := newMux(discovery.NewAssetStore())
+	cases := []string{
+		`{"target":"","protocol":"tls","severity":"high","summary":"x"}`,
+		`{"target":"host","protocol":"tls","severity":"unknown","summary":"x"}`,
+		`{"target":"host","protocol":"tls","severity":"high","summary":""}`,
+		`{"target":`,
+	}
+	for _, body := range cases {
+		res := httptest.NewRecorder()
+		mux.ServeHTTP(res, httptest.NewRequest(http.MethodPost, "/assets", strings.NewReader(body)))
+		if res.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400 for %q, got %d", body, res.Code)
+		}
+	}
+}
+
 func TestScanRejectsMalformedPayloadBurst(t *testing.T) {
 	store := discovery.NewAssetStore()
 	mux := newMux(store)

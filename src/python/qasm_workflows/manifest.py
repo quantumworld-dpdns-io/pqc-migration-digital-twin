@@ -11,6 +11,7 @@ from dataclasses import asdict, dataclass
 class QasmManifest:
     workflow_name: str
     qasm_path: str
+    backend: str = "simulator"
     shots: int = 1024
 
     def canonical_json(self) -> str:

@@ -7,16 +7,29 @@ import (
 
 // Target describes a discovery target endpoint for protocol scanners.
 type Target struct {
-	Address string
-	Port    int
+	Address string `json:"address"`
+	Port    int    `json:"port"`
 }
 
 // Finding is a normalized, protocol-agnostic discovery result.
 type Finding struct {
-	Protocol string
-	Target   string
-	Severity string
-	Summary  string
+	Protocol string `json:"protocol"`
+	Target   string `json:"target"`
+	Severity string `json:"severity"`
+	Summary  string `json:"summary"`
+}
+
+func NormalizeFinding(proto, target, severity, summary string) Finding {
+	return normalizeFinding(proto, Target{Address: target}, severity, summary)
+}
+
+func ValidSeverity(value string) bool {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "critical", "high", "medium", "low", "info":
+		return true
+	default:
+		return false
+	}
 }
 
 // Scanner defines a protocol-specific discovery connector contract.

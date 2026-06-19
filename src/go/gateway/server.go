@@ -229,6 +229,7 @@ func NewMux() http.Handler {
 	mux.HandleFunc("/api/v1/risk/backlog", withServiceMiddleware(withAudit("/api/v1/risk/backlog", audit, backlogHandler(client, cfg)), metrics))
 	mux.HandleFunc("/api/v1/proof", withServiceMiddleware(withAudit("/api/v1/proof", audit, proofHandler(client, cfg)), metrics))
 	mux.HandleFunc("/api/v1/qasm", withServiceMiddleware(withAudit("/api/v1/qasm", audit, qasmHandler(client, cfg)), metrics))
+	mux.HandleFunc("/api/v1/qasm/run", withServiceMiddleware(withAudit("/api/v1/qasm/run", audit, qasmRunHandler(client, cfg)), metrics))
 	mux.HandleFunc("/api/v1/governance/exceptions", withServiceMiddleware(withAudit("/api/v1/governance/exceptions", audit, governanceExceptionsHandler(exceptions)), metrics))
 	mux.HandleFunc("/api/v1/governance/verifier-drift", withServiceMiddleware(withAudit("/api/v1/governance/verifier-drift", audit, verifierDriftHandler()), metrics))
 	mux.HandleFunc("/api/v1/audit/events", withServiceMiddleware(auditEventsHandler(audit), metrics))
@@ -359,6 +360,15 @@ func discoveryHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 
 func assetsHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			payload, code, err := doPOSTJSON(client, cfg.discoveryURL+"/assets", readJSONBody(r), requestIDFromContext(r.Context()))
+			if err != nil {
+				writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "assets"})
+				return
+			}
+			writeJSON(w, code, payload)
+			return
+		}
 		if r.Method != http.MethodGet {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -473,6 +483,52 @@ func qasmHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
 		}
 		writeJSON(w, code, payload)
 	}
+}
+
+func qasmRunHandler(client *http.Client, cfg serviceConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		in := readJSONBody(r)
+		name := asString(in["name"], "")
+		if !validQasmName(name) {
+			http.Error(w, "name must be a safe .qasm filename", http.StatusBadRequest)
+			return
+		}
+		shots := asInt(in["shots"], 1024)
+		if shots <= 0 || shots > 1_000_000 {
+			http.Error(w, "shots must be between 1 and 1000000", http.StatusBadRequest)
+			return
+		}
+		out := map[string]any{
+			"name":          name,
+			"workflow_name": asString(in["workflow_name"], "default-workflow"),
+			"backend":       asString(in["backend"], "simulator"),
+			"shots":         shots,
+		}
+		payload, code, err := doPOSTJSON(client, cfg.pythonURL+"/qasm/run", out, requestIDFromContext(r.Context()))
+		if err != nil {
+			writeJSON(w, http.StatusBadGateway, map[string]any{"error": err.Error(), "service": "qasm-run"})
+			return
+		}
+		writeJSON(w, code, payload)
+	}
+}
+
+func validQasmName(name string) bool {
+	name = strings.TrimSpace(name)
+	if name == "" || !strings.HasSuffix(strings.ToLower(name), ".qasm") || strings.ContainsAny(name, "/\\") {
+		return false
+	}
+	for _, char := range name {
+		if (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9') || char == '-' || char == '_' || char == '.' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func governanceExceptionsHandler(store *exceptionStore) http.HandlerFunc {

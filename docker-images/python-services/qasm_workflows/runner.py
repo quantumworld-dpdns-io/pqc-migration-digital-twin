@@ -24,6 +24,7 @@ def run_manifest(manifest: QasmManifest) -> dict[str, str | int]:
     return {
         "workflow_name": manifest.workflow_name,
         "qasm_path": str(qasm_file),
+        "backend": manifest.backend,
         "shots": manifest.shots,
         "line_count": len(qasm_text.splitlines()),
         "manifest_hash": manifest.hash(),

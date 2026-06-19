@@ -119,24 +119,38 @@ export type DiscoveryResponse = {
 export type QasmExample = { name: string; sha256?: string; bytes?: number };
 export type QasmExamplesResponse = { examples: QasmExample[] };
 
+export type PolicyName = 'strict' | 'balanced' | 'lenient';
+
 export type RiskRequest = { 
   total_assets?: number; 
   quantum_vulnerable_assets?: number;
-  policy?: string;
+  policy?: PolicyName;
 };
 export type RiskResponse = { 
   policy: string;
   exposure_ratio: number;
   score: number;
-  risk_score: number; // Added for backward compatibility if used
-  risk_level: string; // Added for backward compatibility if used
 };
 
-export type BacklogRow = Record<string, unknown>;
-export type BacklogRequest = { policy: string; asset_rows: BacklogRow[] };
-export type BacklogResponse = { 
-  policy: string;
-  backlog: Record<string, unknown>[];
+export type BacklogRow = {
+  asset_id: string;
+  total_assets: number;
+  quantum_vulnerable_assets: number;
+};
+export type BacklogResult = BacklogRow & {
+  policy: PolicyName;
+  exposure_ratio: number;
+  score: number;
+  rank: number;
+  rationale_over_threshold: boolean;
+  rationale_threshold_gap: number;
+  rationale_risk_band: 'critical' | 'high' | 'medium' | 'low';
+  rationale_summary: string;
+};
+export type BacklogRequest = { policy: PolicyName; asset_rows: BacklogRow[] };
+export type BacklogResponse = {
+  policy: PolicyName;
+  backlog: BacklogResult[];
 };
 
 export type ProofRequest = {
@@ -153,13 +167,36 @@ export type ProofResponse = {
   proof_hash: string;
 };
 
-export type QasmRequest = { name?: string };
-export type QasmResponse = Record<string, unknown>;
+export type QasmRequest = { name: string };
+export type QasmSourceResponse = { name: string; source: string };
+export type QasmRunRequest = {
+  name: string;
+  workflow_name?: string;
+  backend?: string;
+  shots?: number;
+};
+export type QasmRunResponse = {
+  workflow_name: string;
+  qasm_path: string;
+  backend: string;
+  shots: number;
+  line_count: number;
+  manifest_hash: string;
+  status: 'validated';
+};
 
 export type AssetListResponse = {
   count: number;
   assets: Asset[];
 };
+
+export type AssetCreateRequest = {
+  target: string;
+  protocol: string;
+  severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  summary: string;
+};
+export type AssetCreateResponse = { asset: Asset; created: boolean };
 
 export type GovernanceException = {
   exception_id: string;
@@ -205,6 +242,11 @@ export const getAssets = async (signal?: AbortSignal): Promise<AssetListResponse
   return { count: raw.count ?? assets.length, assets };
 };
 
+export const createAsset = async (req: AssetCreateRequest, signal?: AbortSignal): Promise<AssetCreateResponse> => {
+  const raw = await request<{ asset: RawAsset; created: boolean }>('POST', '/api/v1/assets', req, signal);
+  return { asset: normalizeAsset(raw.asset), created: raw.created };
+};
+
 export const runDiscovery = async (
   req: DiscoveryRequest, signal?: AbortSignal,
 ): Promise<DiscoveryResponse> => {
@@ -226,8 +268,11 @@ export const getRiskBacklog = (req: BacklogRequest, signal?: AbortSignal) =>
 export const generateProof = (req: ProofRequest, signal?: AbortSignal) =>
   request<ProofResponse>('POST', '/api/v1/proof', req, signal);
 
-export const getQasm = (req: QasmRequest = {}, signal?: AbortSignal) =>
-  request<QasmResponse>('POST', '/api/v1/qasm', req, signal);
+export const getQasm = (req: QasmRequest, signal?: AbortSignal) =>
+  request<QasmSourceResponse>('POST', '/api/v1/qasm', req, signal);
+
+export const runQasm = (req: QasmRunRequest, signal?: AbortSignal) =>
+  request<QasmRunResponse>('POST', '/api/v1/qasm/run', req, signal);
 
 export const getGovernanceExceptions = (signal?: AbortSignal) =>
   request<{ exceptions: GovernanceException[] }>('GET', '/api/v1/governance/exceptions', undefined, signal);

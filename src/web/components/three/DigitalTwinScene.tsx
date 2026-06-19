@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo, type ReactNode } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars, Float, Text, MeshDistortMaterial, ContactShadows, PresentationControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -67,11 +67,10 @@ function Connection({ start, end, color }: { start: [number, number, number], en
 
 type DigitalTwinSceneProps = {
   assets: Asset[];
-  children?: ReactNode;
   className?: string;
 };
 
-export default function DigitalTwinScene({ assets, children, className = 'h-[500px]' }: DigitalTwinSceneProps) {
+export default function DigitalTwinScene({ assets, className = 'h-[500px]' }: DigitalTwinSceneProps) {
   const nodes = useMemo(() => {
     return assets.map((asset, i) => {
       const angle = (i / assets.length) * Math.PI * 2;
@@ -124,11 +123,6 @@ export default function DigitalTwinScene({ assets, children, className = 'h-[500
         <Stars radius={100} depth={50} count={7000} factor={4} saturation={0} fade speed={1} />
         <OrbitControls enablePan={false} maxDistance={22} minDistance={8} makeDefault />
       </Canvas>
-      {children ? (
-        <div className="pointer-events-none absolute inset-0 z-20 overflow-y-auto px-4 pb-5 pt-16 sm:px-6 lg:px-8">
-          <div className="pointer-events-auto mx-auto max-w-6xl">{children}</div>
-        </div>
-      ) : null}
     </div>
   );
 }

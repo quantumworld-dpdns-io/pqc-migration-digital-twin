@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 import logging
 import threading
 import time
@@ -167,9 +169,22 @@ class Handler(BaseHTTPRequestHandler):
 
     def _handle_qasm(self, payload: dict) -> None:
         try:
+            name = str(payload.get("name", "")).strip()
+            if name:
+                if Path(name).name != name or Path(name).suffix.lower() != ".qasm":
+                    raise ValueError("name must be a safe .qasm filename")
+                configured_dir = os.environ.get("QASM_EXAMPLES_DIR", "").strip()
+                if configured_dir:
+                    examples_dir = Path(configured_dir)
+                else:
+                    candidates = (Path("src/qasm/examples"), Path("qasm_examples"))
+                    examples_dir = next((candidate for candidate in candidates if candidate.is_dir()), candidates[0])
+                qasm_path = examples_dir / name
+            else:
+                qasm_path = Path(str(payload.get("qasm_path", "src/qasm/examples/bell_pair.qasm")))
             manifest = QasmManifest(
                 workflow_name=str(payload.get("workflow_name", "default-workflow")),
-                qasm_path=str(payload.get("qasm_path", "src/qasm/examples/bell_pair.qasm")),
+                qasm_path=str(qasm_path),
                 backend=str(payload.get("backend", "simulator")),
                 shots=int(payload.get("shots", 1024)),
             )

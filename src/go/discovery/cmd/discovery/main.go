@@ -130,6 +130,13 @@ type scanRequest struct {
 	Port    int    `json:"port"`
 }
 
+type assetCreateRequest struct {
+	Target   string `json:"target"`
+	Protocol string `json:"protocol"`
+	Severity string `json:"severity"`
+	Summary  string `json:"summary"`
+}
+
 func main() {
 	store := discovery.NewAssetStore()
 	mux := newMux(store)
@@ -200,6 +207,38 @@ func newMux(store *discovery.AssetStore) *http.ServeMux {
 		})
 	}, metrics))
 	mux.HandleFunc("/assets", withServiceMiddleware(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			var input assetCreateRequest
+			decoder := json.NewDecoder(io.LimitReader(r.Body, 64<<10))
+			if err := decoder.Decode(&input); err != nil {
+				http.Error(w, "invalid json", http.StatusBadRequest)
+				return
+			}
+			input.Target = strings.TrimSpace(input.Target)
+			input.Protocol = strings.TrimSpace(input.Protocol)
+			input.Severity = strings.TrimSpace(input.Severity)
+			input.Summary = strings.TrimSpace(input.Summary)
+			if input.Target == "" || input.Protocol == "" || input.Summary == "" {
+				http.Error(w, "target, protocol, and summary are required", http.StatusBadRequest)
+				return
+			}
+			if len(input.Target) > 512 || len(input.Protocol) > 64 || len(input.Summary) > 2048 {
+				http.Error(w, "asset field exceeds maximum length", http.StatusBadRequest)
+				return
+			}
+			if !discovery.ValidSeverity(input.Severity) {
+				http.Error(w, "severity must be one of critical, high, medium, low, or info", http.StatusBadRequest)
+				return
+			}
+			finding := discovery.NormalizeFinding(input.Protocol, input.Target, input.Severity, input.Summary)
+			record, created := store.UpsertFinding(finding, time.Now().UTC())
+			status := http.StatusOK
+			if created {
+				status = http.StatusCreated
+			}
+			writeJSON(w, status, map[string]any{"asset": record, "created": created})
+			return
+		}
 		if r.Method != http.MethodGet {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return

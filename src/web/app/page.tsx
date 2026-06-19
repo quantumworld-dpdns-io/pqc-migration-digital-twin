@@ -5,7 +5,10 @@ import { Panel } from '../components/Panel';
 import { ProofPanel } from '../components/ProofPanel';
 import { RiskMatrix } from '../components/RiskMatrix';
 import { StatCard } from '../components/StatCard';
-import { getAssets, getRiskScore, Asset, assetSystem, assetAlgorithm, assetStatus, assetVulnerable } from '../lib/api';
+import {
+  getAssets, getRiskScore, getGovernanceExceptions, getVerifierDrift, Asset,
+  assetSystem, assetAlgorithm, assetStatus, assetVulnerable,
+} from '../lib/api';
 import type { GovernanceException, HeatmapCell, InventoryItem, RiskItem, VerifierDrift } from '../lib/types';
 import { PageHeader } from '../components/PageHeader';
 import { ShieldAlert, Globe, Server, CheckCircle2 } from 'lucide-react';
@@ -77,17 +80,20 @@ async function fetchOrFallback<T>(fetcher: () => Promise<T>, fallback: T): Promi
 }
 
 export default async function DashboardPage() {
-  const [assetsResult, riskResult] = await Promise.all([
-    fetchOrFallback(getAssets, { count: 0, assets: [] }),
-    fetchOrFallback(
-      () => getRiskScore({ total_assets: 100, quantum_vulnerable_assets: 40 }),
-      null,
-    ),
-  ]);
+  const assetsResult = await fetchOrFallback(getAssets, { count: 0, assets: [] });
   const assetsResponse = assetsResult.data;
   const assets = assetsResponse.assets.length > 0 ? assetsResponse.assets : fallbackAssets;
+  const vulnerableCount = assets.filter(assetVulnerable).length;
+  const [riskResult, exceptionsResult, driftResult] = await Promise.all([
+    fetchOrFallback(
+      () => getRiskScore({ total_assets: assets.length, quantum_vulnerable_assets: vulnerableCount, policy: 'balanced' }),
+      null,
+    ),
+    fetchOrFallback(getGovernanceExceptions, { exceptions: [] }),
+    fetchOrFallback(getVerifierDrift, null),
+  ]);
   const risk = riskResult.data;
-  const isLiveMode = assetsResult.isLive || riskResult.isLive;
+  const isLiveMode = assetsResult.isLive || riskResult.isLive || exceptionsResult.isLive || driftResult.isLive;
 
   const inventory: InventoryItem[] = assetsResponse.assets.length > 0
     ? assetsResponse.assets.map(a => ({
@@ -105,9 +111,21 @@ export default async function DashboardPage() {
       ]
     : fallbackRisks;
 
-  const vulnerableCount = assets.filter(assetVulnerable).length;
   const vulnPct =
     assets.length > 0 ? Math.min(100, Math.round((vulnerableCount / assets.length) * 100)) : 0;
+  const dashboardExceptions: GovernanceException[] = exceptionsResult.isLive
+    ? exceptionsResult.data.exceptions.map(item => ({
+        id: item.exception_id,
+        control: `Asset: ${item.asset_id}`,
+        owner: item.owner,
+        status: item.status === 'open' ? 'Open' : 'Closed',
+        expiry: item.expires_at ?? 'Never',
+      }))
+    : governanceExceptions;
+  const dashboardDrift: VerifierDrift[] = driftResult.data
+    ? [{ verifier: 'Main Verifier', currentVersion: driftResult.data.current_verifier_version, latestVersion: driftResult.data.latest_verifier_version }]
+    : verifierDrift;
+  const verifierHealthy = driftResult.data ? !driftResult.data.drift : dashboardDrift.every(item => item.currentVersion === item.latestVersion);
 
   return (
     <div className="dashboard space-y-12">
@@ -140,19 +158,19 @@ export default async function DashboardPage() {
           color="rose"
         />
         <StatCard label="Network Reach" value="Subnet A/B" subValue="Discovered" icon={Globe} color="amber" />
-        <StatCard label="Verifier Status" value="Healthy" icon={CheckCircle2} color="emerald" />
+        <StatCard label="Verifier Status" value={verifierHealthy ? 'Healthy' : 'Update required'} icon={CheckCircle2} color={verifierHealthy ? 'emerald' : 'amber'} />
       </div>
 
-      <div className="layout-grid">
-        {/* Main Centerpiece: 3D Twin */}
-        <div className="col-span-full xl:col-span-8">
+      <div className="space-y-6">
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(20rem,1fr)]">
+        <div className="min-w-0">
           <Panel title="Real-time Network Twin" subtitle="Live 3D spatial representation of discovered entities and security posture" accent="indigo">
             <DigitalTwinScene assets={assets} />
           </Panel>
         </div>
 
         {/* Sidebar Analysis */}
-        <div className="col-span-full xl:col-span-4 flex flex-col gap-8">
+        <div className="flex min-w-0 flex-col gap-6">
           <Panel title="Risk Analysis" subtitle="HNDL signal intensity and exposure matrix" accent="rose">
             <div className="space-y-8">
               <HndlHeatmap cells={fallbackHeatmap} />
@@ -162,20 +180,21 @@ export default async function DashboardPage() {
             </div>
           </Panel>
           
-          <Panel title="Compliance Overview" subtitle="Verifier drift and policy exceptions" accent="amber">
-            <GovernancePanel exceptions={governanceExceptions} drift={verifierDrift} />
+          <Panel title="Compliance Overview" subtitle={`Verifier drift and policy exceptions · ${exceptionsResult.isLive && driftResult.isLive ? 'live' : 'fallback'}`} accent="amber">
+            <GovernancePanel exceptions={dashboardExceptions} drift={dashboardDrift} variant="compact" />
           </Panel>
+        </div>
         </div>
 
         {/* Supporting Evidence */}
-        <div className="col-span-full">
+        <div>
           <Panel title="Evidence & Verification" subtitle="Cryptographic proofs and audit-ready verification lanes" accent="emerald">
             <ProofPanel />
           </Panel>
         </div>
 
         {/* Bottom Detail: Detailed Inventory */}
-        <div className="col-span-full">
+        <div>
           <Panel title="Cryptographic Inventory" subtitle={`${assets.length} unique systems identified in the current twin scope`} accent="indigo">
             <InventoryTable items={inventory} />
           </Panel>

@@ -74,13 +74,11 @@
                   ],
                   "properties": {
                     "target": {
-                      "type": "object"
+                      "$ref": "#/components/schemas/DiscoveryTarget"
                     },
                     "findings": {
                       "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
+                      "items": { "$ref": "#/components/schemas/Finding" }
                     }
                   }
                 }
@@ -109,7 +107,8 @@
                     "minimum": 0
                   },
                   "policy": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["strict", "balanced", "lenient"]
                   }
                 }
               }
@@ -234,11 +233,38 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/QasmExamplesResponse" },
+                    { "$ref": "#/components/schemas/QasmSourceResponse" }
+                  ]
                 }
               }
             }
           }
+        }
+      }
+    },
+    "/api/v1/qasm/run": {
+      "post": {
+        "summary": "Validate and run a named QASM example manifest",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/QasmRunRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validated QASM manifest",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/QasmRunResponse" }
+              }
+            }
+          },
+          "400": { "description": "Invalid filename, shots, or manifest" }
         }
       }
     },
@@ -260,17 +286,34 @@
                     "count": {
                       "type": "integer"
                     },
-                    "assets": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
-                    }
+                    "assets": { "type": "array", "items": { "$ref": "#/components/schemas/Asset" } }
                   }
                 }
               }
             }
           }
+        }
+      },
+      "post": {
+        "summary": "Create or upsert a manually supplied asset",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AssetCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Existing asset upserted",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AssetCreateResponse" } } }
+          },
+          "201": {
+            "description": "New asset created",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AssetCreateResponse" } } }
+          },
+          "400": { "description": "Invalid asset fields" }
         }
       }
     },
@@ -285,13 +328,12 @@
                 "type": "object",
                 "properties": {
                   "policy": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": ["strict", "balanced", "lenient"]
                   },
                   "asset_rows": {
                     "type": "array",
-                    "items": {
-                      "type": "object"
-                    }
+                    "items": { "$ref": "#/components/schemas/BacklogRow" }
                   }
                 }
               }
@@ -315,9 +357,7 @@
                     },
                     "backlog": {
                       "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
+                      "items": { "$ref": "#/components/schemas/BacklogResult" }
                     }
                   }
                 }
@@ -486,6 +526,126 @@
   },
   "components": {
     "schemas": {
+      "DiscoveryTarget": {
+        "type": "object",
+        "required": ["address", "port"],
+        "properties": {
+          "address": { "type": "string" },
+          "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+        }
+      },
+      "Finding": {
+        "type": "object",
+        "required": ["target", "protocol", "severity", "summary"],
+        "properties": {
+          "target": { "type": "string" },
+          "protocol": { "type": "string" },
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low", "info", "unknown"] },
+          "summary": { "type": "string" }
+        }
+      },
+      "BacklogRow": {
+        "type": "object",
+        "required": ["asset_id", "total_assets", "quantum_vulnerable_assets"],
+        "properties": {
+          "asset_id": { "type": "string", "minLength": 1 },
+          "total_assets": { "type": "number", "minimum": 0 },
+          "quantum_vulnerable_assets": { "type": "number", "minimum": 0 }
+        }
+      },
+      "BacklogResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/BacklogRow" },
+          {
+            "type": "object",
+            "required": ["policy", "exposure_ratio", "score", "rank", "rationale_over_threshold", "rationale_threshold_gap", "rationale_risk_band", "rationale_summary"],
+            "properties": {
+              "policy": { "type": "string", "enum": ["strict", "balanced", "lenient"] },
+              "exposure_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+              "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+              "rank": { "type": "integer", "minimum": 1 },
+              "rationale_over_threshold": { "type": "boolean" },
+              "rationale_threshold_gap": { "type": "number" },
+              "rationale_risk_band": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+              "rationale_summary": { "type": "string" }
+            }
+          }
+        ]
+      },
+      "QasmExample": {
+        "type": "object",
+        "required": ["name", "sha256", "bytes"],
+        "properties": {
+          "name": { "type": "string" },
+          "sha256": { "type": "string" },
+          "bytes": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "QasmExamplesResponse": {
+        "type": "object",
+        "required": ["examples"],
+        "properties": { "examples": { "type": "array", "items": { "$ref": "#/components/schemas/QasmExample" } } }
+      },
+      "QasmSourceResponse": {
+        "type": "object",
+        "required": ["name", "source"],
+        "properties": { "name": { "type": "string" }, "source": { "type": "string" } }
+      },
+      "Asset": {
+        "type": "object",
+        "required": ["fingerprint", "target", "protocol", "severity", "summary", "first_seen_at", "last_seen_at", "seen_count"],
+        "properties": {
+          "fingerprint": { "type": "string" },
+          "target": { "type": "string" },
+          "protocol": { "type": "string" },
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"] },
+          "summary": { "type": "string" },
+          "first_seen_at": { "type": "string", "format": "date-time" },
+          "last_seen_at": { "type": "string", "format": "date-time" },
+          "seen_count": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "AssetCreateRequest": {
+        "type": "object",
+        "required": ["target", "protocol", "severity", "summary"],
+        "properties": {
+          "target": { "type": "string", "maxLength": 512 },
+          "protocol": { "type": "string", "maxLength": 64 },
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"] },
+          "summary": { "type": "string", "maxLength": 2048 }
+        }
+      },
+      "AssetCreateResponse": {
+        "type": "object",
+        "required": ["asset", "created"],
+        "properties": {
+          "asset": { "$ref": "#/components/schemas/Asset" },
+          "created": { "type": "boolean" }
+        }
+      },
+      "QasmRunRequest": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+\\.qasm$" },
+          "workflow_name": { "type": "string" },
+          "backend": { "type": "string", "default": "simulator" },
+          "shots": { "type": "integer", "minimum": 1, "maximum": 1000000, "default": 1024 }
+        }
+      },
+      "QasmRunResponse": {
+        "type": "object",
+        "required": ["workflow_name", "qasm_path", "backend", "shots", "line_count", "manifest_hash", "status"],
+        "properties": {
+          "workflow_name": { "type": "string" },
+          "qasm_path": { "type": "string" },
+          "backend": { "type": "string" },
+          "shots": { "type": "integer" },
+          "line_count": { "type": "integer" },
+          "manifest_hash": { "type": "string" },
+          "status": { "type": "string", "enum": ["validated"] }
+        }
+      },
       "GovernanceExceptionCreateRequest": {
         "type": "object",
         "required": [
