@@ -36,10 +36,10 @@ probe() {
 
   start_ms=$(date +%s000)
   if [[ "$method" == "POST" && -n "$body" ]]; then
-    response=$(curl -sS -m 15 -w "\n__HTTP_CODE__:%{http_code}" -X POST "$url" \
+    response=$(curl -sS -m 15 -w "\n__CURL_META__\nhttp_code:%{http_code}\nconnect:%{time_connect}\ntotal:%{time_total}\n" -X POST "$url" \
       -H 'content-type: application/json' -d "$body" 2>&1) || curl_err=$?
   else
-    response=$(curl -sS -m 15 -w "\n__HTTP_CODE__:%{http_code}" "$url" 2>&1) || curl_err=$?
+    response=$(curl -sS -m 15 -w "\n__CURL_META__\nhttp_code:%{http_code}\nconnect:%{time_connect}\ntotal:%{time_total}\n" "$url" 2>&1) || curl_err=$?
   fi
   end_ms=$(date +%s000)
   elapsed_ms=$((end_ms - start_ms))
@@ -51,10 +51,14 @@ probe() {
     return
   fi
 
-  http_code="${response##*__HTTP_CODE__:}"
-  body_snip=$(printf '%s' "${response%__HTTP_CODE__:*}" | head -c 200 | tr '\n' ' ')
+  meta_block="${response##*__CURL_META__}"
+  body_part="${response%%__CURL_META__*}"
+  http_code=$(printf '%s' "$meta_block" | awk -F: '/^http_code:/{print $2}')
+  connect_s=$(printf '%s' "$meta_block" | awk -F: '/^connect:/{print $2}')
+  total_s=$(printf '%s' "$meta_block" | awk -F: '/^total:/{print $2}')
+  body_snip=$(printf '%s' "$body_part" | head -c 200 | tr '\n' ' ')
   log_event "$hypothesis_id" "choreo-diagnose.sh:probe" "probe result" \
-    "{\"path\":\"${path}\",\"method\":\"${method}\",\"httpCode\":${http_code},\"elapsedMs\":${elapsed_ms},\"bodySnippet\":\"${body_snip}\"}"
+    "{\"path\":\"${path}\",\"method\":\"${method}\",\"httpCode\":\"${http_code}\",\"elapsedMs\":${elapsed_ms},\"connectSec\":\"${connect_s}\",\"totalSec\":\"${total_s}\",\"bodySnippet\":\"${body_snip}\"}"
 
   if [[ "$http_code" =~ ^2 ]]; then
     echo "OK   ${method} ${path} — HTTP ${http_code} (${elapsed_ms}ms)"

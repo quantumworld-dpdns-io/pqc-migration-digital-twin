@@ -1,4 +1,5 @@
 # yaml-language-server: $schema=none
+# Choreo Component Directory MUST be: docker-images/nginx
 schemaVersion: "1.2"
 
 endpoints:
@@ -10,3 +11,16 @@ endpoints:
     type: REST
     networkVisibilities:
       - Public
+
+dependencies:
+  connectionReferences:
+    - name: go-gateway-connection
+      resourceRef: service:/pqc-migration-digital-twin/go-services/v1.0/gateway/PROJECT
+
+configurations:
+  env:
+    - name: GO_SERVICES_HOST
+      valueFrom:
+        connectionRef:
+          name: go-gateway-connection
+          key: ServiceURL
