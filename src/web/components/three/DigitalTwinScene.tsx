@@ -4,7 +4,7 @@ import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Stars, Float, Text, MeshDistortMaterial, ContactShadows, PresentationControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { Asset } from '../../lib/api';
+import { Asset, assetVulnerable, assetSystem } from '../../lib/api';
 
 type NodeProps = {
   position: [number, number, number];
@@ -47,7 +47,7 @@ function AssetNode({ position, color, label, isVulnerable }: NodeProps) {
         color="white"
         anchorX="center"
         anchorY="middle"
-        font="https://fonts.gstatic.com/s/jetbrainsmono/v13/t6nu21tuakQ1re6Vln9_C4O8uXmXySshs70.woff"
+        font="/fonts/JetBrainsMono-Regular.ttf"
       >
         {label}
       </Text>

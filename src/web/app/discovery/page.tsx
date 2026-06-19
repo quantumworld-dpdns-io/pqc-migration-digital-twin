@@ -104,20 +104,20 @@ export default function DiscoveryPage() {
                     {results.length} cryptographic entit{results.length === 1 ? 'y' : 'ies'} found
                   </p>
                   <ul className="space-y-2">
-                    {results.map(a => (
+                    {results.map((a, i) => (
                       <li
-                        key={`${a.address}:${a.port}:${a.id}`}
+                        key={a.fingerprint ?? `${a.target}:${a.protocol}:${i}`}
                         className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-3.5 transition-colors hover:border-emerald-500/25"
                       >
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-zinc-200">{a.address}</p>
+                          <p className="truncate font-medium text-zinc-200">{a.target}</p>
                           <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-zinc-600">
-                            Port {a.port}
-                            {a.protocol ? ` · ${a.protocol}` : ''}
+                            {a.protocol ? a.protocol.toUpperCase() : 'UNKNOWN'}
+                            {a.summary ? ` · ${a.summary}` : ''}
                           </p>
                         </div>
                         <span className="shrink-0 rounded-lg bg-emerald-500/10 px-2.5 py-1 font-mono text-[11px] text-emerald-400">
-                          {a.cipher_suite ?? '—'}
+                          {a.severity ?? '—'}
                         </span>
                       </li>
                     ))}
