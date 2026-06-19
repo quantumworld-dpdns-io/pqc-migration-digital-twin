@@ -22,7 +22,7 @@ services:
     expose:
       - "8080"
     environment:
-      GO_SERVICES_HOST: ${GO_SERVICES_HOST:-go-services}
+      GO_SERVICES_HOST: ${GO_SERVICES_HOST:-go-services:8080}
     depends_on:
       go-services:
         condition: service_healthy

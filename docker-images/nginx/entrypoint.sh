@@ -5,6 +5,13 @@ GO_SERVICES_HOST="${GO_SERVICES_HOST:-go-services:8080}"
 CORS_ALLOW_ORIGIN="${CORS_ALLOW_ORIGIN:-http://localhost:3000}"
 NGINX_ENV="${NGINX_ENV:-choreo}"
 
+# Choreo connectionRef ServiceURL is a full URL; nginx upstream needs host:port.
+case "$GO_SERVICES_HOST" in
+  http://*|https://*)
+    GO_SERVICES_HOST=$(printf '%s' "$GO_SERVICES_HOST" | sed -E 's|https?://([^/]+).*|\1|')
+    ;;
+esac
+
 case "$NGINX_ENV" in
   local|choreo) ;;
   *)
