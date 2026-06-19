@@ -1,6 +1,9 @@
 worker_processes auto;
-pid /var/run/nginx.pid;
-error_log /var/log/nginx/error.log warn;
+# Choreo runs the container with a read-only root filesystem, so every path
+# nginx writes to must live under the writable /tmp/nginx-runtime (or go to
+# stdout/stderr). Writing the pid to /var/run fails with "Read-only file system".
+pid /tmp/nginx-runtime/nginx.pid;
+error_log /dev/stderr warn;
 
 events {
     worker_connections 1024;
@@ -10,13 +13,14 @@ http {
     include      /etc/nginx/mime.types;
     default_type application/octet-stream;
 
-    client_body_temp_path /var/cache/nginx/client_temp;
-    proxy_temp_path       /var/cache/nginx/proxy_temp;
-    fastcgi_temp_path     /var/cache/nginx/fastcgi_temp;
-    uwsgi_temp_path       /var/cache/nginx/uwsgi_temp;
-    scgi_temp_path        /var/cache/nginx/scgi_temp;
+    # Temp paths under the writable runtime dir (read-only root filesystem).
+    client_body_temp_path /tmp/nginx-runtime/client_temp;
+    proxy_temp_path       /tmp/nginx-runtime/proxy_temp;
+    fastcgi_temp_path     /tmp/nginx-runtime/fastcgi_temp;
+    uwsgi_temp_path       /tmp/nginx-runtime/uwsgi_temp;
+    scgi_temp_path        /tmp/nginx-runtime/scgi_temp;
 
-    access_log /var/log/nginx/access.log;
+    access_log /dev/stdout;
     sendfile   on;
     keepalive_timeout 65;
     server_tokens off;
